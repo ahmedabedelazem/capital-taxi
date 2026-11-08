@@ -71,7 +71,7 @@ export function CustomerRideForm() {
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number; status: string } | null>(null);
+  const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number; distanceKm: number; status: string } | null>(null);
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [tripHistory, setTripHistory] = useState<TripHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -451,6 +451,7 @@ export function CustomerRideForm() {
       const data = await response.json() as {
         tripId?: string;
         fareEstimate?: number;
+        distanceKm?: number;
         status?: string;
         error?: string;
       };
@@ -466,8 +467,8 @@ export function CustomerRideForm() {
         };
         throw new Error(messages[data.error ?? ""] ?? "تعذر تسجيل طلب الرحلة. حاول مرة أخرى.");
       }
-      if (!data.tripId || typeof data.fareEstimate !== "number") throw new Error("استجابة الخادم غير مكتملة.");
-      setBooking({ tripId: data.tripId, fareEstimate: data.fareEstimate, status: data.status ?? "pending" });
+      if (!data.tripId || typeof data.fareEstimate !== "number" || typeof data.distanceKm !== "number") throw new Error("استجابة الخادم غير مكتملة.");
+      setBooking({ tripId: data.tripId, fareEstimate: data.fareEstimate, distanceKm: data.distanceKm, status: data.status ?? "pending" });
       setTripDetails(null);
       idempotencyKey.current = null;
       idempotencyFingerprint.current = null;
@@ -568,6 +569,7 @@ export function CustomerRideForm() {
           {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm">
             <b className="text-emerald-300">طلب الرحلة مسجل</b>
             <p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p>
+            <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم</b></p>
             <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p>
             <p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
             {tripDetails?.driver && <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-3">

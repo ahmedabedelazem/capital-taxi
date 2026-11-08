@@ -88,6 +88,28 @@ export async function POST(request: Request) {
     pickup, destination, vehicleCategory, paymentMethod,
   })).digest("hex");
   const idempotencyRef = db.collection("tripIdempotency").doc(requestHash);
+
+  // Avoid a paid routing request when the client retries an already completed booking.
+  try {
+    const previousSnapshot = await idempotencyRef.get();
+    if (previousSnapshot.exists) {
+      const previous = previousSnapshot.data() ?? {};
+      if (previous.requestFingerprint !== requestFingerprint) {
+        return NextResponse.json({ ok: false, error: "idempotency_key_reused_with_different_request" }, { status: 409 });
+      }
+      return NextResponse.json({
+        ok: true,
+        tripId: previous.tripId,
+        fareEstimate: previous.fareEstimate,
+        distanceKm: previous.distanceKm,
+        reused: true,
+        status: "pending",
+      }, { status: 200, headers: { "Cache-Control": "no-store" } });
+    }
+  } catch {
+    return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
+  }
+
   const tripRef = db.collection("trips").doc();
 
   try {
