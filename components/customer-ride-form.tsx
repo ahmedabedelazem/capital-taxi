@@ -71,6 +71,8 @@ export function CustomerRideForm() {
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState("");
   const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number; distanceKm: number; status: string } | null>(null);
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [tripHistory, setTripHistory] = useState<TripHistoryItem[]>([]);
@@ -380,6 +382,45 @@ export function CustomerRideForm() {
     };
   }, [booking?.tripId, booking?.status]);
 
+  async function cancelBooking() {
+    if (!booking?.tripId || cancelling) return;
+    if (!window.confirm("هل تريد إلغاء طلب الرحلة؟")) return;
+    setCancelling(true);
+    setCancelMessage("");
+    try {
+      const response = await fetch(`/api/trips/${encodeURIComponent(booking.tripId)}/cancel`, {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const data = await response.json() as { error?: string; status?: string };
+      if (!response.ok) {
+        if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
+        if (response.status === 404) throw new Error("الرحلة غير موجودة أو لا تخص حسابك.");
+        if (response.status === 409) throw new Error("لا يمكن إلغاء الرحلة بعد بدء تنفيذها أو بعد انتهائها.");
+        throw new Error("تعذر إلغاء الرحلة حالياً. حاول مرة أخرى.");
+      }
+      setBooking((current) => current && current.tripId === booking.tripId
+        ? { ...current, status: "cancelled" }
+        : current);
+      setTripDetails((current) => current ? {
+        ...current,
+        status: "cancelled",
+        driver: null,
+        driverLocation: null,
+        timeline: [...current.timeline, { from: booking.status, to: "cancelled", createdAt: new Date().toISOString() }],
+      } : current);
+      setTripHistory((current) => current.map((trip) => trip.tripId === booking.tripId
+        ? { ...trip, status: "cancelled" }
+        : trip));
+      setCancelMessage("تم إلغاء الرحلة وإغلاق عروض السائقين المرتبطة بها.");
+    } catch (error) {
+      setCancelMessage(error instanceof Error ? error.message : "تعذر إلغاء الرحلة.");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   function useCurrentLocation() {
     if (!("geolocation" in navigator)) {
       setLocationMessage("المتصفح لا يدعم تحديد الموقع. اختر نقطة الانطلاق من اقتراحات العناوين.");
@@ -572,6 +613,8 @@ export function CustomerRideForm() {
             <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم</b></p>
             <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p>
             <p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
+            {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
+            {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-white/5 p-3 text-xs leading-6 text-muted">{cancelMessage}</p>}
             {tripDetails?.driver && <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-3">
               <b className="text-sm text-gold">بيانات السائق المعيّن</b>
               <p className="mt-2 text-xs">الاسم: {tripDetails.driver.fullName || "غير متاح"}</p>
