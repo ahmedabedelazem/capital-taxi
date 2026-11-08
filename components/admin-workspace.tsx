@@ -49,7 +49,45 @@ export function AdminWorkspace() {
   const [dispatchForm, setDispatchForm] = useState({ stageRadiiKm: "", offerTtlSeconds: "60", maxOffersPerStage: "5" });
   const [configLoading, setConfigLoading] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
+  const [overviewMetrics, setOverviewMetrics] = useState<{ pendingDrivers: number; activeTrips: number } | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState("");
   const current = sections.find((section) => section.id === active)!;
+
+  useEffect(() => {
+    if (active !== "overview") return;
+    let mounted = true;
+    setOverviewLoading(true);
+    setOverviewError("");
+    Promise.all([
+      fetch("/api/admin/drivers", { credentials: "same-origin", cache: "no-store" }),
+      fetch("/api/admin/trips", { credentials: "same-origin", cache: "no-store" }),
+    ]).then(async ([driversResponse, tripsResponse]) => {
+      if (driversResponse.status === 401 || tripsResponse.status === 401) {
+        throw new Error("سجّل الدخول بحساب الإدارة لعرض مؤشرات التشغيل.");
+      }
+      if (driversResponse.status === 403 || tripsResponse.status === 403) {
+        throw new Error("هذا الحساب لا يملك صلاحية الإدارة.");
+      }
+      if (!driversResponse.ok || !tripsResponse.ok) {
+        throw new Error("تعذر تحميل مؤشرات التشغيل من الخادم.");
+      }
+      const [driversData, tripsData] = await Promise.all([
+        driversResponse.json() as Promise<{ applications?: Application[] }>,
+        tripsResponse.json() as Promise<{ trips?: AdminTrip[] }>,
+      ]);
+      if (!mounted) return;
+      setOverviewMetrics({
+        pendingDrivers: Array.isArray(driversData.applications) ? driversData.applications.length : 0,
+        activeTrips: Array.isArray(tripsData.trips) ? tripsData.trips.length : 0,
+      });
+    }).catch((error: unknown) => {
+      if (mounted) setOverviewError(error instanceof Error ? error.message : "تعذر تحميل المؤشرات.");
+    }).finally(() => {
+      if (mounted) setOverviewLoading(false);
+    });
+    return () => { mounted = false; };
+  }, [active]);
 
   const loadTrips = useCallback(async () => {
     setTripsLoading(true);
@@ -235,7 +273,7 @@ export function AdminWorkspace() {
 
   return <div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {[{label:"طلبات سائقين معلقة",value:active==="drivers" ? String(applications.length) : "—",icon:CarFront},{label:"مراجعة الصلاحيات",value:"خادمية",icon:BadgeCheck},{label:"الرحلات النشطة",value:"—",icon:Activity},{label:"حالة النظام",value:"تجهيز",icon:Users}].map(({label,value,icon:Icon})=><div key={label} className="rounded-2xl border border-white/10 bg-panel p-5"><Icon className="mb-5 text-gold" size={21}/><p className="text-xs text-muted">{label}</p><b className="mt-2 block text-2xl">{value}</b><span className="mt-1 block text-[10px] text-muted">بيانات حية عند توفر API القسم</span></div>)}
+      {[{label:"طلبات السائقين المعلقة",value:overviewLoading ? "…" : overviewMetrics ? String(overviewMetrics.pendingDrivers) : "—",icon:CarFront},{label:"الرحلات النشطة المعروضة",value:overviewLoading ? "…" : overviewMetrics ? String(overviewMetrics.activeTrips) : "—",icon:Activity},{label:"مراجعة الصلاحيات",value:"خادمية",icon:BadgeCheck},{label:"مصدر المؤشرات",value:"Firestore",icon:Users}].map(({label,value,icon:Icon})=><div key={label} className="rounded-2xl border border-white/10 bg-panel p-5"><Icon className="mb-5 text-gold" size={21}/><p className="text-xs text-muted">{label}</p><b className="mt-2 block text-2xl">{value}</b><span className="mt-1 block text-[10px] text-muted">{overviewLoading ? "جارٍ جلب البيانات…" : "آخر قراءة مباشرة من واجهات الإدارة"}</span></div>)}
     </div>
     <div className="mt-5 grid gap-5 lg:grid-cols-[240px_1fr]">
       <nav aria-label="أقسام الإدارة" className="flex gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-panel p-3 lg:flex-col">
@@ -246,7 +284,7 @@ export function AdminWorkspace() {
           {(active === "drivers" || active === "trips") && <button type="button" disabled={active === "drivers" ? loading : tripsLoading} onClick={() => void (active === "drivers" ? loadApplications() : loadTrips())} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={(active === "drivers" ? loading : tripsLoading) ? "animate-spin" : ""}/> تحديث القائمة</button>}
           {active !== "drivers" && <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-2 text-[11px] text-amber-200">قيد الاستكمال</span>}
         </div>
-        {active === "overview" && <div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">حالة المنصة</h3><p className="mt-3 text-sm leading-7 text-muted">تم ربط بعض خدمات العميل والسائق والإدارة بخدمات خادمية. لا تُعرض أرقام تشغيل غير متحققة.</p></div><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">الأولويات</h3><ul className="mt-3 space-y-2 text-sm text-muted"><li>• اعتماد السائقين ومراجعة الطلبات</li><li>• ضبط التعريفة ونطاق الخدمة</li><li>• تشغيل مجدول التوزيع الموثوق</li><li>• استكمال متابعة الرحلات والتقارير</li></ul></div></div>}
+        {active === "overview" && <div className="mt-6 grid gap-4 sm:grid-cols-2">{overviewError && <p role="alert" className="sm:col-span-2 rounded-xl border border-rose-300/20 bg-rose-400/5 p-3 text-xs leading-6 text-rose-200">{overviewError}</p>}<div className="rounded-2xl bg-night p-5"><h3 className="font-bold">حالة المنصة</h3><p className="mt-3 text-sm leading-7 text-muted">تم ربط بعض خدمات العميل والسائق والإدارة بخدمات خادمية. لا تُعرض أرقام تشغيل غير متحققة.</p></div><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">الأولويات</h3><ul className="mt-3 space-y-2 text-sm text-muted"><li>• اعتماد السائقين ومراجعة الطلبات</li><li>• ضبط التعريفة ونطاق الخدمة</li><li>• تشغيل مجدول التوزيع الموثوق</li><li>• استكمال متابعة الرحلات والتقارير</li></ul></div></div>}
         {active === "drivers" && <div className="mt-5 space-y-4">
           {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
           {loading && <div className="py-12 text-center text-sm text-muted">جارٍ تحميل الطلبات…</div>}
