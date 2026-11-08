@@ -8,6 +8,57 @@ export const dynamic = "force-dynamic";
 
 const categories = ["trip", "payment", "driver", "account", "app", "other"] as const;
 
+
+function serializeTicketDate(value: unknown): string | null {
+  if (value && typeof value === "object" && "toDate" in value &&
+      typeof (value as { toDate?: unknown }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return value instanceof Date ? value.toISOString() : null;
+}
+
+export async function GET(request: Request) {
+  let user;
+  try { user = await verifyRequestUser(request); } catch {
+    return NextResponse.json({ ok: false, error: "authentication_service_unavailable" }, { status: 503 });
+  }
+  if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  if (!hasRole(user, ["customer", "driver"])) {
+    return NextResponse.json({ ok: false, error: "support_request_not_allowed" }, { status: 403 });
+  }
+
+  try {
+    const snapshot = await getServerDb().collection("supportTickets")
+      .where("uid", "==", user.uid).limit(50).get();
+    const tickets = snapshot.docs
+      .sort((a, b) => {
+        const left = a.data().createdAt?.toMillis?.() ?? 0;
+        const right = b.data().createdAt?.toMillis?.() ?? 0;
+        return right - left;
+      })
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          ticketId: doc.id,
+          category: data.category ?? "other",
+          subject: data.subject ?? "",
+          description: data.description ?? "",
+          tripId: data.tripId ?? null,
+          status: data.status ?? "open",
+          adminNote: data.adminNote ?? null,
+          createdAt: serializeTicketDate(data.createdAt),
+          updatedAt: serializeTicketDate(data.updatedAt),
+          resolvedAt: serializeTicketDate(data.resolvedAt),
+        };
+      });
+    return NextResponse.json({ ok: true, tickets }, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch {
+    return NextResponse.json({ ok: false, error: "support_tickets_read_failed" }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request) {
   let user;
   try { user = await verifyRequestUser(request); } catch {

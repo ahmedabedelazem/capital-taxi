@@ -22,6 +22,19 @@ const tripStatusLabels: Record<string, string> = {
 
 type Point = { lat: number; lng: number };
 
+type SupportTicketHistoryItem = {
+  ticketId: string;
+  category: string;
+  subject: string;
+  description: string;
+  tripId: string | null;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  adminNote: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  resolvedAt: string | null;
+};
+
 type TripHistoryItem = {
   tripId: string;
   status: string;
@@ -67,6 +80,9 @@ export function CustomerRideForm() {
   const [supportTripId, setSupportTripId] = useState("");
   const [supportBusy, setSupportBusy] = useState(false);
   const [supportMessage, setSupportMessage] = useState("");
+  const [supportTickets, setSupportTickets] = useState<SupportTicketHistoryItem[]>([]);
+  const [supportHistoryLoading, setSupportHistoryLoading] = useState(true);
+  const [supportHistoryError, setSupportHistoryError] = useState("");
   const pickupInput = useRef<HTMLInputElement>(null);
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
@@ -414,10 +430,33 @@ export function CustomerRideForm() {
       if (response.status === 403 && data.error === "trip_not_accessible") throw new Error("رقم الرحلة غير مرتبط بحسابك. راجع الرقم أو اترك الحقل فارغاً.");
       if (response.status === 429) throw new Error("وصلت للحد المؤقت لإرسال الشكاوى. حاول بعد قليل.");
       if (!response.ok || !data.ticketId) throw new Error("تعذر إرسال الشكوى. حاول مرة أخرى.");
-      setSupportMessage("تم إرسال طلب الدعم بنجاح. رقم المتابعة: " + data.ticketId); setSupportSubject(""); setSupportDescription(""); setSupportTripId("");
+      setSupportMessage("تم إرسال طلب الدعم بنجاح. رقم المتابعة: " + data.ticketId); void loadSupportHistory(); setSupportSubject(""); setSupportDescription(""); setSupportTripId("");
     } catch (error) { setSupportMessage(error instanceof Error ? error.message : "تعذر إرسال طلب الدعم."); }
     finally { setSupportBusy(false); }
   }
+
+  const loadSupportHistory = async () => {
+    setSupportHistoryLoading(true);
+    setSupportHistoryError("");
+    try {
+      const response = await fetch("/api/support/tickets", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (response.status === 401) throw new Error("سجّل الدخول لعرض سجل الشكاوى.");
+      if (response.status === 403) throw new Error("سجل الدعم غير متاح لهذا الحساب.");
+      if (!response.ok) throw new Error("تعذر تحميل سجل الشكاوى.");
+      const data = await response.json() as { tickets?: SupportTicketHistoryItem[] };
+      setSupportTickets(Array.isArray(data.tickets) ? data.tickets : []);
+    } catch (error) {
+      setSupportHistoryError(error instanceof Error ? error.message : "حدث خطأ أثناء تحميل سجل الشكاوى.");
+    } finally {
+      setSupportHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadSupportHistory(); }, []);
+
   const selectedVehicle = vehicleOptions.find((item) => item.id === vehicle);
 
   return (
@@ -527,6 +566,18 @@ export function CustomerRideForm() {
             <button type="submit" disabled={supportBusy} className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
             {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-white/10 bg-night p-3 text-xs leading-6 text-muted">{supportMessage}</p>}
           </form>
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <div className="flex items-center justify-between gap-3"><h4 className="text-sm font-bold">متابعة طلباتك</h4><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-gold disabled:opacity-50">تحديث</button></div>
+            {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-200">{supportHistoryError}</p>}
+            {supportHistoryLoading && <p className="mt-3 text-xs text-muted">جارٍ تحميل الشكاوى…</p>}
+            {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-muted">لا توجد طلبات دعم سابقة.</p>}
+            <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-white/10 bg-night p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-gold/10 px-2 py-1 text-[10px] text-gold">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
+              <p className="mt-2 text-xs leading-6 text-muted">{ticket.description}</p>
+              {ticket.adminNote && <p className="mt-2 rounded-lg border border-emerald-300/10 bg-emerald-300/5 p-2 text-xs leading-6 text-emerald-100">رد الإدارة: {ticket.adminNote}</p>}
+              <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-muted"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
+            </article>)}</div>
+          </div>
         </section>
       </aside>
     </div>
