@@ -55,12 +55,17 @@ export async function POST(request: Request) {
       if (applicationSnapshot.exists && currentStatus !== "rejected") return "application_not_resubmittable";
 
       const rateLimit = rateLimitSnapshot.data();
-      const windowStartedAt = rateLimit?.windowStartedAt instanceof Timestamp
-        ? rateLimit.windowStartedAt.toMillis()
-        : 0;
+      const storedWindowStart = rateLimit?.windowStartedAt;
+      const validWindowStart = storedWindowStart instanceof Timestamp ? storedWindowStart : null;
+      const windowStartedAt = validWindowStart?.toMillis() ?? 0;
       const previousCount = Number.isInteger(rateLimit?.count) ? rateLimit.count as number : 0;
-      const windowIsActive = now - windowStartedAt >= 0 && now - windowStartedAt < APPLICATION_WINDOW_MS;
+      const windowIsActive = validWindowStart !== null
+        && now - windowStartedAt >= 0
+        && now - windowStartedAt < APPLICATION_WINDOW_MS;
       const nextCount = windowIsActive ? previousCount + 1 : 1;
+      const windowStartForWrite = windowIsActive && validWindowStart
+        ? validWindowStart
+        : Timestamp.fromMillis(now);
 
       if (nextCount > MAX_APPLICATIONS_PER_WINDOW) return "application_rate_limited";
 
@@ -77,7 +82,7 @@ export async function POST(request: Request) {
         reviewedBy: null,
       });
       transaction.set(rateLimitRef, {
-        windowStartedAt: windowIsActive ? rateLimit!.windowStartedAt : Timestamp.fromMillis(now),
+        windowStartedAt: windowStartForWrite,
         count: nextCount,
         updatedAt: FieldValue.serverTimestamp(),
       });
