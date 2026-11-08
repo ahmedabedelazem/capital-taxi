@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import { useSearchParams } from "next/navigation";
 import { getFirebaseClientAuth } from "@/lib/firebase/client";
+import { safeInternalRedirectPath } from "@/lib/domain/redirect";
 
 type Mode = "login" | "register";
 
@@ -47,11 +48,8 @@ export function AuthPanel() {
     });
     if (!profileResponse.ok) throw new Error("تعذر التحقق من صلاحيات الحساب بعد إنشاء الجلسة.");
     const profile = await profileResponse.json() as { user?: { role?: string } };
-    const requestedNext = searchParams.get("next");
-    const safeNext = requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-      ? requestedNext
-      : destinationFor(profile.user?.role);
-    window.location.assign(safeNext);
+    const requestedNext = safeInternalRedirectPath(searchParams.get("next"), window.location.origin);
+    window.location.assign(requestedNext ?? destinationFor(profile.user?.role));
   }
 
   async function cleanupFailedSignIn() {
