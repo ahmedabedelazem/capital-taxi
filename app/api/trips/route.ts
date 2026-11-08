@@ -66,10 +66,21 @@ export async function POST(request: Request) {
   if (pickup.lat === destination.lat && pickup.lng === destination.lng) {
     return NextResponse.json({ ok: false, error: "pickup_and_destination_must_differ" }, { status: 400 });
   }
+  const vehicleCategory = data.vehicleCategory;
+  const paymentMethod = data.paymentMethod;
+  if (!["economy", "family", "private"].includes(String(vehicleCategory))) {
+    return NextResponse.json({ ok: false, error: "invalid_vehicle_category" }, { status: 400 });
+  }
+  if (!["cash", "wallet"].includes(String(paymentMethod))) {
+    return NextResponse.json({ ok: false, error: "invalid_payment_method" }, { status: 400 });
+  }
 
   const db = getServerDb();
   const pricingRef = db.collection("config").doc("tripPricing");
   const requestHash = createHash("sha256").update(`${user.uid}:${idempotencyKey}`).digest("hex");
+  const requestFingerprint = createHash("sha256").update(JSON.stringify({
+    pickup, destination, vehicleCategory, paymentMethod,
+  })).digest("hex");
   const idempotencyRef = db.collection("tripIdempotency").doc(requestHash);
   const tripRef = db.collection("trips").doc();
 
@@ -81,6 +92,9 @@ export async function POST(request: Request) {
       ]);
       if (existingRequest.exists) {
         const previous = existingRequest.data() ?? {};
+        if (previous.requestFingerprint !== requestFingerprint) {
+          throw new Error("IDEMPOTENCY_KEY_REUSED");
+        }
         return {
           tripId: previous.tripId as string,
           fareEstimate: previous.fareEstimate as number,
@@ -121,6 +135,8 @@ export async function POST(request: Request) {
         customerUid: user.uid,
         pickup,
         destination,
+        vehicleCategory,
+        paymentMethod,
         distanceKm: Number(distance.toFixed(2)),
         fareEstimate: Number(fareEstimate.toFixed(2)),
         pricingVersion: typeof pricing.version === "string" ? pricing.version : "unversioned",
@@ -132,6 +148,7 @@ export async function POST(request: Request) {
       transaction.create(idempotencyRef, {
         customerUid: user.uid,
         tripId: tripRef.id,
+        requestFingerprint,
         fareEstimate: Number(fareEstimate.toFixed(2)),
         distanceKm: Number(distance.toFixed(2)),
         createdAt: FieldValue.serverTimestamp(),
@@ -162,6 +179,7 @@ export async function POST(request: Request) {
     }
     if (code === "OUTSIDE_SERVICE_AREA") return NextResponse.json({ ok: false, error: "outside_service_area" }, { status: 422 });
     if (code === "TRIP_DISTANCE_NOT_SUPPORTED") return NextResponse.json({ ok: false, error: "trip_distance_not_supported" }, { status: 422 });
+    if (code === "IDEMPOTENCY_KEY_REUSED") return NextResponse.json({ ok: false, error: "idempotency_key_reused_with_different_request" }, { status: 409 });
     return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
   }
 }
