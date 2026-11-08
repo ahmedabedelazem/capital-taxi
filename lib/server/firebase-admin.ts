@@ -21,15 +21,22 @@ function getFirebaseAdminApp() {
   }
 
   if (serviceAccountJson) {
-    let serviceAccount: ServiceAccount;
+    let raw: Record<string, unknown>;
     try {
-      serviceAccount = JSON.parse(serviceAccountJson) as ServiceAccount;
+      raw = JSON.parse(serviceAccountJson) as Record<string, unknown>;
     } catch {
       throw new Error("Firebase Admin service-account JSON is invalid.");
     }
 
+    // Google service-account downloads use snake_case; the Admin SDK expects
+    // the camelCase ServiceAccount shape.
+    const serviceAccount: ServiceAccount = {
+      projectId: String(raw.project_id ?? raw.projectId ?? ""),
+      clientEmail: String(raw.client_email ?? raw.clientEmail ?? ""),
+      privateKey: String(raw.private_key ?? raw.privateKey ?? "").replace(/\\n/g, "\n"),
+    };
+
     if (
-      !serviceAccount.projectId ||
       serviceAccount.projectId !== projectId ||
       !serviceAccount.clientEmail ||
       !serviceAccount.privateKey
