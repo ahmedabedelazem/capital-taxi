@@ -24,12 +24,6 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const db = getServerDb();
-    const tripRef = db.collection("trips").doc(tripId);
-    const offerRef = db.collection("tripOffers").doc(`${tripId}_${user.uid}`);
-    const driverRef = db.collection("drivers").doc(user.uid);
-    const applicationRef = db.collection("driverApplications").doc(user.uid);
-    const timelineRef = tripRef.collection("statusTimeline").doc();
-
     await acceptTripForDriver(db, tripId, user.uid);
 
     return NextResponse.json({ ok: true, tripId, status: "accepted" }, {

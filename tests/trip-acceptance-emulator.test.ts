@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, test } from "node:test";
-import { initializeApp, getApps, type App } from "firebase-admin/app";
+import { deleteApp, initializeApp, getApps, type App } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { acceptTripForDriver } from "../lib/server/trip-acceptance-core";
 
@@ -15,7 +15,7 @@ before(() => {
 });
 
 after(async () => {
-  if (app) await app.delete();
+  if (app) await deleteApp(app);
 });
 
 test("two drivers racing for one trip produce exactly one winner", async () => {
