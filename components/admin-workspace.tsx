@@ -27,6 +27,7 @@ type AdminTrip = {
   driverUid: string | null;
   driverLocation: { lat: number; lng: number; updatedAt: string } | null;
   createdAt: string | null;
+  updatedAt: string | null;
 };
 
 const tripStatusMeta: Record<string, { label: string; className: string }> = {
@@ -382,6 +383,7 @@ export function AdminWorkspace() {
               <p className="mt-1">موقع السائق: {trip.driverLocation ? <><span className="text-emerald-300">موقع حديث</span><span dir="ltr"> · {trip.driverLocation.lat.toFixed(5)}, {trip.driverLocation.lng.toFixed(5)} · {new Date(trip.driverLocation.updatedAt).toLocaleTimeString("ar-EG")}</span><a className="mr-2 text-gold underline underline-offset-4" href={`https://www.google.com/maps?q=${trip.driverLocation.lat},${trip.driverLocation.lng}`} target="_blank" rel="noreferrer">فتح على الخريطة</a></> : <span className="text-muted">لا يوجد موقع حديث متاح</span>}</p>
               <p className="mt-1">تُعرض إحداثيات GPS إذا كان آخر تحديث خلال 120 ثانية فقط.</p>
               <p className="mt-1">وقت الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</p>
+              <p className="mt-1">آخر تحديث للحالة: {trip.updatedAt ? new Date(trip.updatedAt).toLocaleString("ar-EG") : "غير متاح"}</p>
             </div>
           </article>)}
         </div>}
