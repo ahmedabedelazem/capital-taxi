@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getServerAuth } from "@/lib/server/firebase-admin";
+import { getServerAuth, getServerDb } from "@/lib/server/firebase-admin";
 
 export type AppRole = "customer" | "driver" | "admin";
 
@@ -47,6 +47,22 @@ function toAuthenticatedUser(decoded: {
   };
 }
 
+async function resolveApprovedRole(user: AuthenticatedUser): Promise<AuthenticatedUser> {
+  if (user.role !== "driver") return user;
+
+  // A signed driver claim is necessary but not sufficient: approval must
+  // also exist in the server-owned application record.
+  const application = await getServerDb()
+    .collection("driverApplications")
+    .doc(user.uid)
+    .get();
+
+  if (application.data()?.status !== "approved") {
+    return { ...user, role: "customer" };
+  }
+  return user;
+}
+
 export async function verifyRequestUser(
   request: Request,
 ): Promise<AuthenticatedUser | null> {
@@ -56,7 +72,7 @@ export async function verifyRequestUser(
   if (sessionCookie) {
     try {
       const decoded = await auth.verifySessionCookie(sessionCookie, true);
-      return toAuthenticatedUser(decoded);
+      return await resolveApprovedRole(toAuthenticatedUser(decoded));
     } catch {
       return null;
     }
@@ -70,7 +86,7 @@ export async function verifyRequestUser(
 
   try {
     const decoded = await auth.verifyIdToken(idToken, true);
-    return toAuthenticatedUser(decoded);
+    return await resolveApprovedRole(toAuthenticatedUser(decoded));
   } catch {
     return null;
   }
