@@ -14,7 +14,7 @@ test("rejects protocol-relative and absolute external URLs", () => {
 });
 
 test("rejects backslash-based authority confusion", () => {
-  assert.equal(safeInternalRedirectPath("/\\\\evil.example/path", origin), null);
+  assert.equal(safeInternalRedirectPath("/\\evil.example/path", origin), null);
 });
 
 test("rejects relative paths and malformed origins", () => {
