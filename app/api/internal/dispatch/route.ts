@@ -96,10 +96,10 @@ export async function POST(request: Request) {
     }
 
     const pickup = trip.pickup && typeof trip.pickup === "object" ? trip.pickup as Record<string, unknown> : {};
-    if (!isValidPoint({ lat: pickup.lat, lng: pickup.lng })) {
+    const tripPoint = { lat: pickup.lat, lng: pickup.lng };
+    if (!isValidPoint(tripPoint)) {
       return NextResponse.json({ ok: false, error: "trip_pickup_invalid" }, { status: 422 });
     }
-    const tripPoint = { lat: pickup.lat, lng: pickup.lng };
     const driverSnapshot = await db.collection("drivers")
       .where("isAvailable", "==", true)
       .limit(100)
@@ -110,10 +110,10 @@ export async function POST(request: Request) {
         ? driver.location as Record<string, unknown>
         : {};
       const updatedAt = driver.locationUpdatedAt;
-      if (!isValidPoint({ lat: location.lat, lng: location.lng }) ||
+      const point = { lat: location.lat, lng: location.lng };
+      if (!isValidPoint(point) ||
           !(updatedAt instanceof Timestamp) || now - updatedAt.toMillis() > 90_000 ||
           now < updatedAt.toMillis() || driver.activeTripId) return null;
-      const point = { lat: location.lat, lng: location.lng };
       const distance = distanceKm(tripPoint, point);
       return { uid: doc.id, distance, point };
     }).filter((v): v is NonNullable<typeof v> => v !== null && v.distance <= (radii[stage] as number))
@@ -147,18 +147,15 @@ export async function POST(request: Request) {
         const location = driver.location && typeof driver.location === "object"
           ? driver.location as Record<string, unknown>
           : {};
+        const currentPoint = { lat: location.lat, lng: location.lng };
         if (application.status !== "approved" || driver.isAvailable !== true ||
             driver.activeTripId || !(driver.locationUpdatedAt instanceof Timestamp) ||
             now - driver.locationUpdatedAt.toMillis() < 0 ||
             now - driver.locationUpdatedAt.toMillis() > 90_000 ||
-            !isValidPoint({ lat: location.lat, lng: location.lng }) ||
-            existingOffers[index].exists) {
+            !isValidPoint(currentPoint) || existingOffers[index].exists) {
           return [];
         }
-        const currentDistance = distanceKm(tripPoint, {
-          lat: location.lat,
-          lng: location.lng,
-        });
+        const currentDistance = distanceKm(tripPoint, currentPoint);
         if (!Number.isFinite(currentDistance) || currentDistance > (radii[stage] as number)) return [];
         return [{ ...candidate, distance: currentDistance }];
       });
