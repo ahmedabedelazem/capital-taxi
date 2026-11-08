@@ -191,25 +191,45 @@ export function AdminWorkspace() {
 
   async function savePricing(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const numericValues = {
+      baseFare: Number(pricingForm.baseFare),
+      perKm: Number(pricingForm.perKm),
+      minimumFare: Number(pricingForm.minimumFare),
+      maximumDistanceKm: Number(pricingForm.maximumDistanceKm),
+      roundingIncrement: Number(pricingForm.roundingIncrement),
+    };
+    const coordinates = {
+      minLat: Number(pricingForm.minLat),
+      maxLat: Number(pricingForm.maxLat),
+      minLng: Number(pricingForm.minLng),
+      maxLng: Number(pricingForm.maxLng),
+    };
+    if (Object.values(numericValues).some((value) => !Number.isFinite(value) || value < 0) ||
+        numericValues.maximumDistanceKm <= 0 || numericValues.roundingIncrement <= 0 ||
+        numericValues.baseFare > 100000 || numericValues.perKm > 10000 ||
+        numericValues.minimumFare > 100000 || numericValues.maximumDistanceKm > 500 ||
+        numericValues.roundingIncrement > 1000) {
+      setMessage("راجع قيم التعريفة: يجب إدخال أرقام صحيحة ضمن الحدود المسموح بها، والمسافة وخطوة التقريب أكبر من صفر.");
+      return;
+    }
+    if (Object.values(coordinates).some((value) => !Number.isFinite(value)) ||
+        coordinates.minLat < -90 || coordinates.maxLat > 90 ||
+        coordinates.minLng < -180 || coordinates.maxLng > 180 ||
+        coordinates.minLat >= coordinates.maxLat || coordinates.minLng >= coordinates.maxLng) {
+      setMessage("إحداثيات نطاق الخدمة غير صحيحة. تأكد من حدود خطوط العرض والطول ومن أن الحد الأدنى أقل من الحد الأعلى.");
+      return;
+    }
     setConfigSaving(true);
     setMessage("");
     try {
-      const payload = {
-        enabled: pricingForm.enabled,
-        baseFare: Number(pricingForm.baseFare),
-        perKm: Number(pricingForm.perKm),
-        minimumFare: Number(pricingForm.minimumFare),
-        maximumDistanceKm: Number(pricingForm.maximumDistanceKm),
-        roundingIncrement: Number(pricingForm.roundingIncrement),
-        serviceArea: {
-          minLat: Number(pricingForm.minLat), maxLat: Number(pricingForm.maxLat),
-          minLng: Number(pricingForm.minLng), maxLng: Number(pricingForm.maxLng),
-        },
-      };
       const response = await fetch("/api/admin/config/pricing", {
         method: "PUT", credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          enabled: pricingForm.enabled,
+          ...numericValues,
+          serviceArea: coordinates,
+        }),
       });
       if (response.status === 401 || response.status === 403) throw new Error("لا تملك صلاحية تعديل التعريفة.");
       if (!response.ok) throw new Error("رفض الخادم القيم. راجع السعر وحدود نطاق الخدمة.");
@@ -220,20 +240,34 @@ export function AdminWorkspace() {
       setConfigSaving(false);
     }
   }
-
   async function saveDispatch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const radiusValues = dispatchForm.stageRadiiKm.split(",").map((value) => value.trim());
+    const radii = radiusValues.map(Number);
+    const ttl = Number(dispatchForm.offerTtlSeconds);
+    const maxOffers = Number(dispatchForm.maxOffersPerStage);
+    if (radiusValues.length < 1 || radiusValues.length > 6 ||
+        radiusValues.some((value) => value === "") ||
+        radii.some((value) => !Number.isFinite(value) || value <= 0 || value > 100) ||
+        radii.some((value, index) => index > 0 && value <= radii[index - 1])) {
+      setMessage("أدخل من مرحلة إلى 6 مراحل، بأنصاف أقطار موجبة لا تتجاوز 100 كم وبترتيب تصاعدي، وافصل بينها بفواصل.");
+      return;
+    }
+    if (!Number.isInteger(ttl) || ttl < 15 || ttl > 300 ||
+        !Number.isInteger(maxOffers) || maxOffers < 1 || maxOffers > 30) {
+      setMessage("مدة العرض يجب أن تكون من 15 إلى 300 ثانية، وعدد العروض من 1 إلى 30.");
+      return;
+    }
     setConfigSaving(true);
     setMessage("");
     try {
-      const radii = dispatchForm.stageRadiiKm.split(",").map((value) => Number(value.trim()));
       const response = await fetch("/api/admin/config/dispatch", {
         method: "PUT", credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           stageRadiiKm: radii,
-          offerTtlSeconds: Number(dispatchForm.offerTtlSeconds),
-          maxOffersPerStage: Number(dispatchForm.maxOffersPerStage),
+          offerTtlSeconds: ttl,
+          maxOffersPerStage: maxOffers,
         }),
       });
       if (response.status === 401 || response.status === 403) throw new Error("لا تملك صلاحية تعديل إعدادات التوزيع.");
@@ -245,7 +279,6 @@ export function AdminWorkspace() {
       setConfigSaving(false);
     }
   }
-
   async function decide(uid: string, decision: "approved" | "rejected") {
     setBusyUid(uid);
     setMessage("");
