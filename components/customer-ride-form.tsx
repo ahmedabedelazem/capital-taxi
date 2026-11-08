@@ -41,6 +41,7 @@ type TripDetails = {
     vehicleModel: string | null;
     plateNumber: string | null;
   } | null;
+  driverLocation: { lat: number; lng: number; updatedAt: string } | null;
   timeline: { from: string | null; to: string | null; createdAt: string | null }[];
 };
 
@@ -339,6 +340,11 @@ export function CustomerRideForm() {
               <p className="mt-1 text-xs">المركبة: {[tripDetails.driver.vehicleType, tripDetails.driver.vehicleModel].filter(Boolean).join(" – ") || "غير متاحة"}</p>
               <p className="mt-1 text-xs">رقم اللوحة: {tripDetails.driver.plateNumber || "غير متاح"}</p>
               {tripDetails.driver.phone && <a href={`tel:${tripDetails.driver.phone}`} className="mt-3 inline-flex rounded-lg bg-gold px-4 py-2 text-xs font-bold text-night">اتصال بالسائق</a>}
+            </div>}
+            {tripDetails?.driverLocation && <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3">
+              <b className="text-xs text-emerald-300">آخر موقع مُحدّث للسائق</b>
+              <p className="mt-2 text-[11px] text-muted" dir="ltr">{tripDetails.driverLocation.lat.toFixed(5)}, {tripDetails.driverLocation.lng.toFixed(5)}</p>
+              <p className="mt-1 text-[10px] text-muted">آخر تحديث: {new Date(tripDetails.driverLocation.updatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</p>
             </div>}
             {tripDetails?.timeline?.length ? <div className="mt-4 border-t border-white/10 pt-3">
               <b className="text-xs">تحديثات الرحلة</b>
