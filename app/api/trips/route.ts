@@ -71,8 +71,8 @@ export async function POST(request: Request) {
   if (!["economy", "family", "private"].includes(String(vehicleCategory))) {
     return NextResponse.json({ ok: false, error: "invalid_vehicle_category" }, { status: 400 });
   }
-  if (!["cash", "wallet"].includes(String(paymentMethod))) {
-    return NextResponse.json({ ok: false, error: "invalid_payment_method" }, { status: 400 });
+  if (paymentMethod !== "cash") {
+    return NextResponse.json({ ok: false, error: "cash_payment_only" }, { status: 400 });
   }
 
   const db = getServerDb();

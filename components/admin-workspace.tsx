@@ -464,7 +464,7 @@ export function AdminWorkspace() {
               <div><span className="block text-[11px] text-muted">الأجرة التقديرية</span><b>{trip.fareEstimate ?? "—"} ج.م</b></div>
               <div><span className="block text-[11px] text-muted">المسافة</span><b>{trip.distanceKm ?? "—"} كم</b></div>
               <div><span className="block text-[11px] text-muted">فئة المركبة</span><b>{trip.vehicleCategory || "—"}</b></div>
-              <div><span className="block text-[11px] text-muted">الدفع</span><b>{trip.paymentMethod === "cash" ? "نقداً" : trip.paymentMethod === "wallet" ? "محفظة" : "—"}</b></div>
+              <div><span className="block text-[11px] text-muted">الدفع</span><b>{trip.paymentMethod === "cash" ? "نقداً" : "غير محدد"}</b></div>
             </div>
             <div className="mt-4 border-t border-white/10 pt-3 text-xs text-muted">
               <p>السائق: {trip.driverUid ? <span dir="ltr">{trip.driverUid}</span> : "لم يتم التعيين بعد"}</p>

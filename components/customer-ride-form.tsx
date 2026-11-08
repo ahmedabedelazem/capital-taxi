@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation, WalletCards } from "lucide-react";
+import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation } from "lucide-react";
 
 const vehicleOptions = [
   { id: "economy", name: "اقتصادي", detail: "للمشاوير اليومية", seats: "حتى 4 ركاب", icon: CarFront },
@@ -64,7 +64,6 @@ export function CustomerRideForm() {
   const [pickupPoint, setPickupPoint] = useState<Point | null>(null);
   const [destinationPoint, setDestinationPoint] = useState<Point | null>(null);
   const [vehicle, setVehicle] = useState("economy");
-  const [payment, setPayment] = useState("cash");
   const [locating, setLocating] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -432,7 +431,7 @@ export function CustomerRideForm() {
       pickup: { label: pickup, lat: pickupPoint.lat, lng: pickupPoint.lng },
       destination: { label: destination, lat: destinationPoint.lat, lng: destinationPoint.lng },
       vehicleCategory: vehicle,
-      paymentMethod: payment,
+      paymentMethod: "cash",
     };
     const requestFingerprint = JSON.stringify(payload);
     if (!idempotencyKey.current || idempotencyFingerprint.current !== requestFingerprint) {
@@ -554,17 +553,17 @@ export function CustomerRideForm() {
         </div>
 
         <div className="mt-7">
-          <h3 className="mb-3 font-bold">وسيلة الدفع المفضلة</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => {setPayment("cash");setPreview(false);}} aria-pressed={payment==="cash"} className={`flex items-center gap-3 rounded-xl border p-4 text-sm ${payment==="cash" ? "border-gold/60 bg-gold/10 text-gold" : "border-white/10 bg-night text-muted"}`}><CircleDollarSign size={20}/> نقداً</button>
-            <button type="button" onClick={() => {setPayment("wallet");setPreview(false);}} aria-pressed={payment==="wallet"} className={`flex items-center gap-3 rounded-xl border p-4 text-sm ${payment==="wallet" ? "border-gold/60 bg-gold/10 text-gold" : "border-white/10 bg-night text-muted"}`}><WalletCards size={20}/> محفظة إلكترونية</button>
+          <h3 className="mb-3 font-bold">طريقة الدفع</h3>
+          <div className="flex items-center gap-3 rounded-xl border border-gold/40 bg-gold/5 p-4 text-sm text-gold">
+            <CircleDollarSign size={20}/>
+            <span className="font-bold">الدفع نقداً للسائق بعد انتهاء الرحلة</span>
           </div>
         </div>
 
         <button type="button" onClick={showPreview} className="mt-7 w-full rounded-xl bg-gold px-5 py-4 font-bold text-night transition hover:bg-[#e8c77e]">معاينة تفاصيل الرحلة</button>
         {preview && <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
           <div className="mb-3 flex items-center gap-2 text-emerald-300"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
-          <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">الدفع المفضل</span><b>{payment==="cash" ? "نقداً" : "محفظة إلكترونية"}</b></div></div>
+          <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">طريقة الدفع</span><b>نقداً للسائق</b></div></div>
           <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-gold px-4 py-3 font-bold text-night disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
           {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm">
             <b className="text-emerald-300">طلب الرحلة مسجل</b>
