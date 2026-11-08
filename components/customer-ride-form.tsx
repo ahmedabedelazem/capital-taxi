@@ -88,6 +88,7 @@ export function CustomerRideForm() {
   const pickupInput = useRef<HTMLInputElement>(null);
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
+  const idempotencyFingerprint = useRef<string | null>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const mapMarkers = useRef<{
@@ -427,7 +428,17 @@ export function CustomerRideForm() {
     if (!pickupPoint || !destinationPoint) return;
     setSubmitting(true);
     setLocationMessage("");
-    if (!idempotencyKey.current) idempotencyKey.current = crypto.randomUUID();
+    const payload = {
+      pickup: { label: pickup, lat: pickupPoint.lat, lng: pickupPoint.lng },
+      destination: { label: destination, lat: destinationPoint.lat, lng: destinationPoint.lng },
+      vehicleCategory: vehicle,
+      paymentMethod: payment,
+    };
+    const requestFingerprint = JSON.stringify(payload);
+    if (!idempotencyKey.current || idempotencyFingerprint.current !== requestFingerprint) {
+      idempotencyKey.current = crypto.randomUUID();
+      idempotencyFingerprint.current = requestFingerprint;
+    }
     try {
       const response = await fetch("/api/trips", {
         method: "POST",
@@ -436,12 +447,7 @@ export function CustomerRideForm() {
           "Content-Type": "application/json",
           "Idempotency-Key": idempotencyKey.current,
         },
-        body: JSON.stringify({
-          pickup: { label: pickup, lat: pickupPoint.lat, lng: pickupPoint.lng },
-          destination: { label: destination, lat: destinationPoint.lat, lng: destinationPoint.lng },
-          vehicleCategory: vehicle,
-          paymentMethod: payment,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json() as {
         tripId?: string;
@@ -465,6 +471,7 @@ export function CustomerRideForm() {
       setBooking({ tripId: data.tripId, fareEstimate: data.fareEstimate, status: data.status ?? "pending" });
       setTripDetails(null);
       idempotencyKey.current = null;
+      idempotencyFingerprint.current = null;
       void fetch("/api/customer/trips", { credentials: "same-origin", cache: "no-store" })
         .then((response) => response.ok ? response.json() as Promise<{ trips?: TripHistoryItem[] }> : null)
         .then((result) => { if (result?.trips) setTripHistory(result.trips); })
