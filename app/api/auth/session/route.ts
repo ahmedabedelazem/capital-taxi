@@ -6,7 +6,23 @@ export const dynamic = "force-dynamic";
 
 const SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
 
+function isSameOriginRequest(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try {
+    return new URL(origin).origin === new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_request_origin" },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   let body: unknown;
   try {
     body = await request.json();
@@ -59,7 +75,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_request_origin" },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   const response = NextResponse.json(
     { ok: true },
     { headers: { "Cache-Control": "no-store" } },
