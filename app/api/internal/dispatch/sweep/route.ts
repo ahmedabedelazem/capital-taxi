@@ -125,7 +125,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      ok: failed === 0,
+      // Invalid searching stages need operator review even when all dispatched
+      // tasks completed successfully; the HTTP response remains 200 so the
+      // scheduler does not retry malformed records indefinitely.
+      ok: failed === 0 && invalidSearchingStage === 0,
       scanned: pendingSnapshot.size + searchingSnapshot.size,
       due,
       processed,

@@ -88,9 +88,11 @@ gcloud scheduler jobs describe capital-taxi-dispatch-sweep --location="$SCHEDULE
 gcloud scheduler jobs run capital-taxi-dispatch-sweep --location="$SCHEDULER_REGION"
 ```
 
-افحص سجلات Cloud Scheduler واستجابة التطبيق. الاستجابة الناجحة من العامل تتضمن `scanned`, `due`, `processed`, `deferred`, `failed`, و`truncated`.
+افحص سجلات Cloud Scheduler وسجل استجابة التطبيق. يحتوي جسم الاستجابة على `scanned`, `due`, `processed`, `deferred`, `failed`, `invalidSearchingStage`, و`truncated`.
 
-لا تعتبر الاختبار ناجحاً لمجرد إنشاء المهمة: يلزم التأكد من أن استجابة HTTP ناجحة، وأن إعدادات `config/dispatch` مكتملة، وأن هناك سائقين معتمدين متصلين بموقع حديث. لا تنشئ رحلات أو تعدّل بيانات حقيقية بغرض الاختبار دون موافقة تشغيلية.
+**لا تعتمد على HTTP 200 وحده:** قد تكون استجابة العامل HTTP 200 مع `ok: false` إذا وجد رحلات `searching` ذات `dispatchStage` مفقود أو غير صالح. Cloud Scheduler يعتبر HTTP 200 نجاحاً للطلب ولن يعيد المحاولة لهذه الحالة؛ لذلك يجب أن يراقب نظام التنبيه جسم الاستجابة أو سجلات التطبيق، ويصعّد `invalidSearchingStage > 0` للمراجعة اليدوية. لا تصلح هذه الرحلات آلياً بالتخمين.
+
+لا تعتبر الاختبار ناجحاً لمجرد إنشاء المهمة: يلزم التأكد من أن استجابة التطبيق سليمة، وأن إعدادات `config/dispatch` مكتملة، وأن هناك سائقين معتمدين متصلين بموقع حديث. لا تنشئ رحلات أو تعدّل بيانات حقيقية بغرض الاختبار دون موافقة تشغيلية.
 
 ## ملاحظات تشغيلية
 
@@ -119,7 +121,7 @@ gcloud scheduler jobs run capital-taxi-dispatch-sweep --location="$SCHEDULER_REG
 4. حدد سجلات `searching` التي ينقصها `lastDispatchAt` أو التي تفتقد `dispatchStage` أو تحمل قيمة خارج نطاق المراحل.
 5. راجع كل مجموعة من السجلات مع مصدرها وسجل الحالة `statusTimeline` وأي عروض موجودة في `tripOffers`؛ لا تستنتج المرحلة من حالة الرحلة وحدها.
 6. وثّق قرار المعالجة لكل سجل قبل أي كتابة، ثم اختبر المعالجة على نسخة منفصلة أو بيئة اختبار أولاً.
-7. بعد اكتمال المراجعة والتحقق من الفهارس والإعدادات، فعّل المجدول وراقب قيم `deferred` و`failed` و`truncated` وسجلات العامل.
+7. بعد اكتمال المراجعة والتحقق من الفهارس والإعدادات، فعّل المجدول وراقب قيم `deferred` و`failed` و`invalidSearchingStage` و`truncated` وسجلات العامل.
 
 ### قواعد المعالجة الآمنة
 
