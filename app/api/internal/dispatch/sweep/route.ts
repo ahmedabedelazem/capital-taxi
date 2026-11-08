@@ -54,11 +54,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "dispatch_not_configured" }, { status: 503 });
     }
 
-    const [pendingSnapshot, searchingSnapshot] = await Promise.all([
-      db.collection("trips").where("status", "==", "pending").limit(30).get(),
-      db.collection("trips").where("status", "==", "searching").limit(70).get(),
-    ]);
     const now = Date.now();
+    const dispatchCutoff = Timestamp.fromMillis(now - ttlSeconds * 1000);
+    const [pendingSnapshot, searchingSnapshot] = await Promise.all([
+      db.collection("trips")
+        .where("status", "==", "pending")
+        .orderBy("createdAt", "asc")
+        .limit(30)
+        .get(),
+      db.collection("trips")
+        .where("status", "==", "searching")
+        .where("lastDispatchAt", "<=", dispatchCutoff)
+        .orderBy("lastDispatchAt", "asc")
+        .limit(70)
+        .get(),
+    ]);
     const due: Array<{ tripId: string; stage: number }> = [];
 
     for (const snapshot of pendingSnapshot.docs) {
@@ -69,11 +79,7 @@ export async function POST(request: Request) {
       const trip = snapshot.data();
       const stage = typeof trip.dispatchStage === "number" && Number.isInteger(trip.dispatchStage)
         ? trip.dispatchStage : 0;
-      if (stage < 1 || stage > radii.length) continue;
-      const lastDispatchAt = trip.lastDispatchAt instanceof Timestamp
-        ? trip.lastDispatchAt.toMillis()
-        : trip.createdAt instanceof Timestamp ? trip.createdAt.toMillis() : 0;
-      if (now - lastDispatchAt >= ttlSeconds * 1000) {
+      if (stage >= 1 && stage <= radii.length) {
         due.push({ tripId: snapshot.id, stage });
       }
     }
