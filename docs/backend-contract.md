@@ -78,6 +78,18 @@ The route reads `config/tripPricing` and expects: `enabled: true`, `baseFare`, `
 
 New trips are created with `status: pending`. This endpoint does not yet dispatch offers; a trusted dispatch worker must move the trip into searching and create targeted offer documents before drivers can see or accept it.
 
+## Implemented staged dispatch worker API
+
+| Method | Route | Purpose | Authorization |
+| --- | --- | --- | --- |
+| POST | `/api/internal/dispatch` | Send one dispatch wave or finalize an exhausted search | Server-to-server secret in `x-dispatch-secret` |
+
+The worker endpoint requires `DISPATCH_WORKER_SECRET` (at least 32 characters) and compares it in constant time. It accepts `{ "tripId": "...", "stage": 0 }`. The trusted scheduler invokes successive stages after each offer window expires. The worker reads available drivers, considers only fresh driver locations (90 seconds), sorts by pickup distance, and sends up to the configured maximum number of offers within that stage's radius. Driver state and trip state are re-read inside a Firestore transaction before offer documents are created. Offer IDs are deterministic per trip and driver to prevent duplicate delivery.
+
+The endpoint reads `config/dispatch` with `stageRadiiKm: number[]`, `offerTtlSeconds` (15–300), and `maxOffersPerStage` (1–30). Stage values are zero-based; after the final offer window expires, the scheduler calls the final stage index (`stageRadiiKm.length`) to mark the still-searching trip `no_driver`, unless a live offer remains. If the trip was accepted or otherwise changed, stale dispatch attempts are rejected.
+
+Operational driver records must store `isAvailable`, optional `activeTripId`, `location: { lat, lng }`, and Firestore Timestamp `locationUpdatedAt`. This worker does not obtain GPS itself and does not start a scheduler. A trusted scheduled job/queue must call it at the right intervals, and a separate authenticated location-update API is still required before live driver GPS can be safely used.
+
 ## Proposed API surface
 
 Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
