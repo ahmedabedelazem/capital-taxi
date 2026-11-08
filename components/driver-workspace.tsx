@@ -20,6 +20,9 @@ export function DriverWorkspace() {
   const [message, setMessage] = useState("سجّل الدخول بحساب سائق معتمد لتفعيل الخدمات.");
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
   const [acceptedTripId, setAcceptedTripId] = useState<string | null>(null);
+  const [showApplication, setShowApplication] = useState(false);
+  const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
+  const [applicationBusy, setApplicationBusy] = useState(false);
   const lastLocationSentAt = useRef(0);
 
   const loadOffers = useCallback(async () => {
@@ -39,7 +42,10 @@ export function DriverWorkspace() {
     void fetch("/api/driver/availability", { credentials: "same-origin", cache: "no-store" })
       .then(async (response) => {
         if (response.status === 401) throw new Error("سجّل الدخول بحساب سائق معتمد.");
-        if (response.status === 403) throw new Error("حساب السائق غير معتمد من الإدارة بعد.");
+        if (response.status === 403) {
+          setShowApplication(true);
+          throw new Error("يمكنك تقديم طلب انضمام للسائقين أو متابعة حالة طلبك.");
+        }
         if (!response.ok) throw new Error("تعذر قراءة حالة حساب السائق.");
         return response.json() as Promise<{ isAvailable?: boolean; activeTripId?: string | null }>;
       })
@@ -107,6 +113,34 @@ export function DriverWorkspace() {
     };
   }, [available, loadOffers]);
 
+  async function submitApplication(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setApplicationBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/driver/application", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(application),
+      });
+      const data = await response.json() as { error?: string; status?: string };
+      if (response.status === 401) throw new Error("سجّل الدخول بحساب عميل أولاً.");
+      if (response.status === 403) throw new Error("هذا الحساب غير مؤهل لتقديم طلب جديد.");
+      if (data.error === "already_approved") {
+        setShowApplication(false);
+        throw new Error("حسابك معتمد بالفعل. سجّل الدخول مجدداً لتحديث الصلاحيات.");
+      }
+      if (!response.ok) throw new Error("تعذر إرسال الطلب. راجع البيانات وحاول مرة أخرى.");
+      setShowApplication(false);
+      setMessage("تم إرسال طلب الانضمام بنجاح. سيظهر في لوحة الإدارة للمراجعة، ولن تتمكن من استقبال رحلات قبل الاعتماد.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر إرسال طلب الانضمام.");
+    } finally {
+      setApplicationBusy(false);
+    }
+  }
+
   async function toggleAvailability() {
     setBusy(true);
     setMessage("");
@@ -163,6 +197,18 @@ export function DriverWorkspace() {
   }
 
   return <div>
+    {showApplication && <section className="mb-5 rounded-3xl border border-gold/20 bg-panel p-6">
+      <div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-gold"/><div><h2 className="font-bold">طلب الانضمام كسائق</h2><p className="mt-1 text-xs text-muted">املأ بياناتك ومركبتك لإرسال الطلب إلى الإدارة.</p></div></div>
+      <form onSubmit={submitApplication} className="grid gap-4 sm:grid-cols-2">
+        <label className="text-xs text-muted">الاسم بالكامل<input required maxLength={100} value={application.fullName} onChange={e=>setApplication(v=>({...v,fullName:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-muted">رقم الهاتف<input required type="tel" maxLength={25} value={application.phone} onChange={e=>setApplication(v=>({...v,phone:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50" dir="ltr"/></label>
+        <label className="text-xs text-muted">نوع المركبة<input required maxLength={40} value={application.vehicleType} onChange={e=>setApplication(v=>({...v,vehicleType:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-muted">موديل المركبة<input required maxLength={60} value={application.vehicleModel} onChange={e=>setApplication(v=>({...v,vehicleModel:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-muted sm:col-span-2">رقم اللوحة<input required maxLength={30} value={application.plateNumber} onChange={e=>setApplication(v=>({...v,plateNumber:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
+        <button type="submit" disabled={applicationBusy} className="rounded-xl bg-gold px-5 py-3 text-sm font-bold text-night disabled:opacity-50 sm:col-span-2">{applicationBusy ? "جارٍ إرسال الطلب…" : "إرسال طلب الانضمام"}</button>
+      </form>
+      <p className="mt-3 text-[11px] leading-6 text-muted">لا ترفع مستندات حساسة هنا حالياً. ستتم إضافة قناة آمنة لمراجعة المستندات قبل التشغيل.</p>
+    </section>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {[{label:"حالة الاتصال",value:available ? "متاح – متصل بالخادم" : "غير متصل",icon:Power},{label:"العروض الحالية",value:String(offers.length),icon:ClipboardList},{label:"الرحلة النشطة",value:activeTripId ? "قيد المتابعة" : "لا توجد",icon:CarFront},{label:"اعتماد الحساب",value:"يتحقق منه الخادم",icon:BadgeCheck}].map(({label,value,icon:Icon})=><div key={label} className="rounded-2xl border border-white/10 bg-panel p-5"><Icon className="mb-5 text-gold" size={21}/><p className="text-xs text-muted">{label}</p><b className="mt-2 block text-lg">{value}</b></div>)}
     </div>
