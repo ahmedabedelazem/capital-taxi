@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       const storedWindowStart = rateLimit?.windowStartedAt;
       const validWindowStart = storedWindowStart instanceof Timestamp ? storedWindowStart : null;
       const windowStartedAt = validWindowStart?.toMillis() ?? 0;
-      const previousCount = Number.isInteger(rateLimit?.count) ? rateLimit.count as number : 0;
+      const previousCount = Number.isInteger(rateLimit?.count) ? rateLimit?.count as number : 0;
       const windowIsActive = validWindowStart !== null
         && now - windowStartedAt >= 0
         && now - windowStartedAt < APPLICATION_WINDOW_MS;
