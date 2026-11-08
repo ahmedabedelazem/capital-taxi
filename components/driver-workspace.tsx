@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { BadgeCheck, CarFront, CircleDollarSign, ClipboardList, MapPin, Power, ShieldCheck, WalletCards } from "lucide-react";
 
 type TripOffer = {
@@ -113,7 +113,7 @@ export function DriverWorkspace() {
     };
   }, [available, loadOffers]);
 
-  async function submitApplication(event: React.FormEvent<HTMLFormElement>) {
+  async function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setApplicationBusy(true);
     setMessage("");
