@@ -186,7 +186,7 @@ export function DriverWorkspace() {
       map.panTo(destination);
       map.setZoom(15);
     }
-  }, [activeTrip?.pickupPoint, activeTrip?.destinationPoint, mapReady]);
+  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -223,7 +223,7 @@ export function DriverWorkspace() {
       active = false;
       renderer.setMap(null);
     };
-  }, [activeTrip?.pickupPoint, activeTrip?.destinationPoint, mapReady]);
+  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady]);
 
   const loadOffers = useCallback(async () => {
     const response = await fetch("/api/driver/offers", {
