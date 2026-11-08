@@ -21,9 +21,13 @@ export async function verifyRequestUser(
   const idToken = authorization.slice("Bearer ".length).trim();
   if (!idToken) return null;
 
+  // Initialize outside the verification catch so missing server credentials
+  // surface as a service configuration failure (503), not a false 401.
+  const auth = getServerAuth();
+
   try {
     // checkRevoked=true also rejects tokens revoked by the trusted admin process.
-    const decoded = await getServerAuth().verifyIdToken(idToken, true);
+    const decoded = await auth.verifyIdToken(idToken, true);
     const claimRole = decoded.role;
     const role: AppRole =
       typeof claimRole === "string" &&
