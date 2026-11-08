@@ -21,9 +21,23 @@ type ActiveTrip = {
   distanceKm: number | null;
 };
 
+type DriverTripHistoryItem = {
+  tripId: string;
+  status: string;
+  pickupLabel: string | null;
+  destinationLabel: string | null;
+  fareEstimate: number | null;
+  distanceKm: number | null;
+  createdAt: string | null;
+  completedAt: string | null;
+};
+
 export function DriverWorkspace() {
   const [available, setAvailable] = useState(false);
   const [offers, setOffers] = useState<TripOffer[]>([]);
+  const [history, setHistory] = useState<DriverTripHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
   const [section, setSection] = useState("offers");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("سجّل الدخول بحساب سائق معتمد لتفعيل الخدمات.");
@@ -46,6 +60,30 @@ export function DriverWorkspace() {
     const data = await response.json() as { offers?: TripOffer[] };
     setOffers(Array.isArray(data.offers) ? data.offers : []);
   }, []);
+
+  const loadDriverHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const response = await fetch("/api/driver/trips", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (response.status === 401) throw new Error("سجّل الدخول بحساب السائق لعرض سجل الرحلات.");
+      if (response.status === 403) throw new Error("سجل الرحلات متاح للسائقين المعتمدين فقط.");
+      if (!response.ok) throw new Error("تعذر تحميل سجل الرحلات حالياً.");
+      const data = await response.json() as { trips?: DriverTripHistoryItem[] };
+      setHistory(Array.isArray(data.trips) ? data.trips : []);
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "حدث خطأ أثناء تحميل السجل.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (section === "history") void loadDriverHistory();
+  }, [section, loadDriverHistory]);
 
   useEffect(() => {
     let mounted = true;
@@ -172,6 +210,7 @@ export function DriverWorkspace() {
         setActiveTripId(null);
         setAcceptedTripId(null);
         setActiveTrip(null);
+        void loadDriverHistory();
         setMessage("اكتملت الرحلة بنجاح. يمكنك تفعيل استقبال رحلات جديدة عند الاستعداد.");
       } else {
         setMessage(status === "driver_arrived" ? "تم تسجيل وصولك إلى نقطة الانطلاق." : "تم بدء الرحلة.");
@@ -313,7 +352,18 @@ export function DriverWorkspace() {
             {activeTrip && !["accepted","driver_arrived","in_progress"].includes(activeTrip.status) && <p className="mt-4 text-xs text-muted">الحالة الحالية: {activeTrip.status}</p>}
           </article>}
         </div>}
-        {section==="history" && <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">سجل الرحلات غير متاح بعد</b><p className="mt-2 text-xs leading-6 text-muted">سيظهر بعد إضافة واجهات سجل الرحلات.</p></div></div>}
+        {section==="history" && <div className="mt-5 space-y-3">
+          <div className="flex items-center justify-between gap-3"><p className="text-xs text-muted">آخر الرحلات المسندة إلى حسابك (حتى 100 رحلة)</p><button type="button" disabled={historyLoading} onClick={() => void loadDriverHistory()} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-gold disabled:opacity-50">{historyLoading ? "جارٍ التحديث…" : "تحديث السجل"}</button></div>
+          {historyError && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-200">{historyError}</p>}
+          {historyLoading && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 text-xs text-muted">جارٍ تحميل سجل الرحلات…</div>}
+          {!historyLoading && !historyError && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">لا توجد رحلات في السجل</b><p className="mt-2 text-xs leading-6 text-muted">ستظهر هنا الرحلات التي تم إسنادها إلى حسابك.</p></div></div>}
+          {history.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-white/10 bg-night p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-gold/10 px-3 py-1 text-[11px] text-gold">{({accepted:"تم قبولها",driver_arrived:"تم الوصول",in_progress:"قيد التنفيذ",completed:"مكتملة",cancelled:"ملغاة",no_driver:"لم يُعيّن سائق",pending:"معلقة",searching:"جارٍ البحث"} as Record<string,string>)[trip.status] ?? trip.status}</span><b className="text-sm text-gold">{trip.fareEstimate === null ? "الأجرة غير محددة" : `${trip.fareEstimate} ج.م`}</b></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2"><div><span className="text-[10px] text-muted">نقطة الانطلاق</span><p className="mt-1 text-xs leading-6">{trip.pickupLabel ?? "غير محددة"}</p></div><div><span className="text-[10px] text-muted">الوجهة</span><p className="mt-1 text-xs leading-6">{trip.destinationLabel ?? "غير محددة"}</p></div></div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-[10px] text-muted"><span>المسافة: {trip.distanceKm === null ? "—" : `${trip.distanceKm} كم`}</span><span>تاريخ الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span>{trip.completedAt && <span>الإنهاء: {new Date(trip.completedAt).toLocaleString("ar-EG")}</span>}</div>
+            <p className="mt-2 break-all text-[9px] text-muted" dir="ltr">{trip.tripId}</p>
+          </article>)}
+        </div>}
       </section>
     </div>
     <section className="mt-5 rounded-3xl border border-white/10 bg-panel p-6"><div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-gold"/><h2 className="font-bold">متطلبات تفعيل حساب السائق</h2></div><div className="grid gap-3 sm:grid-cols-3">{["بيانات السائق والتحقق من الهوية","بيانات المركبة والترخيص","موافقة الإدارة وتفعيل الحساب"].map((item,i)=><div key={item} className="flex items-start gap-3 rounded-xl bg-night p-4"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gold/10 text-xs text-gold">{i+1}</span><p className="text-xs leading-6 text-muted">{item}</p></div>)}</div></section>
