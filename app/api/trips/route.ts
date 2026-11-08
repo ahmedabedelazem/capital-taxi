@@ -216,7 +216,7 @@ export async function POST(request: Request) {
       };
     });
 
-    return NextResponse.json({ ok: true, ...result, status: "pending" }, {
+    return NextResponse.json({ ok: true, ...result, status: result.status }, {
       status: result.reused ? 200 : 201,
       headers: { "Cache-Control": "no-store" },
     });
