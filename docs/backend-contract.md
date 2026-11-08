@@ -87,8 +87,11 @@ New trips are created with `status: pending`. This endpoint does not yet dispatc
 | Method | Route | Purpose | Authorization |
 | --- | --- | --- | --- |
 | POST | `/api/internal/dispatch` | Send one dispatch wave or finalize an exhausted search | Server-to-server secret in `x-dispatch-secret` |
+| POST | `/api/internal/dispatch/sweep` | Find due trips and invoke the next dispatch stage | Same server-to-server secret; trusted scheduler only |
 
 The worker endpoint requires `DISPATCH_WORKER_SECRET` (at least 32 characters) and compares it in constant time. It accepts `{ "tripId": "...", "stage": 0 }`. The trusted scheduler invokes successive stages after each offer window expires. The worker reads available drivers, considers only fresh driver locations (90 seconds), sorts by pickup distance, and sends up to the configured maximum number of offers within that stage's radius. Driver state and trip state are re-read inside a Firestore transaction before offer documents are created. Offer IDs are deterministic per trip and driver to prevent duplicate delivery.
+
+The scheduled sweep reads pending and searching trips, waits for the configured offer TTL between waves, and invokes the internal worker for each due stage. It requires `APP_BASE_URL` (HTTPS deployment origin) and the same server-only `DISPATCH_WORKER_SECRET`. Configure Cloud Scheduler or an equivalent trusted scheduler to POST to `/api/internal/dispatch/sweep` with the `x-dispatch-secret` header at a cadence appropriate for the offer TTL (for example, once per minute with a 60-second TTL). The sweep processes a bounded batch and is safe against overlapping invocations because the worker rejects stale stages transactionally.
 
 The endpoint reads `config/dispatch` with `stageRadiiKm: number[]`, `offerTtlSeconds` (15–300), and `maxOffersPerStage` (1–30). Stage values are zero-based; after the final offer window expires, the scheduler calls the final stage index (`stageRadiiKm.length`) to mark the still-searching trip `no_driver`, unless a live offer remains. If the trip was accepted or otherwise changed, stale dispatch attempts are rejected.
 
