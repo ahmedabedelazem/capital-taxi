@@ -47,6 +47,10 @@ type TripHistoryItem = {
 
 type TripDetails = {
   status: string;
+  pickupLabel: string | null;
+  destinationLabel: string | null;
+  pickupPoint: Point | null;
+  destinationPoint: Point | null;
   driver: {
     fullName: string | null;
     phone: string | null;
@@ -380,7 +384,13 @@ export function CustomerRideForm() {
         if (!response.ok) return;
         const data = await response.json() as { trip?: TripDetails & { status?: string } };
         const status = data.trip?.status;
-        if (active && data.trip) setTripDetails(data.trip);
+        if (active && data.trip) {
+          setTripDetails(data.trip);
+          setPickup(data.trip.pickupLabel ?? "");
+          setDestination(data.trip.destinationLabel ?? "");
+          setPickupPoint(data.trip.pickupPoint ?? null);
+          setDestinationPoint(data.trip.destinationPoint ?? null);
+        }
         if (active && typeof status === "string") {
           setBooking((current) => current && current.tripId === booking.tripId
             ? { ...current, status }

@@ -4,6 +4,14 @@ import { hasRole, verifyRequestUser } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
+function tripPoint(value: unknown): { lat: number; lng: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const point = value as Record<string, unknown>;
+  if (typeof point.lat !== "number" || !Number.isFinite(point.lat) || point.lat < -90 || point.lat > 90) return null;
+  if (typeof point.lng !== "number" || !Number.isFinite(point.lng) || point.lng < -180 || point.lng > 180) return null;
+  return { lat: point.lat, lng: point.lng };
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ tripId: string }> },
@@ -93,6 +101,8 @@ export async function GET(
         status: typeof trip.status === "string" ? trip.status : "unknown",
         pickupLabel: typeof trip.pickup?.label === "string" ? trip.pickup.label : null,
         destinationLabel: typeof trip.destination?.label === "string" ? trip.destination.label : null,
+        pickupPoint: tripPoint(trip.pickup),
+        destinationPoint: tripPoint(trip.destination),
         fareEstimate: typeof trip.fareEstimate === "number" ? trip.fareEstimate : null,
         distanceKm: typeof trip.distanceKm === "number" ? trip.distanceKm : null,
         vehicleCategory: typeof trip.vehicleCategory === "string" ? trip.vehicleCategory : null,
