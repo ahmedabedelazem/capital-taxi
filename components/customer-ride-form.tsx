@@ -111,9 +111,10 @@ export function CustomerRideForm() {
         });
         if (!response.ok) return;
         const data = await response.json() as { trip?: { status?: string } };
-        if (active && typeof data.trip?.status === "string") {
+        const status = data.trip?.status;
+        if (active && typeof status === "string") {
           setBooking((current) => current && current.tripId === booking.tripId
-            ? { ...current, status: data.trip!.status! }
+            ? { ...current, status }
             : current);
         }
       } catch {
