@@ -147,7 +147,7 @@ export function DriverWorkspace() {
       destinationMarker.current = null;
       mapInstance.current = null;
     };
-  }, [mapReady]);
+  }, [mapReady, section, activeTripId]);
 
   useEffect(() => {
     const map = mapInstance.current;
