@@ -314,6 +314,7 @@ export function DriverWorkspace() {
         if (response.status === 401) throw new Error("سجّل الدخول أولاً.");
         if (data.error === "approved_driver_required") throw new Error("حساب السائق لم يحصل على اعتماد الإدارة بعد.");
         if (data.error === "active_trip_cannot_go_offline") throw new Error("لا يمكن إيقاف التوفر أثناء رحلة نشطة.");
+        if (data.error === "active_trip_cannot_go_online") throw new Error("لا يمكن تفعيل استقبال الرحلات أثناء وجود رحلة نشطة.");
         throw new Error("تعذر تغيير حالة التوفر.");
       }
       setAvailable(Boolean(data.isAvailable));

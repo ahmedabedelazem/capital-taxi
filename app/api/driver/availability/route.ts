@@ -62,6 +62,9 @@ export async function POST(request: Request) {
       if (application.data()?.status !== "approved") {
         throw new Error("DRIVER_NOT_APPROVED");
       }
+      if (isAvailable && driver.data()?.activeTripId) {
+        throw new Error("ACTIVE_TRIP_CANNOT_GO_ONLINE");
+      }
       if (!isAvailable && driver.data()?.activeTripId) {
         throw new Error("ACTIVE_TRIP_CANNOT_GO_OFFLINE");
       }
@@ -76,6 +79,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof Error && error.message === "DRIVER_NOT_APPROVED") {
       return NextResponse.json({ ok: false, error: "approved_driver_required" }, { status: 403 });
+    }
+    if (error instanceof Error && error.message === "ACTIVE_TRIP_CANNOT_GO_ONLINE") {
+      return NextResponse.json({ ok: false, error: "active_trip_cannot_go_online" }, { status: 409 });
     }
     if (error instanceof Error && error.message === "ACTIVE_TRIP_CANNOT_GO_OFFLINE") {
       return NextResponse.json({ ok: false, error: "active_trip_cannot_go_offline" }, { status: 409 });

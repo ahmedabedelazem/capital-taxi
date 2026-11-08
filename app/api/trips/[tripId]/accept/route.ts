@@ -40,7 +40,9 @@ export async function POST(request: Request, context: RouteContext) {
       if (!applicationSnapshot.exists || applicationSnapshot.data()?.status !== "approved") {
         throw new Error("DRIVER_NOT_APPROVED");
       }
-      if (!driverSnapshot.exists || driverSnapshot.data()?.isAvailable !== true) {
+      const driverState = driverSnapshot.data() ?? {};
+      if (driverState.activeTripId) throw new Error("DRIVER_HAS_ACTIVE_TRIP");
+      if (!driverSnapshot.exists || driverState.isAvailable !== true) {
         throw new Error("DRIVER_NOT_AVAILABLE");
       }
       if (!tripSnapshot.exists) throw new Error("TRIP_NOT_AVAILABLE");
@@ -88,7 +90,7 @@ export async function POST(request: Request, context: RouteContext) {
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     if (code === "DRIVER_NOT_APPROVED") return NextResponse.json({ ok: false, error: "approved_driver_required" }, { status: 403 });
-    if (code === "DRIVER_NOT_AVAILABLE") return NextResponse.json({ ok: false, error: "driver_not_available" }, { status: 409 });
+    if (code === "DRIVER_NOT_AVAILABLE" || code === "DRIVER_HAS_ACTIVE_TRIP") return NextResponse.json({ ok: false, error: "driver_not_available" }, { status: 409 });
     if (code === "TRIP_NOT_AVAILABLE" || code === "OFFER_NOT_AVAILABLE") return NextResponse.json({ ok: false, error: "offer_not_available_or_expired" }, { status: 404 });
     if (code === "TRIP_ALREADY_ASSIGNED") return NextResponse.json({ ok: false, error: "trip_already_assigned" }, { status: 409 });
     return NextResponse.json({ ok: false, error: "trip_acceptance_failed" }, { status: 503 });
