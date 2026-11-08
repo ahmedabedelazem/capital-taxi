@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getServerAuth, getServerDb } from "@/lib/server/firebase-admin";
+import { isSameOriginCookieRequest } from "@/lib/domain/request-security";
 
 export type AppRole = "customer" | "driver" | "admin";
 
@@ -12,19 +13,6 @@ export interface AuthenticatedUser {
 
 const validRoles: readonly AppRole[] = ["customer", "driver", "admin"];
 export const SESSION_COOKIE_NAME = "__session";
-
-const unsafeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-function isSameOriginMutation(request: Request): boolean {
-  if (!unsafeMethods.has(request.method.toUpperCase())) return true;
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-}
 
 function readCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get("cookie");
@@ -85,7 +73,7 @@ export async function verifyRequestUser(
   if (sessionCookie) {
     // Cookie-authenticated mutations must originate from this exact site.
     // SameSite=Lax is defense-in-depth, not a substitute for CSRF validation.
-    if (!isSameOriginMutation(request)) return null;
+    if (!isSameOriginCookieRequest(request)) return null;
     try {
       const decoded = await auth.verifySessionCookie(sessionCookie, true);
       return await resolveApprovedRole(toAuthenticatedUser(decoded));

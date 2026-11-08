@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/server/firebase-admin";
 import { SESSION_COOKIE_NAME } from "@/lib/server/auth";
+import { isSameOriginRequest } from "@/lib/domain/request-security";
 
 export const dynamic = "force-dynamic";
 
 const SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
-
-function isSameOriginRequest(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
