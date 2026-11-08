@@ -31,11 +31,15 @@ export async function POST(request: Request, context: RouteContext) {
     const timelineRef = tripRef.collection("statusTimeline").doc();
 
     await db.runTransaction(async (transaction) => {
-      const [tripSnapshot, offerSnapshot, driverSnapshot, applicationSnapshot] = await Promise.all([
+      const competingOffersQuery = db.collection("tripOffers")
+        .where("tripId", "==", tripId)
+        .where("status", "==", "offered");
+      const [tripSnapshot, offerSnapshot, driverSnapshot, applicationSnapshot, competingOffersSnapshot] = await Promise.all([
         transaction.get(tripRef),
         transaction.get(offerRef),
         transaction.get(driverRef),
         transaction.get(applicationRef),
+        transaction.get(competingOffersQuery),
       ]);
       if (!applicationSnapshot.exists || applicationSnapshot.data()?.status !== "approved") {
         throw new Error("DRIVER_NOT_APPROVED");
@@ -70,6 +74,13 @@ export async function POST(request: Request, context: RouteContext) {
         status: "accepted",
         acceptedAt: FieldValue.serverTimestamp(),
       });
+      for (const competingOffer of competingOffersSnapshot.docs) {
+        if (competingOffer.ref.path === offerRef.path) continue;
+        transaction.update(competingOffer.ref, {
+          status: "withdrawn",
+          withdrawnAt: FieldValue.serverTimestamp(),
+        });
+      }
       transaction.set(driverRef, {
         isAvailable: false,
         activeTripId: tripId,
