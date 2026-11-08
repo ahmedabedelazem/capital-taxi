@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 const visibleStatuses = new Set([
   "pending", "searching", "accepted", "driver_arrived", "in_progress",
+  "completed", "cancelled", "no_driver",
 ]);
 
 function iso(value: unknown): string | null {
