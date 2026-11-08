@@ -143,6 +143,7 @@ npm run dev
 - أضيف ملف `firestore.indexes.json` وربطه في `firebase.json`؛ يلزم نشر الفهارس إلى مشروع Firebase المقصود قبل الاعتماد على الاستعلامات التي تتطلبها.
 - أضيفت قواعد `firestore.rules` التي ترفض كل عمليات القراءة والكتابة المباشرة من SDK العميل. يعتمد التطبيق على واجهات API الخادمية وFirebase Admin SDK؛ لذلك تظل عمليات الخادم المصرح بها ممكنة لأن Admin SDK يتجاوز Firestore Security Rules. لا تنشر القواعد قبل التأكد من أن أي تطبيق آخر أو عميل خارجي لا يعتمد على الوصول المباشر إلى Firestore.
 - نجاح CI يثبت نجاح lint وTypeScript وProduction build في بيئة GitHub Actions، ولا يثبت اتصال Firebase الفعلي أو نجاح الرحلات على بيئة تشغيل منشورة.
+- اختبارات Emulator تعمل على مشروع تجريبي يبدأ اسمه بـ `demo-`، ولا تتصل بمشروع Firebase الحي.
 - لم يتم من خلال هذا التعديل نشر التطبيق أو إنشاء Cloud Scheduler أو نشر فهارس Firestore أو تغيير بيانات Firebase وقواعده.
 
 ## تشغيل مجدول توزيع الرحلات
@@ -153,6 +154,8 @@ npm run dev
 
 - قواعد Firestore في `firestore.rules` مغلقة افتراضياً: `allow read, write: if false` لكل المستندات. جميع عمليات البيانات في واجهات هذا المستودع تمر عبر API الخادمية باستخدام Firebase Admin SDK.
 - لا تستخدم Firebase Admin SDK داخل المتصفح؛ فهو مخصص للخادم ويتجاوز Firestore Security Rules.
+- اختبارات `tests/firestore-rules.test.ts` تشغّل Firestore Emulator بمعرّف مشروع `demo-capital-taxi` وتتحقق من رفض القراءة والكتابة والحذف للعملاء غير المسجلين والمستخدمين ذوي أدوار customer/driver/admin.
+- شغّل `npm run test:rules` محلياً؛ لا يحتاج الاختبار إلى تسجيل دخول Firebase أو بيانات مشروع حقيقي.
 - عند إضافة أي وصول مباشر مستقبلاً من تطبيق عميل، يجب تصميم قواعد دقيقة واختبارها عبر Firebase Emulator قبل السماح به؛ لا تفتح قواعد عامة.
 - التحقق من الهوية والدور على الخادم.
 - لا تفتح قواعد Firebase لتسهيل التطوير.
