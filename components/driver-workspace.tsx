@@ -223,7 +223,7 @@ export function DriverWorkspace() {
       active = false;
       renderer.setMap(null);
     };
-  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady]);
+  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady, section, activeTripId]);
 
   const loadOffers = useCallback(async () => {
     const response = await fetch("/api/driver/offers", {
