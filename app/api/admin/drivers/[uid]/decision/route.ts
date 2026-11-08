@@ -42,20 +42,27 @@ export async function PATCH(
     await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(applicationRef);
       if (!snapshot.exists) throw new Error("application_not_found");
-      if (snapshot.data()?.status !== "pending") throw new Error("application_already_reviewed");
-      transaction.update(applicationRef, {
-        status: decision,
-        reviewedAt: FieldValue.serverTimestamp(),
-        reviewedBy: user.uid,
-      });
-      const auditRef = db.collection("adminAuditLogs").doc();
-      transaction.create(auditRef, {
-        action: "driver_application_decision",
-        targetUid: uid,
-        decision,
-        actorUid: user.uid,
-        createdAt: FieldValue.serverTimestamp(),
-      });
+      const currentStatus = snapshot.data()?.status;
+      if (currentStatus !== "pending" && currentStatus !== decision) {
+        throw new Error("application_already_reviewed");
+      }
+      // Allow retrying the same decision so a transient Firebase Auth claim
+      // update failure can be repaired without permitting a decision reversal.
+      if (currentStatus === "pending") {
+        transaction.update(applicationRef, {
+          status: decision,
+          reviewedAt: FieldValue.serverTimestamp(),
+          reviewedBy: user.uid,
+        });
+        const auditRef = db.collection("adminAuditLogs").doc();
+        transaction.create(auditRef, {
+          action: "driver_application_decision",
+          targetUid: uid,
+          decision,
+          actorUid: user.uid,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
     });
 
     // Preserve unrelated claims. Admin privileges are never changed here.
