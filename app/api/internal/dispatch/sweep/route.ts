@@ -47,8 +47,9 @@ export async function POST(request: Request) {
     const config = configSnapshot.data() ?? {};
     const radii = config.stageRadiiKm;
     const ttlSeconds = config.offerTtlSeconds;
-    if (!Array.isArray(radii) || !radii.length ||
+    if (!Array.isArray(radii) || !radii.length || radii.length > 6 ||
         !radii.every((value) => typeof value === "number" && Number.isFinite(value) && value > 0) ||
+        radii.some((value, index) => index > 0 && value <= (radii[index - 1] as number)) ||
         typeof ttlSeconds !== "number" || !Number.isInteger(ttlSeconds) || ttlSeconds < 15 || ttlSeconds > 300) {
       return NextResponse.json({ ok: false, error: "dispatch_not_configured" }, { status: 503 });
     }
