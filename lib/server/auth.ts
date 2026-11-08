@@ -11,35 +11,66 @@ export interface AuthenticatedUser {
 }
 
 const validRoles: readonly AppRole[] = ["customer", "driver", "admin"];
+export const SESSION_COOKIE_NAME = "__session";
+
+function readCookie(request: Request, name: string): string | null {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
+
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    if (part.slice(0, separator).trim() === name) {
+      return decodeURIComponent(part.slice(separator + 1).trim());
+    }
+  }
+  return null;
+}
+
+function toAuthenticatedUser(decoded: {
+  uid: string;
+  email?: string;
+  role?: unknown;
+}): AuthenticatedUser {
+  // Role claims are trusted only because Firebase signs them; clients cannot
+  // set custom claims. Missing/unknown claims fail closed to customer.
+  const role: AppRole =
+    typeof decoded.role === "string" &&
+    validRoles.includes(decoded.role as AppRole)
+      ? (decoded.role as AppRole)
+      : "customer";
+
+  return {
+    uid: decoded.uid,
+    role,
+    ...(typeof decoded.email === "string" ? { email: decoded.email } : {}),
+  };
+}
 
 export async function verifyRequestUser(
   request: Request,
 ): Promise<AuthenticatedUser | null> {
+  const auth = getServerAuth();
+  const sessionCookie = readCookie(request, SESSION_COOKIE_NAME);
+
+  if (sessionCookie) {
+    try {
+      const decoded = await auth.verifySessionCookie(sessionCookie, true);
+      return toAuthenticatedUser(decoded);
+    } catch {
+      return null;
+    }
+  }
+
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return null;
 
   const idToken = authorization.slice("Bearer ".length).trim();
   if (!idToken) return null;
 
-  // Initialize outside the verification catch so missing server credentials
-  // surface as a service configuration failure (503), not a false 401.
-  const auth = getServerAuth();
-
   try {
-    // checkRevoked=true also rejects tokens revoked by the trusted admin process.
     const decoded = await auth.verifyIdToken(idToken, true);
-    const claimRole = decoded.role;
-    const role: AppRole =
-      typeof claimRole === "string" &&
-      validRoles.includes(claimRole as AppRole)
-        ? (claimRole as AppRole)
-        : "customer";
-
-    return {
-      uid: decoded.uid,
-      role,
-      ...(typeof decoded.email === "string" ? { email: decoded.email } : {}),
-    };
+    return toAuthenticatedUser(decoded);
   } catch {
     return null;
   }
