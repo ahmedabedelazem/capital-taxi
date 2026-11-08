@@ -380,7 +380,6 @@ export function AdminWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision, ...(decision === "rejected" ? { rejectionReason: normalizedReason } : {}) }),
       });
-      const data = await response.json() as { error?: string };
       if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
       if (response.status === 403) throw new Error("لا تملك صلاحية تنفيذ قرار الاعتماد.");
       if (response.status === 404) throw new Error("طلب السائق غير موجود.");

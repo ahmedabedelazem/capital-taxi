@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { BadgeCheck, CarFront, CircleDollarSign, ClipboardList, MapPin, Power, ShieldCheck, WalletCards } from "lucide-react";
+import { BadgeCheck, CarFront, ClipboardList, MapPin, Power, ShieldCheck, WalletCards } from "lucide-react";
 
 type TripOffer = {
   offerId: string;
@@ -55,7 +55,6 @@ export function DriverWorkspace() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("سجّل الدخول بحساب سائق معتمد لتفعيل الخدمات.");
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
-  const [acceptedTripId, setAcceptedTripId] = useState<string | null>(null);
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
   const [showApplication, setShowApplication] = useState(false);
   const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
@@ -249,7 +248,6 @@ export function DriverWorkspace() {
       setActiveTrip((current) => current ? { ...current, status: data.status ?? status } : current);
       if (status === "completed") {
         setActiveTripId(null);
-        setAcceptedTripId(null);
         setActiveTrip(null);
         void loadDriverHistory();
         setMessage("اكتملت الرحلة بنجاح. يمكنك تفعيل استقبال رحلات جديدة عند الاستعداد.");
@@ -378,7 +376,6 @@ export function DriverWorkspace() {
         if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
         throw new Error("تعذر قبول الرحلة.");
       }
-      setAcceptedTripId(offer.tripId);
       setActiveTripId(offer.tripId);
       setAvailable(false);
       setOffers([]);
