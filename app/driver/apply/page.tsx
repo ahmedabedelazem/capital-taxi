@@ -7,7 +7,7 @@ export default async function DriverApplicationPage() {
 
   return (
     <PortalShell
-      role="انضم كسائق"
+      role="العميل"
       title="ابدأ رحلتك مع تاكسي العاصمة"
       subtitle="قدّم بياناتك وتابع حالة طلب الانضمام من مكان واحد."
     >
