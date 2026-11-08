@@ -9,6 +9,17 @@ const vehicleOptions = [
   { id: "private", name: "خصوصي", detail: "رحلة خاصة ومريحة", seats: "حسب المركبة", icon: CarFront },
 ] as const;
 
+const tripStatusLabels: Record<string, string> = {
+  pending: "تم استلام الطلب",
+  searching: "جارٍ البحث عن سائق",
+  accepted: "تم قبول الرحلة",
+  driver_arrived: "وصل السائق إلى نقطة الانطلاق",
+  in_progress: "الرحلة جارية",
+  completed: "اكتملت الرحلة",
+  cancelled: "أُلغيت الرحلة",
+  no_driver: "لم يتوفر سائق حالياً",
+};
+
 type Point = { lat: number; lng: number };
 
 export function CustomerRideForm() {
