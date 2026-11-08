@@ -52,6 +52,7 @@ export function AdminWorkspace() {
   const [overviewMetrics, setOverviewMetrics] = useState<{ pendingDrivers: number; activeTrips: number } | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(false);
   const [overviewError, setOverviewError] = useState("");
+  const [overviewRefresh, setOverviewRefresh] = useState(0);
   const current = sections.find((section) => section.id === active)!;
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function AdminWorkspace() {
       if (mounted) setOverviewLoading(false);
     });
     return () => { mounted = false; };
-  }, [active]);
+  }, [active, overviewRefresh]);
 
   const loadTrips = useCallback(async () => {
     setTripsLoading(true);
@@ -275,12 +276,14 @@ export function AdminWorkspace() {
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {[{label:"طلبات السائقين المعلقة",value:overviewLoading ? "…" : overviewMetrics ? String(overviewMetrics.pendingDrivers) : "—",icon:CarFront},{label:"الرحلات النشطة المعروضة",value:overviewLoading ? "…" : overviewMetrics ? String(overviewMetrics.activeTrips) : "—",icon:Activity},{label:"مراجعة الصلاحيات",value:"خادمية",icon:BadgeCheck},{label:"مصدر المؤشرات",value:"Firestore",icon:Users}].map(({label,value,icon:Icon})=><div key={label} className="rounded-2xl border border-white/10 bg-panel p-5"><Icon className="mb-5 text-gold" size={21}/><p className="text-xs text-muted">{label}</p><b className="mt-2 block text-2xl">{value}</b><span className="mt-1 block text-[10px] text-muted">{overviewLoading ? "جارٍ جلب البيانات…" : "آخر قراءة مباشرة من واجهات الإدارة"}</span></div>)}
     </div>
+    {active === "overview" && <p className="mt-3 text-[11px] leading-6 text-muted">الأعداد المعروضة مأخوذة من نتائج الإدارة الحالية، وكل واجهة تعرض بحد أقصى 50 سجلاً؛ لذلك قد لا تمثل إجمالي جميع الطلبات أو الرحلات.</p>}
     <div className="mt-5 grid gap-5 lg:grid-cols-[240px_1fr]">
       <nav aria-label="أقسام الإدارة" className="flex gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-panel p-3 lg:flex-col">
         {sections.map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>setActive(id)} aria-current={active===id ? "page" : undefined} className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition lg:w-full ${active===id ? "bg-gold text-night font-bold" : "text-muted hover:bg-white/5 hover:text-white"}`}><Icon size={18}/>{label}</button>)}
       </nav>
       <section className="min-h-[360px] rounded-3xl border border-white/10 bg-panel p-5 md:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-gold">CONTROL CENTER</p><h2 className="mt-1 text-xl font-bold">{current.title}</h2></div>
+          {active === "overview" && <button type="button" disabled={overviewLoading} onClick={() => setOverviewRefresh((value) => value + 1)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={overviewLoading ? "animate-spin" : ""}/> تحديث المؤشرات</button>}
           {(active === "drivers" || active === "trips") && <button type="button" disabled={active === "drivers" ? loading : tripsLoading} onClick={() => void (active === "drivers" ? loadApplications() : loadTrips())} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={(active === "drivers" ? loading : tripsLoading) ? "animate-spin" : ""}/> تحديث القائمة</button>}
           {active !== "drivers" && <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-2 text-[11px] text-amber-200">قيد الاستكمال</span>}
         </div>
