@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
 import { hasRole, verifyRequestUser } from "@/lib/server/auth";
+import { getDrivingDistanceKm } from "@/lib/server/google-routes";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +16,6 @@ function parsePlace(value: unknown): PlaceInput | null {
   if (typeof place.lat !== "number" || !Number.isFinite(place.lat) || place.lat < -90 || place.lat > 90) return null;
   if (typeof place.lng !== "number" || !Number.isFinite(place.lng) || place.lng < -180 || place.lng > 180) return null;
   return { label: place.label.trim(), lat: place.lat, lng: place.lng };
-}
-
-function distanceKm(a: PlaceInput, b: PlaceInput): number {
-  const radians = (degrees: number) => degrees * Math.PI / 180;
-  const dLat = radians(b.lat - a.lat);
-  const dLng = radians(b.lng - a.lng);
-  const value = Math.sin(dLat / 2) ** 2 +
-    Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
 }
 
 function isInsideArea(place: PlaceInput, area: Record<string, unknown>): boolean {
@@ -75,6 +67,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "cash_payment_only" }, { status: 400 });
   }
 
+  let roadDistanceKm: number;
+  try {
+    roadDistanceKm = await getDrivingDistanceKm(pickup, destination);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "GOOGLE_ROUTES_NOT_CONFIGURED") {
+      return NextResponse.json({ ok: false, error: "route_distance_service_not_configured" }, { status: 503 });
+    }
+    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
+  }
+  if (!Number.isFinite(roadDistanceKm) || roadDistanceKm <= 0) {
+    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
+  }
+
   const db = getServerDb();
   const pricingRef = db.collection("config").doc("tripPricing");
   const requestHash = createHash("sha256").update(`${user.uid}:${idempotencyKey}`).digest("hex");
@@ -124,7 +130,7 @@ export async function POST(request: Request) {
         throw new Error("INVALID_PRICING_CONFIGURATION");
       }
 
-      const distance = distanceKm(pickup, destination);
+      const distance = roadDistanceKm;
       if (distance <= 0 || distance > (maximumDistanceKm as number)) {
         throw new Error("TRIP_DISTANCE_NOT_SUPPORTED");
       }
