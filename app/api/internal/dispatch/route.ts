@@ -133,14 +133,16 @@ export async function POST(request: Request) {
       .slice(0, maxOffers as number);
 
     const driverRefs = candidates.map((candidate) => db.collection("drivers").doc(candidate.uid));
+    const applicationRefs = candidates.map((candidate) => db.collection("driverApplications").doc(candidate.uid));
     const offerRefs = candidates.map((candidate) => db.collection("tripOffers").doc(`${tripId}_${candidate.uid}`));
     const timelineRef = tripRef.collection("statusTimeline").doc();
     const expiresAt = Timestamp.fromMillis(now + ttlSeconds * 1000);
 
     const outcome = await db.runTransaction(async (transaction) => {
-      const [currentTrip, driverStates, existingOffers] = await Promise.all([
+      const [currentTrip, driverStates, applicationStates, existingOffers] = await Promise.all([
         transaction.get(tripRef),
         Promise.all(driverRefs.map((ref) => transaction.get(ref))),
+        Promise.all(applicationRefs.map((ref) => transaction.get(ref))),
         Promise.all(offerRefs.map((ref) => transaction.get(ref))),
       ]);
       if (!currentTrip.exists) throw new Error("TRIP_NOT_FOUND");
@@ -153,8 +155,11 @@ export async function POST(request: Request) {
 
       const accepted = candidates.filter((candidate, index) => {
         const driver = driverStates[index].data() ?? {};
-        return driver.isAvailable === true && !driver.activeTripId &&
+        const application = applicationStates[index].data() ?? {};
+        return application.status === "approved" &&
+          driver.isAvailable === true && !driver.activeTripId &&
           driver.locationUpdatedAt instanceof Timestamp &&
+          now - driver.locationUpdatedAt.toMillis() >= 0 &&
           now - driver.locationUpdatedAt.toMillis() <= 90_000 &&
           !existingOffers[index].exists;
       });
