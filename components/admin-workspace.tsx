@@ -42,6 +42,7 @@ export function AdminWorkspace() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [trips, setTrips] = useState<AdminTrip[]>([]);
   const [tripsLoading, setTripsLoading] = useState(false);
+  const [tripStatusFilter, setTripStatusFilter] = useState("active");
   const [loading, setLoading] = useState(false);
   const [busyUid, setBusyUid] = useState<string | null>(null);
   const [message, setMessage] = useState("لوحة الإدارة تعرض بيانات الخادم بعد تسجيل الدخول بحساب مدير معتمد.");
@@ -94,7 +95,8 @@ export function AdminWorkspace() {
     setTripsLoading(true);
     setMessage("");
     try {
-      const response = await fetch("/api/admin/trips", {
+      const query = tripStatusFilter === "active" ? "" : `?status=${encodeURIComponent(tripStatusFilter)}`;
+      const response = await fetch(`/api/admin/trips${query}`, {
         credentials: "same-origin",
         cache: "no-store",
       });
@@ -109,7 +111,7 @@ export function AdminWorkspace() {
     } finally {
       setTripsLoading(false);
     }
-  }, []);
+  }, [tripStatusFilter]);
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
@@ -333,6 +335,20 @@ export function AdminWorkspace() {
           </article>)}
         </div>}
         {active === "trips" && <div className="mt-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-night p-3">
+            <label className="flex flex-1 flex-wrap items-center gap-3 text-xs text-muted">تصفية حسب الحالة
+              <select value={tripStatusFilter} onChange={(event) => setTripStatusFilter(event.target.value)} disabled={tripsLoading} className="min-w-48 rounded-lg border border-white/10 bg-panel px-3 py-2.5 text-sm text-white outline-none focus:border-gold/50 disabled:opacity-60">
+                <option value="active">الرحلات النشطة</option>
+                <option value="all">كل الحالات</option>
+                <option value="pending">رحلات جديدة</option>
+                <option value="searching">جارٍ البحث عن سائق</option>
+                <option value="accepted">تم قبولها</option>
+                <option value="driver_arrived">السائق وصل</option>
+                <option value="in_progress">قيد التنفيذ</option>
+              </select>
+            </label>
+            <span className="text-[11px] text-muted">{tripsLoading ? "جارٍ التحديث…" : `${trips.length} رحلة معروضة`}</span>
+          </div>
           {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
           {tripsLoading && <div className="py-12 text-center text-sm text-muted">جارٍ تحميل الرحلات…</div>}
           {!tripsLoading && trips.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><Activity className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">لا توجد رحلات نشطة حالياً</b><p className="mt-2 text-xs text-muted">ستظهر هنا الرحلات التي يجري البحث لها عن سائق أو تم قبولها أو تنفيذها.</p></div></div>}
@@ -350,6 +366,7 @@ export function AdminWorkspace() {
             <div className="mt-4 border-t border-white/10 pt-3 text-xs text-muted">
               <p>السائق: {trip.driverUid ? <span dir="ltr">{trip.driverUid}</span> : "لم يتم التعيين بعد"}</p>
               <p className="mt-1">الموقع: {trip.driverLocation ? <span dir="ltr">{trip.driverLocation.lat.toFixed(5)}, {trip.driverLocation.lng.toFixed(5)} · آخر تحديث {new Date(trip.driverLocation.updatedAt).toLocaleTimeString("ar-EG")}</span> : "لا يوجد موقع حديث متاح"}</p>
+              <p className="mt-1">تُعرض إحداثيات GPS إذا كان آخر تحديث خلال 120 ثانية فقط.</p>
               <p className="mt-1">وقت الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</p>
             </div>
           </article>)}
