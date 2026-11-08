@@ -47,6 +47,7 @@ export function DriverWorkspace() {
   const [showApplication, setShowApplication] = useState(false);
   const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
   const [applicationBusy, setApplicationBusy] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("لم يبدأ إرسال الموقع.");
   const lastLocationSentAt = useRef(0);
 
   const loadOffers = useCallback(async () => {
@@ -138,15 +139,33 @@ export function DriverWorkspace() {
               accuracyMeters: position.coords.accuracy,
             }),
           });
-          if (!response.ok && mounted) {
-            const data = await response.json().catch(() => ({})) as { error?: string };
-            if (data.error === "approved_driver_required") setMessage("حساب السائق يحتاج إلى اعتماد الإدارة.");
+          const data = await response.json().catch(() => ({})) as { error?: string };
+          if (response.ok) {
+            if (mounted) setLocationStatus("تم تحديث موقعك بنجاح.");
+          } else if (mounted) {
+            if (data.error === "approved_driver_required") {
+              setLocationStatus("الحساب يحتاج إلى اعتماد الإدارة.");
+            } else if (data.error === "invalid_location") {
+              setLocationStatus("دقة الموقع أضعف من الحد المسموح. حاول في مكان مفتوح.");
+            } else if (data.error === "location_update_too_frequent") {
+              setLocationStatus("جارٍ تنظيم تحديثات الموقع.");
+            } else if (data.error === "driver_must_be_online_or_on_trip") {
+              setLocationStatus("أوقف الخادم استقبال الموقع لأن حالة السائق غير متاحة.");
+            } else {
+              setLocationStatus("تعذر حفظ الموقع على الخادم. ستتم المحاولة مع التحديث التالي.");
+            }
           }
         } catch {
           if (mounted) setMessage("تعذر تحديث الموقع. تحقق من اتصال الإنترنت.");
         }
-      }, () => {
-        if (mounted) setMessage("اسمح للموقع من المتصفح حتى تظهر لك الرحلات القريبة.");
+      }, (error) => {
+        if (!mounted) return;
+        const reason = error.code === error.PERMISSION_DENIED
+          ? "تم رفض إذن الموقع. فعّله من إعدادات المتصفح."
+          : error.code === error.POSITION_UNAVAILABLE
+            ? "موقع الجهاز غير متاح حالياً."
+            : "انتهت مهلة تحديد الموقع. ستتم إعادة المحاولة تلقائياً.";
+        setLocationStatus(reason);
       }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
       return () => {
         mounted = false;
@@ -327,6 +346,7 @@ export function DriverWorkspace() {
         <h2 className="text-xl font-bold">حالة استقبال الرحلات</h2>
         <p className="mt-3 text-sm leading-7 text-muted">عند تفعيل التوفر، يطلب المتصفح إذن الموقع ويرسل آخر إحداثياتك أثناء اتصالك فقط. يمكنك إيقاف التوفر في أي وقت ما لم تكن لديك رحلة نشطة.</p>
         <button type="button" disabled={busy} aria-pressed={available} onClick={toggleAvailability} className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 text-sm font-bold transition disabled:opacity-50 ${available ? "border border-emerald-300/30 bg-emerald-400/15 text-emerald-300" : "bg-gold text-night hover:bg-[#e8c77e]"}`}><Power size={18}/>{busy ? "جارٍ التنفيذ…" : available ? "إيقاف استقبال الرحلات" : "بدء استقبال الرحلات"}</button>
+        <p role="status" className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-6 text-muted">حالة GPS: {available || activeTripId ? locationStatus : "يبدأ تحديث الموقع عند تفعيل التوفر أو وجود رحلة نشطة."}</p>
         {message && <p role="status" className="mt-4 rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
       </section>
       <section className="rounded-3xl border border-white/10 bg-panel p-6">
