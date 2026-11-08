@@ -39,6 +39,10 @@ Roles are read only from Firebase-signed custom claims. A missing or unknown rol
 | POST | `/api/driver/application` | Submit/update the caller's driver application | Authenticated customer; server stores the application as pending |
 | GET | `/api/admin/drivers` | List up to 50 pending driver applications | Verified `admin` custom claim only |
 | PATCH | `/api/admin/drivers/:uid/decision` | Approve or reject an application | Verified `admin` custom claim only; writes an audit record |
+| GET/PUT | `/api/admin/config/pricing` | Read or update server-side fare and service-area configuration | Verified `admin` custom claim only; writes an audit record |
+| GET/PUT | `/api/admin/config/dispatch` | Read or update staged dispatch configuration | Verified `admin` custom claim only; writes an audit record |
+
+The admin configuration APIs validate bounded fare inputs, geographic service-area bounds, ascending dispatch radii, offer TTL, and per-stage offer limits. Updates are written server-side and recorded in `adminAuditLogs`; no browser client writes the config collection directly.
 
 Driver approval is enforced by both a signed Firebase `driver` custom claim and a server-owned `driverApplications/{uid}` record with `status: approved`. The decision endpoint preserves unrelated custom claims and never changes an existing admin role. Driver application data is private server-side data; do not expose the collection directly to browser clients.
 
