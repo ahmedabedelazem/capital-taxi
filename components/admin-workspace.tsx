@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Activity, BadgeCheck, CarFront, ChartNoAxesCombined, CircleHelp, Clock3, RefreshCw, SlidersHorizontal, Users, XCircle } from "lucide-react";
 
