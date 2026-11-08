@@ -45,13 +45,32 @@ export function AuthPanel() {
       credentials: "same-origin",
       cache: "no-store",
     });
-    if (!profileResponse.ok) throw new Error("تم تسجيل الدخول لكن تعذر تحميل صلاحيات الحساب.");
+    if (!profileResponse.ok) throw new Error("تعذر التحقق من صلاحيات الحساب بعد إنشاء الجلسة.");
     const profile = await profileResponse.json() as { user?: { role?: string } };
     const requestedNext = searchParams.get("next");
     const safeNext = requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
       ? requestedNext
       : destinationFor(profile.user?.role);
     window.location.assign(safeNext);
+  }
+
+  async function cleanupFailedSignIn() {
+    // Clear the server cookie before signing out of Firebase on the client.
+    // If the server cannot confirm cookie removal, preserve the client session
+    // so the user can retry instead of leaving an invisible server session.
+    try {
+      const response = await fetch("/api/auth/session", {
+        method: "DELETE",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("session_cookie_cleanup_failed");
+      await signOut(getFirebaseClientAuth());
+      return true;
+    } catch {
+      setMessage("تعذر إكمال الدخول أو تنظيف الجلسة بأمان. لم يتم إنهاء جلسة الحساب؛ حاول تسجيل الخروج ثم أعد المحاولة.");
+      return false;
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -81,7 +100,7 @@ export function AuthPanel() {
         "auth/unauthorized-domain": "هذا النطاق غير مضاف إلى نطاقات Firebase المسموح بها.",
       };
       setMessage(known[code] ?? (error instanceof Error ? error.message : "تعذر إكمال العملية."));
-      try { await signOut(getFirebaseClientAuth()); } catch { /* Keep the original sign-in error. */ }
+      await cleanupFailedSignIn();
       setBusy(false);
     }
   }
@@ -100,7 +119,7 @@ export function AuthPanel() {
       setMessage(code === "auth/unauthorized-domain"
         ? "هذا النطاق غير مضاف إلى نطاقات Firebase المسموح بها."
         : error instanceof Error ? error.message : "تعذر تسجيل الدخول باستخدام Google.");
-      try { await signOut(getFirebaseClientAuth()); } catch { /* Keep the original error. */ }
+      await cleanupFailedSignIn();
       setBusy(false);
     }
   }
