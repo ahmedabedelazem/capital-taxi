@@ -26,24 +26,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, offers: [] }, { headers: { "Cache-Control": "no-store" } });
     }
 
+    const now = Timestamp.fromMillis(Date.now());
+    // Filter live offers in Firestore before limiting, otherwise old/expired
+    // documents can occupy the first page and hide newer valid offers.
     const snapshot = await db.collection("tripOffers")
       .where("driverUid", "==", user.uid)
-      .limit(50)
+      .where("status", "==", "offered")
+      .where("expiresAt", ">", now)
+      .orderBy("expiresAt", "asc")
+      .limit(20)
       .get();
-    const now = Date.now();
-    const eligible = snapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          tripId: typeof data.tripId === "string" ? data.tripId : null,
-          status: typeof data.status === "string" ? data.status : null,
-          expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt : Timestamp.fromMillis(0),
-        };
-      })
-      .filter((offer) => offer.status === "offered" &&
-        offer.expiresAt.toMillis() > now)
-      .slice(0, 20);
+
+    const eligible = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        tripId: typeof data.tripId === "string" ? data.tripId : null,
+        expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt : Timestamp.fromMillis(0),
+      };
+    });
 
     const offers = await Promise.all(eligible.map(async (offer) => {
       if (typeof offer.tripId !== "string") return null;
