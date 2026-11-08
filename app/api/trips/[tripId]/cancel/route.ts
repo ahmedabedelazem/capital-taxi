@@ -44,7 +44,7 @@ export async function POST(request: Request, context: RouteContext) {
       const assignedDriverUid = typeof trip.assignedDriverUid === "string" ? trip.assignedDriverUid : null;
       const offersQuery = db.collection("tripOffers")
         .where("tripId", "==", tripId)
-        .where("status", "==", "offered")
+        .where("status", "in", ["offered", "accepted"])
         .limit(200);
       const [driverSnapshot, offersSnapshot] = await Promise.all([
         assignedDriverUid ? transaction.get(db.collection("drivers").doc(assignedDriverUid)) : Promise.resolve(null),
