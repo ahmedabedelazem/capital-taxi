@@ -4,7 +4,7 @@
 
 This document defines the server boundary before any live Firebase integration.
 The current customer, driver, and admin screens are presentation prototypes.
-No endpoint described here should be treated as deployed or operational.
+The endpoints listed under the implemented sections are committed to the repository but are not deployed or connected to a configured Firebase environment.
 
 ## Non-negotiable security boundary
 
@@ -22,7 +22,27 @@ No endpoint described here should be treated as deployed or operational.
 - Validate every request on the server, apply rate limits, and return only the
   minimum personal data needed for the current workflow.
 
-## Implemented authentication surface\n\n| Method | Route | Purpose | Behavior |\n| --- | --- | --- | --- |\n| POST | `/api/auth/session` | Exchange Firebase ID token for a server session | Verifies token and revocation state, then sets an HttpOnly session cookie |\n| DELETE | `/api/auth/session` | Clear current session | Expires the session cookie in the browser |\n| GET | `/api/me` | Resolve current user | Accepts a verified session cookie or Bearer ID token; returns UID, signed role claim, and email only |\n\nRoles are read only from Firebase-signed custom claims. A missing or unknown role fails closed to `customer`. Only a trusted server-side provisioning process may assign `driver` or `admin` custom claims. The session endpoint does not assign roles.\n\n## Proposed API surface
+## Implemented authentication surface
+
+| Method | Route | Purpose | Behavior |
+| --- | --- | --- | --- |
+| POST | `/api/auth/session` | Exchange Firebase ID token for a server session | Verifies token and revocation state, then sets an HttpOnly session cookie |
+| DELETE | `/api/auth/session` | Clear current session | Expires the session cookie in the browser |
+| GET | `/api/me` | Resolve current user | Accepts a verified session cookie or Bearer ID token; returns UID, signed role claim, and email only |
+
+Roles are read only from Firebase-signed custom claims. A missing or unknown role fails closed to `customer`. Only a trusted server-side provisioning process may assign `driver` or `admin` custom claims. The session endpoint does not assign roles.
+
+## Implemented driver onboarding API
+
+| Method | Route | Purpose | Authorization |
+| --- | --- | --- | --- |
+| POST | `/api/driver/application` | Submit/update the caller's driver application | Authenticated customer; server stores the application as pending |
+| GET | `/api/admin/drivers` | List up to 50 pending driver applications | Verified `admin` custom claim only |
+| PATCH | `/api/admin/drivers/:uid/decision` | Approve or reject an application | Verified `admin` custom claim only; writes an audit record |
+
+Driver approval is enforced by both a signed Firebase `driver` custom claim and a server-owned `driverApplications/{uid}` record with `status: approved`. The decision endpoint preserves unrelated custom claims and never changes an existing admin role. Driver application data is private server-side data; do not expose the collection directly to browser clients.
+
+## Proposed API surface
 
 Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
 
