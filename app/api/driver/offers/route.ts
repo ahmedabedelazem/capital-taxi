@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Timestamp } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
 import { hasRole, verifyRequestUser } from "@/lib/server/auth";
 
@@ -36,12 +37,12 @@ export async function GET(request: Request) {
         return {
           id: doc.id,
           tripId: typeof data.tripId === "string" ? data.tripId : null,
-          status: data.status,
-          expiresAt: data.expiresAt,
+          status: typeof data.status === "string" ? data.status : null,
+          expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt : null,
         };
       })
       .filter((offer) => offer.status === "offered" &&
-        typeof offer.expiresAt?.toMillis === "function" &&
+        offer.expiresAt !== null &&
         offer.expiresAt.toMillis() > now)
       .slice(0, 20);
 
