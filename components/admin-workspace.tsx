@@ -356,13 +356,16 @@ export function AdminWorkspace() {
                 <option value="accepted">تم قبولها</option>
                 <option value="driver_arrived">السائق وصل</option>
                 <option value="in_progress">قيد التنفيذ</option>
+                <option value="completed">رحلات مكتملة</option>
+                <option value="cancelled">رحلات ملغاة</option>
+                <option value="no_driver">لم يتوفر لها سائق</option>
               </select>
             </label>
             <span className="text-[11px] text-muted">{tripsLoading ? "جارٍ التحديث…" : `${trips.length} رحلة معروضة`}</span>
           </div>
           {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
           {tripsLoading && <div className="py-12 text-center text-sm text-muted">جارٍ تحميل الرحلات…</div>}
-          {!tripsLoading && trips.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><Activity className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">لا توجد رحلات نشطة حالياً</b><p className="mt-2 text-xs text-muted">ستظهر هنا الرحلات التي يجري البحث لها عن سائق أو تم قبولها أو تنفيذها.</p></div></div>}
+          {!tripsLoading && trips.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><Activity className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">{tripStatusFilter === "active" ? "لا توجد رحلات نشطة حالياً" : "لا توجد رحلات بهذه الحالة ضمن السجلات المعروضة"}</b><p className="mt-2 text-xs text-muted">يمكنك تغيير فلتر الحالة أو تحديث القائمة. النتائج تقتصر على أحدث 100 سجل وبحد أقصى 50 نتيجة.</p></div></div>}
           {trips.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-white/10 bg-night p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h3 className="font-bold">{trip.pickupLabel || "نقطة انطلاق غير متاحة"} <span className="text-gold">←</span> {trip.destinationLabel || "وجهة غير متاحة"}</h3><p className="mt-2 text-[10px] text-muted" dir="ltr">{trip.tripId}</p></div>
