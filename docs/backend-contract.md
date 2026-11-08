@@ -90,6 +90,14 @@ The endpoint reads `config/dispatch` with `stageRadiiKm: number[]`, `offerTtlSec
 
 Operational driver records must store `isAvailable`, optional `activeTripId`, `location: { lat, lng }`, and Firestore Timestamp `locationUpdatedAt`. This worker does not obtain GPS itself and does not start a scheduler. A trusted scheduled job/queue must call it at the right intervals, and a separate authenticated location-update API is still required before live driver GPS can be safely used.
 
+## Implemented driver location update API
+
+| Method | Route | Purpose | Authorization |
+| --- | --- | --- | --- |
+| POST | `/api/driver/location` | Update the authenticated driver's current location | Verified approved driver who is online or has an active trip |
+
+The route accepts latitude, longitude, and reported accuracy (maximum 200 metres), stores only the latest location and server timestamp on `drivers/{uid}`, and applies a two-second minimum interval. It does not accept a driver UID from the body. Location updates are rejected while the driver is offline with no active trip. Browser geolocation permission and collection timing must be controlled by the driver UI; do not collect location continuously outside an active work state.
+
 ## Proposed API surface
 
 Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
