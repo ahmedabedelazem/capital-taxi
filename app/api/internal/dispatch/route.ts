@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const tripId = typeof data.tripId === "string" ? data.tripId : "";
   const stage = data.stage;
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(tripId) ||
-      typeof stage !== "number" || !Number.isInteger(stage) || stage < 0 || stage > 5) {
+      typeof stage !== "number" || !Number.isInteger(stage) || stage < 0 || stage > 6) {
     return NextResponse.json({ ok: false, error: "invalid_dispatch_request" }, { status: 400 });
   }
 
@@ -63,8 +63,45 @@ export async function POST(request: Request) {
         !radii.every((v) => typeof v === "number" && Number.isFinite(v) && v > 0) ||
         typeof ttlSeconds !== "number" || !Number.isInteger(ttlSeconds) || ttlSeconds < 15 || ttlSeconds > 300 ||
         typeof maxOffers !== "number" || !Number.isInteger(maxOffers) || maxOffers < 1 || maxOffers > 30 ||
-        stage >= radii.length) {
+        stage > radii.length) {
       return NextResponse.json({ ok: false, error: "dispatch_not_configured" }, { status: 503 });
+    }
+
+    if (stage === radii.length) {
+      const finalization = await db.runTransaction(async (transaction) => {
+        const currentTrip = await transaction.get(tripRef);
+        if (!currentTrip.exists) throw new Error("TRIP_NOT_FOUND");
+        const current = currentTrip.data() ?? {};
+        const currentStage = typeof current.dispatchStage === "number" ? current.dispatchStage : 0;
+        if (currentStage !== stage) throw new Error("STALE_DISPATCH_STAGE");
+        if (current.status !== "searching" || current.assignedDriverUid) {
+          throw new Error("TRIP_NOT_DISPATCHABLE");
+        }
+        const offersQuery = db.collection("tripOffers").where("tripId", "==", tripId).limit(100);
+        const offersSnapshot = await transaction.get(offersQuery);
+        const hasLiveOffer = offersSnapshot.docs.some((doc) => {
+          const offer = doc.data();
+          return offer.status === "offered" &&
+            offer.expiresAt instanceof Timestamp &&
+            offer.expiresAt.toMillis() > now;
+        });
+        if (hasLiveOffer) return { status: "searching" as const, waitingForOffers: true };
+        transaction.update(tripRef, {
+          status: "no_driver",
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        transaction.create(tripRef.collection("statusTimeline").doc(), {
+          from: "searching",
+          to: "no_driver",
+          actorType: "system",
+          actorUid: "dispatch-worker",
+          createdAt: FieldValue.serverTimestamp(),
+        });
+        return { status: "no_driver" as const, waitingForOffers: false };
+      });
+      return NextResponse.json({ ok: true, tripId, ...finalization }, {
+        headers: { "Cache-Control": "no-store" },
+      });
     }
 
     const pickup = trip.pickup && typeof trip.pickup === "object" ? trip.pickup as Record<string, unknown> : {};
