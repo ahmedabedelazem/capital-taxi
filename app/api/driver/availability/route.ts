@@ -5,6 +5,29 @@ import { hasRole, verifyRequestUser } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(request: Request) {
+  let user;
+  try {
+    user = await verifyRequestUser(request);
+  } catch {
+    return NextResponse.json({ ok: false, error: "authentication_service_unavailable" }, { status: 503 });
+  }
+  if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  if (!hasRole(user, ["driver"])) return NextResponse.json({ ok: false, error: "approved_driver_required" }, { status: 403 });
+
+  try {
+    const driver = await getServerDb().collection("drivers").doc(user.uid).get();
+    const state = driver.data() ?? {};
+    return NextResponse.json({
+      ok: true,
+      isAvailable: state.isAvailable === true,
+      activeTripId: typeof state.activeTripId === "string" ? state.activeTripId : null,
+    }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ ok: false, error: "availability_read_failed" }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request) {
   let user;
   try {
