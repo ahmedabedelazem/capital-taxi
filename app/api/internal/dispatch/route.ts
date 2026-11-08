@@ -2,19 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
+import { distanceKm, isValidPoint } from "@/lib/domain/geo";
 
 export const dynamic = "force-dynamic";
-
-type Point = { lat: number; lng: number };
-
-function distanceKm(a: Point, b: Point): number {
-  const rad = (v: number) => v * Math.PI / 180;
-  const dLat = rad(b.lat - a.lat);
-  const dLng = rad(b.lng - a.lng);
-  const h = Math.sin(dLat / 2) ** 2 +
-    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
 
 function authorized(request: Request): boolean {
   const expected = process.env.DISPATCH_WORKER_SECRET;
@@ -106,8 +96,7 @@ export async function POST(request: Request) {
     }
 
     const pickup = trip.pickup && typeof trip.pickup === "object" ? trip.pickup as Record<string, unknown> : {};
-    if (typeof pickup.lat !== "number" || typeof pickup.lng !== "number" ||
-        !Number.isFinite(pickup.lat) || !Number.isFinite(pickup.lng)) {
+    if (!isValidPoint({ lat: pickup.lat, lng: pickup.lng })) {
       return NextResponse.json({ ok: false, error: "trip_pickup_invalid" }, { status: 422 });
     }
     const tripPoint = { lat: pickup.lat, lng: pickup.lng };
@@ -121,8 +110,7 @@ export async function POST(request: Request) {
         ? driver.location as Record<string, unknown>
         : {};
       const updatedAt = driver.locationUpdatedAt;
-      if (typeof location.lat !== "number" || typeof location.lng !== "number" ||
-          !Number.isFinite(location.lat) || !Number.isFinite(location.lng) ||
+      if (!isValidPoint({ lat: location.lat, lng: location.lng }) ||
           !(updatedAt instanceof Timestamp) || now - updatedAt.toMillis() > 90_000 ||
           now < updatedAt.toMillis() || driver.activeTripId) return null;
       const point = { lat: location.lat, lng: location.lng };
@@ -163,8 +151,7 @@ export async function POST(request: Request) {
             driver.activeTripId || !(driver.locationUpdatedAt instanceof Timestamp) ||
             now - driver.locationUpdatedAt.toMillis() < 0 ||
             now - driver.locationUpdatedAt.toMillis() > 90_000 ||
-            typeof location.lat !== "number" || !Number.isFinite(location.lat) ||
-            typeof location.lng !== "number" || !Number.isFinite(location.lng) ||
+            !isValidPoint({ lat: location.lat, lng: location.lng }) ||
             existingOffers[index].exists) {
           return [];
         }
@@ -172,7 +159,7 @@ export async function POST(request: Request) {
           lat: location.lat,
           lng: location.lng,
         });
-        if (currentDistance > (radii[stage] as number)) return [];
+        if (!Number.isFinite(currentDistance) || currentDistance > (radii[stage] as number)) return [];
         return [{ ...candidate, distance: currentDistance }];
       });
       for (const candidate of accepted) {
