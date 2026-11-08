@@ -62,6 +62,8 @@ npm run dev
 | POST | `/api/driver/application` | تقديم طلب انضمام سائق |
 | GET | `/api/admin/drivers` | عرض طلبات السائقين للإدارة |
 | PATCH | `/api/admin/drivers/:uid/decision` | اعتماد أو رفض طلب سائق |
+| GET/PUT | `/api/admin/config/pricing` | قراءة وتحديث التعريفة ونطاق الخدمة |
+| GET/PUT | `/api/admin/config/dispatch` | قراءة وتحديث مراحل التوزيع |
 | GET/POST | `/api/driver/availability` | قراءة وتغيير حالة التوفر |
 | POST | `/api/driver/location` | تحديث موقع السائق المعتمد |
 | GET | `/api/driver/offers` | قراءة العروض الموجهة للسائق |
