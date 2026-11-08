@@ -87,13 +87,18 @@ export async function POST(request: Request) {
           typeof previous.distanceKm !== "number") {
         return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
       }
+      const previousTripSnapshot = await db.collection("trips").doc(previous.tripId).get();
+      const previousTripStatus = previousTripSnapshot.data()?.status;
+      if (!previousTripSnapshot.exists || typeof previousTripStatus !== "string") {
+        return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
+      }
       return NextResponse.json({
         ok: true,
         tripId: previous.tripId,
         fareEstimate: previous.fareEstimate,
         distanceKm: previous.distanceKm,
         reused: true,
-        status: "pending",
+        status: previousTripStatus,
       }, { status: 200, headers: { "Cache-Control": "no-store" } });
     }
   } catch {
@@ -127,11 +132,21 @@ export async function POST(request: Request) {
         if (previous.requestFingerprint !== requestFingerprint) {
           throw new Error("IDEMPOTENCY_KEY_REUSED");
         }
+        if (typeof previous.tripId !== "string" || typeof previous.fareEstimate !== "number" ||
+            typeof previous.distanceKm !== "number") {
+          throw new Error("IDEMPOTENCY_RECORD_INVALID");
+        }
+        const previousTripSnapshot = await transaction.get(db.collection("trips").doc(previous.tripId));
+        const previousTripStatus = previousTripSnapshot.data()?.status;
+        if (!previousTripSnapshot.exists || typeof previousTripStatus !== "string") {
+          throw new Error("IDEMPOTENCY_TRIP_MISSING");
+        }
         return {
-          tripId: previous.tripId as string,
-          fareEstimate: previous.fareEstimate as number,
-          distanceKm: previous.distanceKm as number,
+          tripId: previous.tripId,
+          fareEstimate: previous.fareEstimate,
+          distanceKm: previous.distanceKm,
           reused: true,
+          status: previousTripStatus,
         };
       }
       if (!pricingSnapshot.exists) throw new Error("PRICING_NOT_CONFIGURED");
@@ -197,6 +212,7 @@ export async function POST(request: Request) {
         fareEstimate: Number(fareEstimate.toFixed(2)),
         distanceKm: Number(distance.toFixed(2)),
         reused: false,
+        status: "pending",
       };
     });
 
@@ -212,6 +228,9 @@ export async function POST(request: Request) {
     if (code === "OUTSIDE_SERVICE_AREA") return NextResponse.json({ ok: false, error: "outside_service_area" }, { status: 422 });
     if (code === "TRIP_DISTANCE_NOT_SUPPORTED") return NextResponse.json({ ok: false, error: "trip_distance_not_supported" }, { status: 422 });
     if (code === "IDEMPOTENCY_KEY_REUSED") return NextResponse.json({ ok: false, error: "idempotency_key_reused_with_different_request" }, { status: 409 });
+    if (code === "IDEMPOTENCY_RECORD_INVALID" || code === "IDEMPOTENCY_TRIP_MISSING") {
+      return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
+    }
     return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
   }
 }
