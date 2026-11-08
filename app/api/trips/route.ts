@@ -67,20 +67,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "cash_payment_only" }, { status: 400 });
   }
 
-  let roadDistanceKm: number;
-  try {
-    roadDistanceKm = await getDrivingDistanceKm(pickup, destination);
-  } catch (error) {
-    const code = error instanceof Error ? error.message : "";
-    if (code === "GOOGLE_ROUTES_NOT_CONFIGURED") {
-      return NextResponse.json({ ok: false, error: "route_distance_service_not_configured" }, { status: 503 });
-    }
-    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
-  }
-  if (!Number.isFinite(roadDistanceKm) || roadDistanceKm <= 0) {
-    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
-  }
-
   const db = getServerDb();
   const pricingRef = db.collection("config").doc("tripPricing");
   const requestHash = createHash("sha256").update(`${user.uid}:${idempotencyKey}`).digest("hex");
@@ -89,13 +75,17 @@ export async function POST(request: Request) {
   })).digest("hex");
   const idempotencyRef = db.collection("tripIdempotency").doc(requestHash);
 
-  // Avoid a paid routing request when the client retries an already completed booking.
+  // Return an existing booking before calling the billable Routes API.
   try {
     const previousSnapshot = await idempotencyRef.get();
     if (previousSnapshot.exists) {
       const previous = previousSnapshot.data() ?? {};
       if (previous.requestFingerprint !== requestFingerprint) {
         return NextResponse.json({ ok: false, error: "idempotency_key_reused_with_different_request" }, { status: 409 });
+      }
+      if (typeof previous.tripId !== "string" || typeof previous.fareEstimate !== "number" ||
+          typeof previous.distanceKm !== "number") {
+        return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
       }
       return NextResponse.json({
         ok: true,
@@ -108,6 +98,20 @@ export async function POST(request: Request) {
     }
   } catch {
     return NextResponse.json({ ok: false, error: "trip_creation_failed" }, { status: 503 });
+  }
+
+  let roadDistanceKm: number;
+  try {
+    roadDistanceKm = await getDrivingDistanceKm(pickup, destination);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "GOOGLE_ROUTES_NOT_CONFIGURED") {
+      return NextResponse.json({ ok: false, error: "route_distance_service_not_configured" }, { status: 503 });
+    }
+    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
+  }
+  if (!Number.isFinite(roadDistanceKm) || roadDistanceKm <= 0) {
+    return NextResponse.json({ ok: false, error: "route_distance_unavailable" }, { status: 503 });
   }
 
   const tripRef = db.collection("trips").doc();
