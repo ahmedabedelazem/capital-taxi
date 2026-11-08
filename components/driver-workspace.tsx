@@ -12,6 +12,15 @@ type TripOffer = {
   expiresAt: string;
 };
 
+type ActiveTrip = {
+  tripId: string;
+  status: string;
+  pickupLabel: string | null;
+  destinationLabel: string | null;
+  fareEstimate: number | null;
+  distanceKm: number | null;
+};
+
 export function DriverWorkspace() {
   const [available, setAvailable] = useState(false);
   const [offers, setOffers] = useState<TripOffer[]>([]);
@@ -20,6 +29,7 @@ export function DriverWorkspace() {
   const [message, setMessage] = useState("سجّل الدخول بحساب سائق معتمد لتفعيل الخدمات.");
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
   const [acceptedTripId, setAcceptedTripId] = useState<string | null>(null);
+  const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
   const [showApplication, setShowApplication] = useState(false);
   const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
   const [applicationBusy, setApplicationBusy] = useState(false);
@@ -61,7 +71,7 @@ export function DriverWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (!available) return;
+    if (!available && !activeTripId) return;
     let mounted = true;
     const refresh = async () => {
       try {
@@ -111,7 +121,67 @@ export function DriverWorkspace() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [available, loadOffers]);
+  }, [available, activeTripId, loadOffers]);
+
+  useEffect(() => {
+    if (!activeTripId) {
+      setActiveTrip(null);
+      return;
+    }
+    let mounted = true;
+    const refreshActiveTrip = async () => {
+      try {
+        const response = await fetch(`/api/trips/${encodeURIComponent(activeTripId)}`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("تعذر قراءة حالة الرحلة النشطة.");
+        const data = await response.json() as { trip?: ActiveTrip };
+        if (mounted && data.trip) setActiveTrip(data.trip);
+      } catch (error) {
+        if (mounted) setMessage(error instanceof Error ? error.message : "تعذر تحديث الرحلة.");
+      }
+    };
+    void refreshActiveTrip();
+    const interval = window.setInterval(() => { void refreshActiveTrip(); }, 8000);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, [activeTripId]);
+
+  async function updateActiveTripStatus(status: "driver_arrived" | "in_progress" | "completed") {
+    if (!activeTripId) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/trips/${encodeURIComponent(activeTripId)}/status`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json() as { error?: string; status?: string };
+      if (!response.ok) {
+        if (response.status === 409) throw new Error("تغيرت حالة الرحلة أو أن الانتقال غير مسموح. حدّث الحالة.");
+        if (response.status === 403) throw new Error("هذه الرحلة غير مسندة إلى حسابك.");
+        throw new Error("تعذر تحديث حالة الرحلة.");
+      }
+      setActiveTrip((current) => current ? { ...current, status: data.status ?? status } : current);
+      if (status === "completed") {
+        setActiveTripId(null);
+        setAcceptedTripId(null);
+        setActiveTrip(null);
+        setMessage("اكتملت الرحلة بنجاح. يمكنك تفعيل استقبال رحلات جديدة عند الاستعداد.");
+      } else {
+        setMessage(status === "driver_arrived" ? "تم تسجيل وصولك إلى نقطة الانطلاق." : "تم بدء الرحلة.");
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر تحديث حالة الرحلة.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -227,7 +297,22 @@ export function DriverWorkspace() {
           {available && offers.length===0 && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><MapPin className="mx-auto mb-3 text-gold" size={26}/><b className="block text-sm">لا توجد عروض متاحة الآن</b><p className="mt-2 text-xs leading-6 text-muted">سيتم تحديث القائمة تلقائياً كل 10 ثوانٍ.</p></div></div>}
           {offers.map(offer=><article key={offer.offerId} className="rounded-2xl border border-white/10 bg-night p-4"><div className="grid gap-3 sm:grid-cols-2"><div><span className="text-[11px] text-muted">نقطة الانطلاق</span><p className="mt-1 text-sm font-semibold">{offer.pickupLabel ?? "غير محدد"}</p></div><div><span className="text-[11px] text-muted">الوجهة</span><p className="mt-1 text-sm font-semibold">{offer.destinationLabel ?? "غير محددة"}</p></div></div><div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3"><span className="text-sm text-gold">{offer.fareEstimate === null ? "السعر غير متاح" : `تقدير السعر: ${offer.fareEstimate} ج.م`}</span><button type="button" disabled={busy} onClick={()=>acceptOffer(offer)} className="rounded-lg bg-gold px-4 py-2 text-xs font-bold text-night disabled:opacity-50">قبول الرحلة</button></div></article>)}
         </div>}
-        {section==="active" && <div className="mt-5 grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><CarFront className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">{activeTripId ? "تم قبول الرحلة" : "لا توجد رحلة نشطة"}</b>{activeTripId && <p className="mt-2 break-all text-xs text-muted">رقم الرحلة: {activeTripId}</p>}<p className="mt-2 text-xs leading-6 text-muted">تحديث مراحل الرحلة وإنهاؤها سيضاف في المرحلة التالية.</p></div></div>}
+        {section==="active" && <div className="mt-5 space-y-4">
+          {!activeTripId && <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><CarFront className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">لا توجد رحلة نشطة</b><p className="mt-2 text-xs leading-6 text-muted">عند قبول عرض ستظهر تفاصيل الرحلة وخطوات تنفيذها هنا.</p></div></div>}
+          {activeTripId && <article className="rounded-2xl border border-gold/20 bg-night p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-bold">الرحلة الحالية</h3><span className="rounded-full bg-gold/10 px-3 py-1.5 text-xs text-gold">{({accepted:"تم قبول الرحلة",driver_arrived:"وصلت إلى العميل",in_progress:"الرحلة جارية"} as Record<string,string>)[activeTrip?.status ?? ""] || "جارٍ تحميل الحالة"}</span></div>
+            <p className="mt-4 text-sm"><span className="text-muted">من:</span> {activeTrip?.pickupLabel || "جارٍ التحميل…"}</p>
+            <p className="mt-2 text-sm"><span className="text-muted">إلى:</span> {activeTrip?.destinationLabel || "جارٍ التحميل…"}</p>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted"><span>الأجرة التقديرية: {activeTrip?.fareEstimate ?? "—"} ج.م</span><span>المسافة: {activeTrip?.distanceKm ?? "—"} كم</span></div>
+            <p className="mt-3 break-all text-[10px] text-muted" dir="ltr">{activeTripId}</p>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {activeTrip?.status === "accepted" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("driver_arrived")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">تأكيد الوصول لنقطة الانطلاق</button>}
+              {activeTrip?.status === "driver_arrived" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("in_progress")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">بدء الرحلة</button>}
+              {activeTrip?.status === "in_progress" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("completed")} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-night disabled:opacity-50">إنهاء الرحلة</button>}
+            </div>
+            {activeTrip && !["accepted","driver_arrived","in_progress"].includes(activeTrip.status) && <p className="mt-4 text-xs text-muted">الحالة الحالية: {activeTrip.status}</p>}
+          </article>}
+        </div>}
         {section==="history" && <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">سجل الرحلات غير متاح بعد</b><p className="mt-2 text-xs leading-6 text-muted">سيظهر بعد إضافة واجهات سجل الرحلات.</p></div></div>}
       </section>
     </div>
