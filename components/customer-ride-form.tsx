@@ -393,7 +393,6 @@ export function CustomerRideForm() {
         credentials: "same-origin",
         cache: "no-store",
       });
-      const data = await response.json() as { error?: string; status?: string };
       if (!response.ok) {
         if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
         if (response.status === 404) throw new Error("الرحلة غير موجودة أو لا تخص حسابك.");
