@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
   try {
     const snapshot = await getServerDb().collection("supportTickets")
-      .where("uid", "==", user.uid).limit(50).get();
+      .where("uid", "==", user.uid).orderBy("createdAt", "desc").limit(50).get();
     const tickets = snapshot.docs
       .sort((a, b) => {
         const left = a.data().createdAt?.toMillis?.() ?? 0;
