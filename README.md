@@ -25,7 +25,7 @@ npm run dev
 - `/driver` بوابة السائق
 - `/admin` بوابة الإدارة
 
-## الأمان
+## المصادقة الخادمية\n- `POST /api/auth/session`: يستبدل Firebase ID token بجلسة خادمية في Cookie من نوع HttpOnly لمدة خمسة أيام.\n- `DELETE /api/auth/session`: ينهي الجلسة بحذف Cookie.\n- `GET /api/me`: يتحقق من Cookie الجلسة أو Bearer ID token ويعيد هوية المستخدم ودوره الموقّع.\n- تُقرأ أدوار `driver` و`admin` من Firebase custom claims الموقعة فقط؛ لا يستطيع العميل تعيينها من الطلب.\n- يلزم إعداد `FIREBASE_PROJECT_ID` و`FIREBASE_SERVICE_ACCOUNT_JSON` كأسرار خادمية في بيئة التشغيل، ولا تضع بيانات حقيقية في Git.\n\n## الأمان
 - التحقق من الصلاحيات يجب أن يتم على الخادم.
 - لا تعدّل المحافظ أو العمولات من العميل مباشرة.
 - قبول الرحلة يجب أن يكون ذرياً عبر Backend موثوق.
