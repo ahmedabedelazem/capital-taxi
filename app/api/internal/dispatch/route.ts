@@ -116,22 +116,31 @@ export async function POST(request: Request) {
     }
 
     const driversCollection = db.collection("drivers");
+    const readGeohashDocuments = async () => {
+      const allDocuments = [];
+      // Bound concurrent Firestore reads even when a wide radius needs many
+      // prefixes. Each cell is still fully paginated; this limits burst load,
+      // not the number of matching drivers returned.
+      for (let offset = 0; offset < geohashPrefixes.length; offset += 8) {
+        const pageGroups = await Promise.all(geohashPrefixes.slice(offset, offset + 8).map(async (prefix) => {
+          const documents = [];
+          let query = driversCollection.where("isAvailable", "==", true)
+            .where("geohash", ">=", prefix)
+            .where("geohash", "<=", `${prefix}~`);
+          while (true) {
+            const page = await query.limit(100).get();
+            documents.push(...page.docs);
+            if (page.size < 100) break;
+            query = query.startAfter(page.docs[page.docs.length - 1]);
+          }
+          return documents;
+        }));
+        allDocuments.push(...pageGroups.flat());
+      }
+      return allDocuments;
+    };
     const [geohashDocuments, legacySnapshot] = await Promise.all([
-      Promise.all(geohashPrefixes.map(async (prefix) => {
-        // Page through the entire matching cell. A single limit(100) silently
-        // dropped nearby drivers whenever a dense cell contained >100 records.
-        const documents = [];
-        let query = driversCollection.where("isAvailable", "==", true)
-          .where("geohash", ">=", prefix)
-          .where("geohash", "<=", `${prefix}~`);
-        while (true) {
-          const page = await query.limit(100).get();
-          documents.push(...page.docs);
-          if (page.size < 100) break;
-          query = query.startAfter(page.docs[page.docs.length - 1]);
-        }
-        return documents;
-      })),
+      readGeohashDocuments(),
       // Include legacy driver documents that have fresh locations but no geohash.
       // The timestamp filter avoids an arbitrary first-100 scan; the cap bounds
       // migration-time reads while geohash queries cover indexed drivers nearby.
