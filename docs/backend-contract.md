@@ -42,6 +42,30 @@ Roles are read only from Firebase-signed custom claims. A missing or unknown rol
 
 Driver approval is enforced by both a signed Firebase `driver` custom claim and a server-owned `driverApplications/{uid}` record with `status: approved`. The decision endpoint preserves unrelated custom claims and never changes an existing admin role. Driver application data is private server-side data; do not expose the collection directly to browser clients.
 
+## Implemented driver dispatch and acceptance APIs
+
+| Method | Route | Purpose | Authorization |
+| --- | --- | --- | --- |
+| POST | `/api/driver/availability` | Set the caller's online/offline state | Verified approved driver; server checks the application record again |
+| GET | `/api/driver/offers` | List unexpired offers assigned to the caller | Verified approved and currently available driver |
+| POST | `/api/trips/:tripId/accept` | Accept the caller's assigned offer | Verified approved, available driver; Firestore transaction |
+
+The offer endpoint returns only pickup/destination labels, the server-stored fare estimate, expiry, and opaque IDs. It does not return customer name, phone, email, or profile details. An offline driver receives an empty offer list. Availability cannot be turned off while the driver record has an active trip.
+
+Acceptance uses the deterministic offer document ID `tripOffers/{tripId}_{driverUid}`. The transaction re-reads the trip, offer, driver, and application before writing. It requires an unexpired offer addressed to the caller, an approved application, an available driver, and a trip still in `searching` with no assigned driver. It then assigns the driver, marks the offer accepted, marks the driver unavailable with an active trip, and appends a server-timestamped event to `trips/{tripId}/statusTimeline`. Concurrent acceptances conflict on the same trip document; only one can commit.
+
+## Dispatch data contract
+
+The following is the canonical Firestore shape expected by these endpoints. It is a contract, not a migration: no live Firebase collections are created or modified by committing this code.
+
+- `driverApplications/{uid}`: private application and admin-review record; `status` is `pending`, `approved`, or `rejected`.
+- `drivers/{uid}`: server-owned operational record with `uid`, `isAvailable`, optional `activeTripId`, and server timestamps. Clients must not write this collection directly.
+- `trips/{tripId}`: trip with `status`, optional `assignedDriverUid`, `pickup.label`, `destination.label`, and server-calculated numeric `fareEstimate`. The customer profile and contact data must be stored separately or excluded from the driver offer payload.
+- `tripOffers/{tripId}_{driverUid}`: `tripId`, `driverUid`, `status: offered|accepted|expired|withdrawn`, and Firestore Timestamp `expiresAt`. Create offers only from a trusted dispatch service.
+- `trips/{tripId}/statusTimeline/{eventId}`: append-only event with `from`, `to`, `actorType`, `actorUid`, and server timestamp `createdAt`.
+
+These routes do not create trips or offers and do not implement geographic dispatch yet. A trusted dispatch worker must create eligible offers; the browser cannot nominate itself for an arbitrary trip.
+
 ## Proposed API surface
 
 Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
