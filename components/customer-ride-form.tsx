@@ -22,6 +22,28 @@ const tripStatusLabels: Record<string, string> = {
 
 type Point = { lat: number; lng: number };
 
+type TripHistoryItem = {
+  tripId: string;
+  status: string;
+  pickupLabel: string | null;
+  destinationLabel: string | null;
+  fareEstimate: number | null;
+  distanceKm: number | null;
+  createdAt: string | null;
+};
+
+type TripDetails = {
+  status: string;
+  driver: {
+    fullName: string | null;
+    phone: string | null;
+    vehicleType: string | null;
+    vehicleModel: string | null;
+    plateNumber: string | null;
+  } | null;
+  timeline: { from: string | null; to: string | null; createdAt: string | null }[];
+};
+
 export function CustomerRideForm() {
   const [pickup, setPickup] = useState("");
   const [destination, setDestination] = useState("");
@@ -35,6 +57,9 @@ export function CustomerRideForm() {
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number; status: string } | null>(null);
+  const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
+  const [tripHistory, setTripHistory] = useState<TripHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const pickupInput = useRef<HTMLInputElement>(null);
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
@@ -112,6 +137,25 @@ export function CustomerRideForm() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    fetch("/api/customer/trips", { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("تعذر تحميل سجل الرحلات.");
+        return response.json() as Promise<{ trips?: TripHistoryItem[] }>;
+      })
+      .then((data) => {
+        if (active) setTripHistory(Array.isArray(data.trips) ? data.trips : []);
+      })
+      .catch(() => {
+        if (active) setLocationMessage("تعذر تحميل سجل الرحلات حالياً.");
+      })
+      .finally(() => {
+        if (active) setHistoryLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     if (!booking?.tripId || ["completed", "cancelled", "no_driver"].includes(booking.status)) return;
     let active = true;
     const refreshStatus = async () => {
@@ -121,8 +165,9 @@ export function CustomerRideForm() {
           cache: "no-store",
         });
         if (!response.ok) return;
-        const data = await response.json() as { trip?: { status?: string } };
+        const data = await response.json() as { trip?: TripDetails & { status?: string } };
         const status = data.trip?.status;
+        if (active && data.trip) setTripDetails(data.trip);
         if (active && typeof status === "string") {
           setBooking((current) => current && current.tripId === booking.tripId
             ? { ...current, status }
@@ -223,7 +268,12 @@ export function CustomerRideForm() {
       }
       if (!data.tripId || typeof data.fareEstimate !== "number") throw new Error("استجابة الخادم غير مكتملة.");
       setBooking({ tripId: data.tripId, fareEstimate: data.fareEstimate, status: data.status ?? "pending" });
+      setTripDetails(null);
       idempotencyKey.current = null;
+      void fetch("/api/customer/trips", { credentials: "same-origin", cache: "no-store" })
+        .then((response) => response.ok ? response.json() as Promise<{ trips?: TripHistoryItem[] }> : null)
+        .then((result) => { if (result?.trips) setTripHistory(result.trips); })
+        .catch(() => undefined);
       setLocationMessage("تم تسجيل طلب الرحلة على الخادم. سيبدأ البحث عن سائق بعد تفعيل مجدول التوزيع.");
     } catch (error) {
       setLocationMessage(error instanceof Error ? error.message : "تعذر تسجيل طلب الرحلة.");
@@ -278,7 +328,23 @@ export function CustomerRideForm() {
           <div className="mb-3 flex items-center gap-2 text-emerald-300"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">الدفع المفضل</span><b>{payment==="cash" ? "نقداً" : "محفظة إلكترونية"}</b></div></div>
           <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-gold px-4 py-3 font-bold text-night disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
-          {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm"><b className="text-emerald-300">طلب الرحلة مسجل</b><p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p><p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p><p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p></div>}
+          {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm">
+            <b className="text-emerald-300">طلب الرحلة مسجل</b>
+            <p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p>
+            <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p>
+            <p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
+            {tripDetails?.driver && <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-3">
+              <b className="text-sm text-gold">بيانات السائق المعيّن</b>
+              <p className="mt-2 text-xs">الاسم: {tripDetails.driver.fullName || "غير متاح"}</p>
+              <p className="mt-1 text-xs">المركبة: {[tripDetails.driver.vehicleType, tripDetails.driver.vehicleModel].filter(Boolean).join(" – ") || "غير متاحة"}</p>
+              <p className="mt-1 text-xs">رقم اللوحة: {tripDetails.driver.plateNumber || "غير متاح"}</p>
+              {tripDetails.driver.phone && <a href={`tel:${tripDetails.driver.phone}`} className="mt-3 inline-flex rounded-lg bg-gold px-4 py-2 text-xs font-bold text-night">اتصال بالسائق</a>}
+            </div>}
+            {tripDetails?.timeline?.length ? <div className="mt-4 border-t border-white/10 pt-3">
+              <b className="text-xs">تحديثات الرحلة</b>
+              <div className="mt-2 space-y-2">{[...tripDetails.timeline].reverse().map((event, index) => <div key={`${event.to ?? "event"}-${index}`} className="flex items-center justify-between gap-3 text-[11px] text-muted"><span>{tripStatusLabels[event.to ?? ""] ?? event.to ?? "تحديث"}</span><span>{event.createdAt ? new Date(event.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}</span></div>)}</div>
+            </div> : null}
+          </div>}
           <p className="mt-4 border-t border-white/10 pt-3 text-xs leading-6 text-muted">السعر التقديري يحسبه الخادم من تعريفة الإدارة. لا يتم تأكيد سائق أو تحصيل دفع إلكتروني في هذه المرحلة.</p>
         </div>}
       </section>
@@ -292,7 +358,18 @@ export function CustomerRideForm() {
             <span className="absolute bottom-3 right-3 rounded-lg bg-night/80 px-3 py-1.5 text-[10px] text-muted">لا تعرض مساراً حياً بعد</span>
           </div>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-panel p-6"><Clock3 className="mb-4 text-gold" size={22}/><h3 className="font-bold">رحلاتك الأخيرة</h3><p className="mt-2 text-sm leading-6 text-muted">سجل الرحلات سيظهر بعد إضافة واجهة قراءة الرحلات الخاصة بالعميل.</p></div>
+        <div className="rounded-3xl border border-white/10 bg-panel p-6">
+          <Clock3 className="mb-4 text-gold" size={22}/>
+          <div className="flex items-center justify-between"><h3 className="font-bold">رحلاتك الأخيرة</h3><span className="text-[10px] text-muted">{tripHistory.length} رحلة</span></div>
+          {historyLoading && <p className="mt-3 text-xs text-muted">جارٍ تحميل السجل…</p>}
+          {!historyLoading && tripHistory.length===0 && <p className="mt-3 text-xs leading-6 text-muted">لا توجد رحلات مسجلة في حسابك حتى الآن.</p>}
+          <div className="mt-4 space-y-3">{tripHistory.map((trip) => <article key={trip.tripId} className="rounded-xl border border-white/10 bg-night p-3">
+            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold">{tripStatusLabels[trip.status] ?? trip.status}</span><span className="text-[10px] text-gold">{trip.fareEstimate === null ? "—" : `${trip.fareEstimate} ج.م`}</span></div>
+            <p className="mt-2 text-xs text-muted">من: {trip.pickupLabel || "غير محدد"}</p>
+            <p className="mt-1 text-xs text-muted">إلى: {trip.destinationLabel || "غير محددة"}</p>
+            <p className="mt-2 text-[10px] text-muted">{trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "تاريخ غير متاح"}</p>
+          </article>)}</div>
+        </div>
         <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5"><b className="text-sm text-gold">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-muted">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
       </aside>
     </div>
