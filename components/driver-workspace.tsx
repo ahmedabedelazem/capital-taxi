@@ -239,7 +239,6 @@ export function DriverWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      const data = await response.json() as { error?: string; status?: string };
       if (!response.ok) {
         if (response.status === 409) throw new Error("تغيرت حالة الرحلة أو أن الانتقال غير مسموح. حدّث الحالة.");
         if (response.status === 403) throw new Error("هذه الرحلة غير مسندة إلى حسابك.");
