@@ -151,9 +151,7 @@ export async function POST(request: Request) {
         .get(),
     ]);
     const driverDocs = new Map(legacySnapshot.docs.map((doc) => [doc.id, doc] as const));
-    for (const documents of geohashDocuments) {
-      for (const doc of documents) driverDocs.set(doc.id, doc);
-    }
+    for (const doc of geohashDocuments) driverDocs.set(doc.id, doc);
 
     const candidates = [...driverDocs.values()].map((doc) => {
       const driver = doc.data();
