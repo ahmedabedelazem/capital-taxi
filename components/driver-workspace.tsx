@@ -281,6 +281,16 @@ export function DriverWorkspace() {
         setShowApplication(false);
         throw new Error("حسابك معتمد بالفعل. سجّل الدخول مجدداً لتحديث الصلاحيات.");
       }
+      if (data.error === "application_already_pending") {
+        setShowApplication(false);
+        throw new Error("لديك طلب انضمام قيد المراجعة بالفعل. لا حاجة لإرساله مرة أخرى.");
+      }
+      if (data.error === "application_rate_limited") {
+        throw new Error("وصلت إلى الحد المسموح لإعادة التقديم: 3 مرات خلال 24 ساعة. حاول لاحقاً.");
+      }
+      if (data.error === "application_not_resubmittable") {
+        throw new Error("يوجد طلب سابق بحالة غير متوقعة. تواصل مع الإدارة لمراجعته.");
+      }
       if (!response.ok) throw new Error("تعذر إرسال الطلب. راجع البيانات وحاول مرة أخرى.");
       setShowApplication(false);
       setMessage("تم إرسال طلب الانضمام بنجاح. سيظهر في لوحة الإدارة للمراجعة، ولن تتمكن من استقبال رحلات قبل الاعتماد.");
