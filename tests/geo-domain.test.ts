@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { distanceKm, encodeGeohash, isValidPoint } from "../lib/domain/geo";
+import {
+  distanceKm,
+  encodeGeohash,
+  geohashQueryPrefixes,
+  isValidPoint,
+} from "../lib/domain/geo";
 
 test("validates geographic coordinate bounds and finite numbers", () => {
   assert.equal(isValidPoint({ lat: 29.95, lng: 32.9 }), true);
@@ -44,4 +49,35 @@ test("rejects invalid geohash input and precision", () => {
   assert.throws(() => encodeGeohash({ lat: 91, lng: 0 }), /invalid_geographic_point/);
   assert.throws(() => encodeGeohash({ lat: 0, lng: 0 }, 0), /invalid_geohash_precision/);
   assert.throws(() => encodeGeohash({ lat: 0, lng: 0 }, 13), /invalid_geohash_precision/);
+});
+
+test("covers sampled bounding-box cells around Arish", () => {
+  const center = { lat: 31.1321, lng: 33.8033 };
+  const radiusKm = 18;
+  const prefixes = new Set(geohashQueryPrefixes(center, radiusKm, 4));
+  const latDelta = radiusKm / 110.574;
+  const lngDelta = radiusKm / (111.32 * Math.cos(center.lat * Math.PI / 180));
+  for (let row = 0; row <= 40; row += 1) {
+    for (let column = 0; column <= 40; column += 1) {
+      const point = {
+        lat: center.lat - latDelta + (2 * latDelta * row) / 40,
+        lng: center.lng - lngDelta + (2 * lngDelta * column) / 40,
+      };
+      assert.ok(prefixes.has(encodeGeohash(point, 4)), "bounding-box cell must be included");
+    }
+  }
+});
+
+test("covers both sides of the antimeridian", () => {
+  const prefixes = new Set(geohashQueryPrefixes({ lat: 0, lng: 179.9 }, 50, 4));
+  assert.ok(prefixes.has(encodeGeohash({ lat: 0, lng: 179.9 }, 4)));
+  assert.ok(prefixes.has(encodeGeohash({ lat: 0, lng: -179.9 }, 4)));
+});
+
+test("covers polar bounds and validates query arguments", () => {
+  const prefixes = geohashQueryPrefixes({ lat: 89.9, lng: 10 }, 30, 4);
+  assert.ok(prefixes.length > 0);
+  assert.throws(() => geohashQueryPrefixes({ lat: 0, lng: 0 }, -1), /invalid_query_radius/);
+  assert.throws(() => geohashQueryPrefixes({ lat: 91, lng: 0 }, 1), /invalid_geographic_point/);
+  assert.throws(() => geohashQueryPrefixes({ lat: 0, lng: 0 }, 1, 0), /invalid_geohash_precision/);
 });
