@@ -42,6 +42,7 @@ export async function PATCH(
     await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(applicationRef);
       if (!snapshot.exists) throw new Error("application_not_found");
+      if (snapshot.data()?.status !== "pending") throw new Error("application_already_reviewed");
       transaction.update(applicationRef, {
         status: decision,
         reviewedAt: FieldValue.serverTimestamp(),
@@ -69,6 +70,9 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof Error && error.message === "application_not_found") {
       return NextResponse.json({ ok: false, error: "application_not_found" }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === "application_already_reviewed") {
+      return NextResponse.json({ ok: false, error: "application_already_reviewed" }, { status: 409 });
     }
     return NextResponse.json({ ok: false, error: "decision_save_failed" }, { status: 503 });
   }

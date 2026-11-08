@@ -377,7 +377,11 @@ export function AdminWorkspace() {
       const data = await response.json() as { error?: string };
       if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
       if (response.status === 403) throw new Error("لا تملك صلاحية تنفيذ قرار الاعتماد.");
-      if (response.status === 404) throw new Error("طلب السائق غير موجود أو تمت مراجعته.");
+      if (response.status === 404) throw new Error("طلب السائق غير موجود.");
+      if (response.status === 409) {
+        void loadApplications();
+        throw new Error("تمت مراجعة هذا الطلب من جلسة أخرى. حدّثنا القائمة لعرض الحالة الحالية.");
+      }
       if (!response.ok) throw new Error("تعذر حفظ قرار المراجعة. لم نغيّر حالة الطلب في الواجهة.");
       setApplications((current) => current.filter((application) => application.uid !== uid));
       setMessage(decision === "approved"
