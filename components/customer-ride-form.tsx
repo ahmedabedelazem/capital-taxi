@@ -68,6 +68,7 @@ export function CustomerRideForm() {
   const [locating, setLocating] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [routeSummary, setRouteSummary] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -248,6 +249,51 @@ export function CustomerRideForm() {
       map.panTo(destinationPoint);
       map.setZoom(15);
     }
+  }, [pickupPoint, destinationPoint, mapReady]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !window.google?.maps || !pickupPoint || !destinationPoint) {
+      setRouteSummary(null);
+      return;
+    }
+
+    let active = true;
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: true,
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: "#d5ae63",
+        strokeOpacity: 0.95,
+        strokeWeight: 6,
+      },
+    });
+    const directionsService = new google.maps.DirectionsService();
+
+    void directionsService.route({
+      origin: pickupPoint,
+      destination: destinationPoint,
+      travelMode: google.maps.TravelMode.DRIVING,
+      provideRouteAlternatives: false,
+      region: "EG",
+    }).then((result) => {
+      if (!active) return;
+      directionsRenderer.setDirections(result);
+      const leg = result.routes[0]?.legs[0];
+      setRouteSummary(
+        leg?.distance?.text && leg.duration?.text
+          ? `مسار القيادة: ${leg.distance.text} • ${leg.duration.text}`
+          : "تم رسم مسار القيادة بين النقطتين."
+      );
+    }).catch(() => {
+      if (active) setRouteSummary("تعذر حساب مسار القيادة. تحقق من تفعيل Directions API لمفتاح الخرائط.");
+    });
+
+    return () => {
+      active = false;
+      directionsRenderer.setMap(null);
+    };
   }, [pickupPoint, destinationPoint, mapReady]);
 
   useEffect(() => {
@@ -550,7 +596,7 @@ export function CustomerRideForm() {
                 <div><MapPin className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">الخريطة غير متاحة حالياً</b><p className="mt-2 text-xs leading-6 text-muted">تحقق من إعداد NEXT_PUBLIC_GOOGLE_MAPS_API_KEY وتفعيل Maps JavaScript API وPlaces API.</p></div>
               </div>
             )}
-            <span className="absolute bottom-3 right-3 rounded-lg bg-night/90 px-3 py-1.5 text-[10px] text-muted">علامات المواقع فقط — لا يوجد مسار ملاحي مرسوم</span>
+            <span aria-live="polite" className="absolute bottom-3 right-3 rounded-lg bg-night/90 px-3 py-1.5 text-[10px] text-muted">{routeSummary ?? (pickupPoint && destinationPoint ? "جارٍ حساب مسار القيادة…" : "اختر نقطتي الانطلاق والوجهة لرسم المسار")}</span>
           </div>
         </div>
         <div className="rounded-3xl border border-white/10 bg-panel p-6">
