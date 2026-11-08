@@ -48,6 +48,12 @@ export function DriverWorkspace() {
   const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
   const [applicationBusy, setApplicationBusy] = useState(false);
   const [locationStatus, setLocationStatus] = useState("لم يبدأ إرسال الموقع.");
+  const [supportCategory, setSupportCategory] = useState("trip");
+  const [supportSubject, setSupportSubject] = useState("");
+  const [supportDescription, setSupportDescription] = useState("");
+  const [supportTripId, setSupportTripId] = useState("");
+  const [supportBusy, setSupportBusy] = useState(false);
+  const [supportMessage, setSupportMessage] = useState("");
   const lastLocationSentAt = useRef(0);
 
   const loadOffers = useCallback(async () => {
@@ -296,6 +302,19 @@ export function DriverWorkspace() {
     }
   }
 
+  async function submitSupportTicket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSupportBusy(true); setSupportMessage("");
+    try {
+      const response = await fetch("/api/support/tickets", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category: supportCategory, subject: supportSubject, description: supportDescription, tripId: supportTripId.trim() || activeTripId || null }) });
+      const data = await response.json() as { ticketId?: string; error?: string };
+      if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
+      if (response.status === 403 && data.error === "trip_not_accessible") throw new Error("رقم الرحلة غير مرتبط بحساب السائق الحالي. راجعه أو اترك الحقل فارغاً.");
+      if (response.status === 429) throw new Error("وصلت للحد المؤقت لإرسال الشكاوى. حاول بعد قليل.");
+      if (!response.ok || !data.ticketId) throw new Error("تعذر إرسال الشكوى. حاول مرة أخرى.");
+      setSupportMessage("تم إرسال طلب الدعم بنجاح. رقم المتابعة: " + data.ticketId); setSupportSubject(""); setSupportDescription(""); setSupportTripId("");
+    } catch (error) { setSupportMessage(error instanceof Error ? error.message : "تعذر إرسال طلب الدعم."); }
+    finally { setSupportBusy(false); }
+  }
   async function acceptOffer(offer: TripOffer) {
     setBusy(true);
     setMessage("");
@@ -386,6 +405,17 @@ export function DriverWorkspace() {
         </div>}
       </section>
     </div>
+    <section className="mt-5 rounded-3xl border border-white/10 bg-panel p-6">
+      <h2 className="font-bold">الدعم والشكاوى</h2><p className="mt-1 text-xs leading-6 text-muted">أرسل مشكلة تخص حسابك أو رحلة مسندة إليك إلى الإدارة.</p>
+      <form onSubmit={submitSupportTicket} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="text-xs text-muted">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">حساب السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
+        <label className="text-xs text-muted">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={activeTripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+        <label className="text-xs text-muted sm:col-span-2">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+        <label className="text-xs text-muted sm:col-span-2">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+        <button type="submit" disabled={supportBusy} className="rounded-xl bg-gold px-5 py-3 text-sm font-bold text-night disabled:opacity-50 sm:col-span-2">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
+        {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-white/10 bg-night p-3 text-xs leading-6 text-muted sm:col-span-2">{supportMessage}</p>}
+      </form>
+    </section>
     <section className="mt-5 rounded-3xl border border-white/10 bg-panel p-6"><div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-gold"/><h2 className="font-bold">متطلبات تفعيل حساب السائق</h2></div><div className="grid gap-3 sm:grid-cols-3">{["بيانات السائق والتحقق من الهوية","بيانات المركبة والترخيص","موافقة الإدارة وتفعيل الحساب"].map((item,i)=><div key={item} className="flex items-start gap-3 rounded-xl bg-night p-4"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gold/10 text-xs text-gold">{i+1}</span><p className="text-xs leading-6 text-muted">{item}</p></div>)}</div></section>
   </div>;
 }

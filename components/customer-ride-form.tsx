@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation, WalletCards } from "lucide-react";
 
 const vehicleOptions = [
@@ -61,6 +61,12 @@ export function CustomerRideForm() {
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [tripHistory, setTripHistory] = useState<TripHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [supportCategory, setSupportCategory] = useState("trip");
+  const [supportSubject, setSupportSubject] = useState("");
+  const [supportDescription, setSupportDescription] = useState("");
+  const [supportTripId, setSupportTripId] = useState("");
+  const [supportBusy, setSupportBusy] = useState(false);
+  const [supportMessage, setSupportMessage] = useState("");
   const pickupInput = useRef<HTMLInputElement>(null);
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
@@ -399,6 +405,19 @@ export function CustomerRideForm() {
     }
   }
 
+  async function submitSupportTicket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSupportBusy(true); setSupportMessage("");
+    try {
+      const response = await fetch("/api/support/tickets", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category: supportCategory, subject: supportSubject, description: supportDescription, tripId: supportTripId.trim() || booking?.tripId || null }) });
+      const data = await response.json() as { ticketId?: string; error?: string };
+      if (response.status === 401) { window.location.assign("/login?next=/customer"); return; }
+      if (response.status === 403 && data.error === "trip_not_accessible") throw new Error("رقم الرحلة غير مرتبط بحسابك. راجع الرقم أو اترك الحقل فارغاً.");
+      if (response.status === 429) throw new Error("وصلت للحد المؤقت لإرسال الشكاوى. حاول بعد قليل.");
+      if (!response.ok || !data.ticketId) throw new Error("تعذر إرسال الشكوى. حاول مرة أخرى.");
+      setSupportMessage("تم إرسال طلب الدعم بنجاح. رقم المتابعة: " + data.ticketId); setSupportSubject(""); setSupportDescription(""); setSupportTripId("");
+    } catch (error) { setSupportMessage(error instanceof Error ? error.message : "تعذر إرسال طلب الدعم."); }
+    finally { setSupportBusy(false); }
+  }
   const selectedVehicle = vehicleOptions.find((item) => item.id === vehicle);
 
   return (
@@ -498,6 +517,17 @@ export function CustomerRideForm() {
           </article>)}</div>
         </div>
         <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5"><b className="text-sm text-gold">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-muted">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
+        <section className="rounded-3xl border border-white/10 bg-panel p-6">
+          <h3 className="font-bold">الدعم والشكاوى</h3><p className="mt-1 text-xs leading-6 text-muted">أرسل استفسارك إلى فريق الإدارة. لا تكتب بيانات دفع أو كلمات مرور.</p>
+          <form onSubmit={submitSupportTicket} className="mt-4 space-y-3">
+            <label className="block text-xs text-muted">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
+            <label className="block text-xs text-muted">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+            <label className="block text-xs text-muted">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+            <label className="block text-xs text-muted">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={booking?.tripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
+            <button type="submit" disabled={supportBusy} className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
+            {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-white/10 bg-night p-3 text-xs leading-6 text-muted">{supportMessage}</p>}
+          </form>
+        </section>
       </aside>
     </div>
   );
