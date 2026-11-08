@@ -100,6 +100,34 @@ export function CustomerRideForm() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    if (!booking?.tripId || ["completed", "cancelled", "no_driver"].includes(booking.status)) return;
+    let active = true;
+    const refreshStatus = async () => {
+      try {
+        const response = await fetch(`/api/trips/${encodeURIComponent(booking.tripId)}`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = await response.json() as { trip?: { status?: string } };
+        if (active && typeof data.trip?.status === "string") {
+          setBooking((current) => current && current.tripId === booking.tripId
+            ? { ...current, status: data.trip!.status! }
+            : current);
+        }
+      } catch {
+        // A temporary status read failure must not erase the confirmed booking.
+      }
+    };
+    const interval = window.setInterval(() => { void refreshStatus(); }, 8000);
+    void refreshStatus();
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [booking?.tripId, booking?.status]);
+
   function useCurrentLocation() {
     if (!("geolocation" in navigator)) {
       setLocationMessage("المتصفح لا يدعم تحديد الموقع. اختر نقطة الانطلاق من اقتراحات العناوين.");
@@ -238,7 +266,7 @@ export function CustomerRideForm() {
           <div className="mb-3 flex items-center gap-2 text-emerald-300"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">الدفع المفضل</span><b>{payment==="cash" ? "نقداً" : "محفظة إلكترونية"}</b></div></div>
           <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-gold px-4 py-3 font-bold text-night disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
-          {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm"><b className="text-emerald-300">طلب الرحلة مسجل</b><p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p><p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p><p className="mt-2 text-xs text-muted">الحالة: بانتظار بدء البحث عن سائق.</p></div>}
+          {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm"><b className="text-emerald-300">طلب الرحلة مسجل</b><p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p><p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p><p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p></div>}
           <p className="mt-4 border-t border-white/10 pt-3 text-xs leading-6 text-muted">السعر التقديري يحسبه الخادم من تعريفة الإدارة. لا يتم تأكيد سائق أو تحصيل دفع إلكتروني في هذه المرحلة.</p>
         </div>}
       </section>
