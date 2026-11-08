@@ -12,6 +12,50 @@ function clean(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+
+export async function GET(request: Request) {
+  let user;
+  try {
+    user = await verifyRequestUser(request);
+  } catch {
+    return NextResponse.json({ ok: false, error: "authentication_service_unavailable" }, { status: 503 });
+  }
+  if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  if (!hasRole(user, ["customer"])) {
+    return NextResponse.json({ ok: false, error: "customer_account_required" }, { status: 403 });
+  }
+
+  try {
+    const snapshot = await getServerDb().collection("driverApplications").doc(user.uid).get();
+    if (!snapshot.exists) {
+      return NextResponse.json({ ok: true, status: "not_submitted", application: null }, {
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+
+    const data = snapshot.data() ?? {};
+    const status = data.status === "pending" || data.status === "rejected" || data.status === "approved"
+      ? data.status
+      : "unknown";
+    const application = {
+      fullName: typeof data.fullName === "string" ? data.fullName : "",
+      phone: typeof data.phone === "string" ? data.phone : "",
+      vehicleType: typeof data.vehicleType === "string" ? data.vehicleType : "ملاكي",
+      vehicleModel: typeof data.vehicleModel === "string" ? data.vehicleModel : "",
+      plateNumber: typeof data.plateNumber === "string" ? data.plateNumber : "",
+    };
+    const submittedAt = data.submittedAt instanceof Timestamp
+      ? data.submittedAt.toDate().toISOString()
+      : null;
+
+    return NextResponse.json({ ok: true, status, application, submittedAt }, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch {
+    return NextResponse.json({ ok: false, error: "application_read_failed" }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request) {
   let user;
   try {
