@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/server/firebase-admin";
 import { SESSION_COOKIE_NAME } from "@/lib/server/auth";
 import { isSameOriginRequest } from "@/lib/domain/request-security";
+import { hasRecentAuthentication } from "@/lib/domain/session";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,14 @@ export async function POST(request: Request) {
 
   try {
     const auth = getServerAuth();
-    await auth.verifyIdToken(idToken, true);
+    const decodedToken = await auth.verifyIdToken(idToken, true);
+    if (!hasRecentAuthentication(decodedToken.auth_time)) {
+      return NextResponse.json(
+        { ok: false, error: "recent_sign_in_required" },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     const sessionCookie = await auth.createSessionCookie(idToken, {
       expiresIn: SESSION_DURATION_MS,
     });

@@ -60,7 +60,7 @@ npm run dev
 
 ## المصادقة والصلاحيات
 
-- `POST /api/auth/session`: يستبدل Firebase ID token بجلسة خادمية في Cookie من نوع HttpOnly.
+- `POST /api/auth/session`: يستبدل Firebase ID token بجلسة خادمية في Cookie من نوع HttpOnly بعد التحقق من صلاحية الرمز وحداثة تسجيل الدخول (آخر 5 دقائق، مع هامش ساعة واحدة لانحراف الساعة).
 - `DELETE /api/auth/session`: ينهي الجلسة.
 - `GET /api/me`: يعيد هوية المستخدم والدور بعد التحقق الخادمي.
 - أدوار الإدارة والسائق تعتمد على Firebase custom claims موقعة؛ لا تقبل الواجهة أو الخادم دوراً موثوقاً من جسم طلب العميل.
