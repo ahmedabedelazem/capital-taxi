@@ -33,6 +33,7 @@ export async function GET(request: Request) {
   try {
     const snapshot = await getServerDb().collection("trips")
       .where("assignedDriverUid", "==", user.uid)
+      .orderBy("createdAt", "desc")
       .limit(100)
       .get();
 
