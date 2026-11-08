@@ -79,14 +79,13 @@ export async function POST(request: Request) {
         if (current.status !== "searching" || current.assignedDriverUid) {
           throw new Error("TRIP_NOT_DISPATCHABLE");
         }
-        const offersQuery = db.collection("tripOffers").where("tripId", "==", tripId).limit(100);
+        const offersQuery = db.collection("tripOffers")
+          .where("tripId", "==", tripId)
+          .where("status", "==", "offered")
+          .where("expiresAt", ">", Timestamp.fromMillis(now))
+          .limit(1);
         const offersSnapshot = await transaction.get(offersQuery);
-        const hasLiveOffer = offersSnapshot.docs.some((doc) => {
-          const offer = doc.data();
-          return offer.status === "offered" &&
-            offer.expiresAt instanceof Timestamp &&
-            offer.expiresAt.toMillis() > now;
-        });
+        const hasLiveOffer = !offersSnapshot.empty;
         if (hasLiveOffer) return { status: "searching" as const, waitingForOffers: true };
         transaction.update(tripRef, {
           status: "no_driver",
