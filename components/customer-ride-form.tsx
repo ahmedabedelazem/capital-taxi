@@ -16,6 +16,7 @@ export function CustomerRideForm() {
   const [payment, setPayment] = useState("cash");
   const [locating, setLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
+  const [locationPoint, setLocationPoint] = useState<{ latitude: number; longitude: number } | null>(null);
   const [preview, setPreview] = useState(false);
 
   function useCurrentLocation() {
@@ -26,7 +27,8 @@ export function CustomerRideForm() {
     setLocating(true);
     setLocationMessage("بانتظار إذن تحديد الموقع من المتصفح…");
     navigator.geolocation.getCurrentPosition(
-      () => {
+      (position) => {
+        setLocationPoint({ latitude: position.coords.latitude, longitude: position.coords.longitude });
         setPickup("موقعي الحالي");
         setLocationMessage("تم تحديد موقع الانطلاق على هذا الجهاز. لم يتم إرسال إحداثياتك لأي خادم.");
         setLocating(false);
@@ -67,7 +69,7 @@ export function CustomerRideForm() {
             <label htmlFor="pickup" className="mb-2 block text-xs text-muted">نقطة الانطلاق</label>
             <div className="flex items-center gap-3">
               <span className="h-3 w-3 shrink-0 rounded-full border-2 border-emerald-400"/>
-              <input id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPreview(false); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="اكتب مكانك أو استخدم موقعي الحالي"/>
+              <input id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setLocationPoint(null); setPreview(false); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="اكتب مكانك أو استخدم موقعي الحالي"/>
               <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gold/25 px-3 py-2 text-xs text-gold transition hover:bg-gold/10 disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
             </div>
           </div>
@@ -97,6 +99,7 @@ export function CustomerRideForm() {
         {preview && <div role="status" className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
           <div className="mb-3 flex items-center gap-2 text-emerald-300"><CheckCircle2 size={18}/><b className="text-sm">تم تجهيز المعاينة محلياً</b></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">الدفع</span><b>{payment==="cash" ? "نقداً" : "محفظة إلكترونية"}</b></div></div>
+          {locationPoint && <p className="mt-3 text-xs text-emerald-300">تم التقاط إحداثيات نقطة الانطلاق محلياً لاستخدامها عند ربط الخريطة.</p> }
           <p className="mt-4 border-t border-white/10 pt-3 text-xs leading-6 text-muted">هذه معاينة على جهازك فقط. لم يتم إنشاء رحلة أو إرسال موقعك أو التواصل مع أي سائق. تفعيل الحجز يتطلب تسجيل الدخول وخدمة تسعير وإسناد آمنة.</p>
         </div>}
       </section>
