@@ -369,7 +369,22 @@ export function DriverWorkspace() {
         });
         if (!response.ok) throw new Error("تعذر قراءة حالة الرحلة النشطة.");
         const data = await response.json() as { trip?: ActiveTrip };
-        if (mounted && data.trip) setActiveTrip(data.trip);
+        if (mounted && data.trip) {
+          if (["completed", "cancelled", "no_driver"].includes(data.trip.status)) {
+            setActiveTrip(null);
+            setActiveTripId(null);
+            setAvailable(false);
+            setOffers([]);
+            void loadDriverHistory();
+            setMessage(data.trip.status === "cancelled"
+              ? "تم إلغاء الرحلة من الطرف الآخر. تم تحرير حسابك من الرحلة."
+              : data.trip.status === "completed"
+                ? "اكتملت الرحلة وتم تحديث حالة حسابك."
+                : "انتهى البحث عن سائق لهذه الرحلة.");
+            return;
+          }
+          setActiveTrip(data.trip);
+        }
       } catch (error) {
         if (mounted) setMessage(error instanceof Error ? error.message : "تعذر تحديث الرحلة.");
       }
@@ -380,7 +395,7 @@ export function DriverWorkspace() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [activeTripId]);
+  }, [activeTripId, loadDriverHistory]);
 
   async function updateActiveTripStatus(status: "driver_arrived" | "in_progress" | "completed") {
     if (!activeTripId) return;
