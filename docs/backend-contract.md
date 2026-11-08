@@ -11,7 +11,7 @@ No endpoint described here should be treated as deployed or operational.
 - The browser is untrusted. Never accept a role, driver approval flag, fare,
   wallet balance, commission, payment result, or admin identity as authoritative
   merely because it appears in a request body.
-- Verify the Firebase ID token on the server using the Firebase Admin SDK.
+- Verify Firebase ID tokens and session cookies on the server using the Firebase Admin SDK. Session cookies are HttpOnly, SameSite=Lax, Secure in production, and expire after five days.
 - Resolve roles and approval state from trusted server-side records or verified
   custom claims. Never grant administrator access by matching an email substring.
 - Keep service-account credentials and all private keys in server environment
@@ -22,9 +22,9 @@ No endpoint described here should be treated as deployed or operational.
 - Validate every request on the server, apply rate limits, and return only the
   minimum personal data needed for the current workflow.
 
-## Proposed API surface
+## Implemented authentication surface\n\n| Method | Route | Purpose | Behavior |\n| --- | --- | --- | --- |\n| POST | `/api/auth/session` | Exchange Firebase ID token for a server session | Verifies token and revocation state, then sets an HttpOnly session cookie |\n| DELETE | `/api/auth/session` | Clear current session | Expires the session cookie in the browser |\n| GET | `/api/me` | Resolve current user | Accepts a verified session cookie or Bearer ID token; returns UID, signed role claim, and email only |\n\nRoles are read only from Firebase-signed custom claims. A missing or unknown role fails closed to `customer`. Only a trusted server-side provisioning process may assign `driver` or `admin` custom claims. The session endpoint does not assign roles.\n\n## Proposed API surface
 
-All routes below are proposals, not implemented endpoints.
+Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
 
 | Method | Route | Purpose | Required server checks |
 | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Return consistent JSON errors without stack traces or secrets:
 
 ## Delivery gates before enabling production
 
-- Configure and verify server-only Firebase Admin credentials.
+- Configure and verify server-only Firebase Admin credentials (`FIREBASE_PROJECT_ID` and `FIREBASE_SERVICE_ACCOUNT_JSON`, or managed-environment ADC).
 - Deploy restrictive database rules and test them against customer, driver,
   admin, and unauthenticated identities.
 - Add automated tests for ownership, role escalation, race conditions,
