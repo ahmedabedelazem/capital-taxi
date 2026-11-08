@@ -67,6 +67,7 @@ export function CustomerRideForm() {
   const [payment, setPayment] = useState("cash");
   const [locating, setLocating] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -102,7 +103,12 @@ export function CustomerRideForm() {
     }
     let active = true;
     const attachPlaces = () => {
-      if (!active || !window.google?.maps?.places || !pickupInput.current || !destinationInput.current) return;
+      if (!active || !window.google?.maps) return;
+      setMapReady(true);
+      if (!window.google.maps.places || !pickupInput.current || !destinationInput.current) {
+        setLocationMessage("الخريطة جاهزة. البحث التلقائي عن العناوين يحتاج تفعيل Places API.");
+        return;
+      }
       const options: google.maps.places.AutocompleteOptions = {
         componentRestrictions: { country: "eg" },
         fields: ["formatted_address", "geometry", "name"],
@@ -141,12 +147,16 @@ export function CustomerRideForm() {
       setLocationMessage("خرائط العناوين جاهزة. اختر الانطلاق والوجهة من الاقتراحات.");
     };
 
-    if (window.google?.maps?.places) {
+    if (window.google?.maps) {
       attachPlaces();
       return () => { active = false; };
     }
     const existing = document.querySelector<HTMLScriptElement>("script[data-capital-taxi-maps]");
     if (existing) {
+      if (window.google?.maps) {
+        attachPlaces();
+        return () => { active = false; };
+      }
       existing.addEventListener("load", attachPlaces);
       return () => {
         active = false;
@@ -167,7 +177,7 @@ export function CustomerRideForm() {
   }, []);
 
   useEffect(() => {
-    if (!mapsReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
+    if (!mapReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
     const map = new google.maps.Map(mapContainer.current, {
       center: { lat: 31.132, lng: 33.803 },
       zoom: 12,
@@ -192,7 +202,7 @@ export function CustomerRideForm() {
       mapMarkers.current = { pickup: null, destination: null, driver: null };
       mapInstance.current = null;
     };
-  }, [mapsReady]);
+  }, [mapReady]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -238,7 +248,7 @@ export function CustomerRideForm() {
       map.panTo(destinationPoint);
       map.setZoom(15);
     }
-  }, [pickupPoint, destinationPoint, mapsReady]);
+  }, [pickupPoint, destinationPoint, mapReady]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -273,7 +283,7 @@ export function CustomerRideForm() {
     if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
       map.panTo({ lat: location.lat, lng: location.lng });
     }
-  }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapsReady]);
+  }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapReady]);
 
   useEffect(() => {
     let active = true;
@@ -533,7 +543,7 @@ export function CustomerRideForm() {
         <div className="rounded-3xl border border-white/10 bg-panel p-6">
           <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-gold" size={20}/></div>
           <div className="relative h-64 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
-            {mapsReady ? (
+            {mapReady ? (
               <div ref={mapContainer} role="img" aria-label="خريطة تفاعلية لمواقع الانطلاق والوجهة والسائق" className="h-full w-full" />
             ) : (
               <div className="grid h-full place-items-center px-5 text-center">
