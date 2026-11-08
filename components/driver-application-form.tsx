@@ -24,6 +24,7 @@ const emptyApplication: ApplicationFields = {
 export function DriverApplicationForm() {
   const [status, setStatus] = useState<ApplicationStatus>("unknown");
   const [application, setApplication] = useState<ApplicationFields>(emptyApplication);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -39,13 +40,14 @@ export function DriverApplicationForm() {
       });
       const data = await response.json() as {
         status?: ApplicationStatus;
-        application?: Partial<ApplicationFields> | null;
+        application?: (Partial<ApplicationFields> & { rejectionReason?: string }) | null;
       };
       if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
       if (response.status === 403) throw new Error("التقديم متاح من حساب العميل فقط.");
       if (!response.ok) throw new Error("تعذر تحميل حالة طلب الانضمام.");
       const nextStatus = data.status ?? "unknown";
       setStatus(nextStatus);
+      setRejectionReason(data.application?.rejectionReason ?? "");
       if (data.application) {
         setApplication({
           fullName: data.application.fullName ?? "",
@@ -144,6 +146,7 @@ export function DriverApplicationForm() {
               <AlertCircle className="mb-2 text-rose-200" size={24} />
               <h3 className="font-bold">لم تتم الموافقة على الطلب السابق</h3>
               <p className="mt-1 text-sm leading-7 text-muted">يمكنك مراجعة بياناتك وتعديلها ثم إعادة التقديم.</p>
+              {rejectionReason && <p className="mt-3 rounded-xl border border-rose-300/15 bg-night/70 p-4 text-sm leading-7 text-rose-100"><b className="block text-xs text-rose-200">ملاحظة الإدارة وسبب الرفض</b>{rejectionReason}</p>}
             </div>
           )}
           {message && <p role="status" className="mb-4 rounded-xl border border-emerald-300/20 bg-emerald-300/5 p-4 text-sm leading-6 text-emerald-100">{message}</p>}

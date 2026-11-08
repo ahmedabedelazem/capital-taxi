@@ -43,6 +43,9 @@ export async function GET(request: Request) {
       vehicleType: typeof data.vehicleType === "string" ? data.vehicleType : "ملاكي",
       vehicleModel: typeof data.vehicleModel === "string" ? data.vehicleModel : "",
       plateNumber: typeof data.plateNumber === "string" ? data.plateNumber : "",
+      rejectionReason: status === "rejected" && typeof data.rejectionReason === "string"
+        ? data.rejectionReason
+        : "",
     };
     const submittedAt = data.submittedAt instanceof Timestamp
       ? data.submittedAt.toDate().toISOString()
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
         vehicleModel,
         plateNumber,
         status: "pending",
+        rejectionReason: null,
         submittedAt: FieldValue.serverTimestamp(),
         reviewedAt: null,
         reviewedBy: null,

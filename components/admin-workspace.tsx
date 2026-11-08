@@ -76,6 +76,7 @@ export function AdminWorkspace() {
   const [tripStatusFilter, setTripStatusFilter] = useState("active");
   const [loading, setLoading] = useState(false);
   const [busyUid, setBusyUid] = useState<string | null>(null);
+  const [rejectionReasonDrafts, setRejectionReasonDrafts] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("لوحة الإدارة تعرض بيانات الخادم بعد تسجيل الدخول بحساب مدير معتمد.");
   const [pricingForm, setPricingForm] = useState({ enabled: false, baseFare: "", perKm: "", minimumFare: "", maximumDistanceKm: "", roundingIncrement: "1", minLat: "", maxLat: "", minLng: "", maxLng: "" });
   const [dispatchForm, setDispatchForm] = useState({ stageRadiiKm: "", offerTtlSeconds: "60", maxOffersPerStage: "5" });
@@ -364,7 +365,12 @@ export function AdminWorkspace() {
       setConfigSaving(false);
     }
   }
-  async function decide(uid: string, decision: "approved" | "rejected") {
+  async function decide(uid: string, decision: "approved" | "rejected", reason = "") {
+    const normalizedReason = reason.trim();
+    if (decision === "rejected" && (normalizedReason.length < 10 || normalizedReason.length > 500)) {
+      setMessage("اكتب سبب رفض واضحاً من 10 إلى 500 حرف قبل رفض الطلب.");
+      return;
+    }
     setBusyUid(uid);
     setMessage("");
     try {
@@ -372,7 +378,7 @@ export function AdminWorkspace() {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
+        body: JSON.stringify({ decision, ...(decision === "rejected" ? { rejectionReason: normalizedReason } : {}) }),
       });
       const data = await response.json() as { error?: string };
       if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
@@ -384,6 +390,11 @@ export function AdminWorkspace() {
       }
       if (!response.ok) throw new Error("تعذر حفظ قرار المراجعة. لم نغيّر حالة الطلب في الواجهة.");
       setApplications((current) => current.filter((application) => application.uid !== uid));
+      setRejectionReasonDrafts((current) => {
+        const next = { ...current };
+        delete next[uid];
+        return next;
+      });
       setMessage(decision === "approved"
         ? "تم اعتماد السائق وتحديث صلاحية حسابه."
         : "تم رفض الطلب وتسجيل القرار في سجل التدقيق.");
@@ -418,7 +429,10 @@ export function AdminWorkspace() {
             <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold">{application.fullName || "اسم غير متاح"}</h3><p className="mt-1 text-xs text-muted" dir="ltr">{application.phone}</p></div><span className="inline-flex items-center gap-1 rounded-full bg-amber-300/10 px-3 py-1.5 text-[11px] text-amber-200"><Clock3 size={13}/> قيد المراجعة</span></div>
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><span className="block text-[11px] text-muted">نوع المركبة</span><b>{application.vehicleType}</b></div><div><span className="block text-[11px] text-muted">الموديل</span><b>{application.vehicleModel}</b></div><div><span className="block text-[11px] text-muted">رقم اللوحة</span><b>{application.plateNumber}</b></div></div>
             <p className="mt-3 text-[10px] text-muted">معرّف الحساب: <span dir="ltr">{application.uid}</span>{application.submittedAt ? ` • تاريخ الإرسال: ${new Date(application.submittedAt).toLocaleString("ar-EG")}` : ""}</p>
-            <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4"><button type="button" disabled={busyUid !== null} onClick={() => void decide(application.uid, "approved")} className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/15 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400/25 disabled:opacity-40"><BadgeCheck size={15}/>{busyUid===application.uid ? "جارٍ الحفظ…" : "اعتماد السائق"}</button><button type="button" disabled={busyUid !== null} onClick={() => void decide(application.uid, "rejected")} className="inline-flex items-center gap-2 rounded-xl border border-rose-300/20 px-4 py-2.5 text-xs text-rose-200 hover:bg-rose-400/10 disabled:opacity-40"><XCircle size={15}/> رفض الطلب</button></div>
+            <label className="mt-4 block text-xs text-muted">سبب الرفض (سيظهر للمتقدم)
+              <textarea rows={2} maxLength={500} value={rejectionReasonDrafts[application.uid] ?? ""} onChange={(event) => setRejectionReasonDrafts((current) => ({ ...current, [application.uid]: event.target.value }))} placeholder="مثال: يرجى استكمال بيانات المركبة أو تصحيح رقم اللوحة…" disabled={busyUid !== null} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-panel px-3 py-3 text-sm leading-6 text-white outline-none focus:border-gold/50 disabled:opacity-50" />
+            </label>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4"><button type="button" disabled={busyUid !== null} onClick={() => void decide(application.uid, "approved")} className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/15 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400/25 disabled:opacity-40"><BadgeCheck size={15}/>{busyUid===application.uid ? "جارٍ الحفظ…" : "اعتماد السائق"}</button><button type="button" disabled={busyUid !== null || (rejectionReasonDrafts[application.uid] ?? "").trim().length < 10} onClick={() => void decide(application.uid, "rejected", rejectionReasonDrafts[application.uid] ?? "")} className="inline-flex items-center gap-2 rounded-xl border border-rose-300/20 px-4 py-2.5 text-xs text-rose-200 hover:bg-rose-400/10 disabled:opacity-40"><XCircle size={15}/> رفض الطلب</button></div>
           </article>)}
         </div>}
         {active === "trips" && <div className="mt-5 space-y-4">

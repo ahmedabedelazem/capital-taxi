@@ -27,8 +27,15 @@ export async function PATCH(
   }
   const decision = body && typeof body === "object" && "decision" in body
     ? (body as { decision?: unknown }).decision : undefined;
+  const rejectionReason = body && typeof body === "object" && "rejectionReason" in body &&
+    typeof (body as { rejectionReason?: unknown }).rejectionReason === "string"
+    ? (body as { rejectionReason: string }).rejectionReason.trim()
+    : "";
   if (decision !== "approved" && decision !== "rejected") {
     return NextResponse.json({ ok: false, error: "invalid_decision" }, { status: 400 });
+  }
+  if (decision === "rejected" && (rejectionReason.length < 10 || rejectionReason.length > 500)) {
+    return NextResponse.json({ ok: false, error: "invalid_rejection_reason" }, { status: 400 });
   }
 
   try {
@@ -51,6 +58,7 @@ export async function PATCH(
       if (currentStatus === "pending") {
         transaction.update(applicationRef, {
           status: decision,
+          rejectionReason: decision === "rejected" ? rejectionReason : null,
           reviewedAt: FieldValue.serverTimestamp(),
           reviewedBy: user.uid,
         });
@@ -59,6 +67,7 @@ export async function PATCH(
           action: "driver_application_decision",
           targetUid: uid,
           decision,
+          rejectionReason: decision === "rejected" ? rejectionReason : null,
           actorUid: user.uid,
           createdAt: FieldValue.serverTimestamp(),
         });
