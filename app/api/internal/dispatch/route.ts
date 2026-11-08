@@ -116,13 +116,22 @@ export async function POST(request: Request) {
     }
 
     const driversCollection = db.collection("drivers");
-    const [geohashSnapshots, legacySnapshot] = await Promise.all([
-      Promise.all(geohashPrefixes.map((prefix) => driversCollection
-        .where("isAvailable", "==", true)
-        .where("geohash", ">=", prefix)
-        .where("geohash", "<=", `${prefix}~`)
-        .limit(100)
-        .get())),
+    const [geohashDocuments, legacySnapshot] = await Promise.all([
+      Promise.all(geohashPrefixes.map(async (prefix) => {
+        // Page through the entire matching cell. A single limit(100) silently
+        // dropped nearby drivers whenever a dense cell contained >100 records.
+        const documents = [];
+        let query = driversCollection.where("isAvailable", "==", true)
+          .where("geohash", ">=", prefix)
+          .where("geohash", "<=", `${prefix}~`);
+        while (true) {
+          const page = await query.limit(100).get();
+          documents.push(...page.docs);
+          if (page.size < 100) break;
+          query = query.startAfter(page.docs[page.docs.length - 1]);
+        }
+        return documents;
+      })),
       // Include legacy driver documents that have fresh locations but no geohash.
       // The timestamp filter avoids an arbitrary first-100 scan; the cap bounds
       // migration-time reads while geohash queries cover indexed drivers nearby.
@@ -133,8 +142,8 @@ export async function POST(request: Request) {
         .get(),
     ]);
     const driverDocs = new Map(legacySnapshot.docs.map((doc) => [doc.id, doc] as const));
-    for (const snapshot of geohashSnapshots) {
-      for (const doc of snapshot.docs) driverDocs.set(doc.id, doc);
+    for (const documents of geohashDocuments) {
+      for (const doc of documents) driverDocs.set(doc.id, doc);
     }
 
     const candidates = [...driverDocs.values()].map((doc) => {
