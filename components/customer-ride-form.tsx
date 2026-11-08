@@ -228,7 +228,8 @@ export function CustomerRideForm() {
       mapMarkers.current.driver = null;
       return;
     }
-    if (!mapMarkers.current.driver) {
+    const isFirstDriverPosition = !mapMarkers.current.driver;
+    if (isFirstDriverPosition) {
       mapMarkers.current.driver = new google.maps.Marker({
         map,
         title: "موقع السائق",
@@ -245,8 +246,10 @@ export function CustomerRideForm() {
       });
     }
     mapMarkers.current.driver.setPosition({ lat: location.lat, lng: location.lng });
-    map.panTo({ lat: location.lat, lng: location.lng });
-  }, [tripDetails?.driverLocation?.lat, tripDetails?.driverLocation?.lng, mapsReady]);
+    if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
+      map.panTo({ lat: location.lat, lng: location.lng });
+    }
+  }, [tripDetails?.driverLocation?.lat, tripDetails?.driverLocation?.lng, pickupPoint, destinationPoint, mapsReady]);
 
   useEffect(() => {
     let active = true;
@@ -468,7 +471,7 @@ export function CustomerRideForm() {
 
       <aside className="space-y-4">
         <div className="rounded-3xl border border-white/10 bg-panel p-6">
-          <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مسار الرحلة</h3><Navigation className="text-gold" size={20}/></div>
+          <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-gold" size={20}/></div>
           <div className="relative h-64 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
             {mapsReady ? (
               <div ref={mapContainer} role="img" aria-label="خريطة تفاعلية لمواقع الانطلاق والوجهة والسائق" className="h-full w-full" />
