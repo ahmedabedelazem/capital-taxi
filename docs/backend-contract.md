@@ -3,7 +3,7 @@
 ## Scope and status
 
 This document defines the server boundary before any live Firebase integration.
-The customer screen remains a booking preview, the driver workspace is connected to availability/location/offers/acceptance APIs, and the admin screen remains a presentation prototype.
+The customer screen is connected to trip creation and status reads, the driver workspace is connected to availability/location/offers/acceptance APIs, and the admin screen remains a presentation prototype.
 The endpoints listed under the implemented sections are committed to the repository but are not deployed or connected to a configured Firebase environment.
 
 ## Non-negotiable security boundary
@@ -72,8 +72,11 @@ The worker performs staged proximity selection using the latest driver locations
 | Method | Route | Purpose | Authorization |
 | --- | --- | --- | --- |
 | POST | `/api/trips` | Create a customer trip request and server-side fare estimate | Verified customer session; required idempotency key |
+| GET | `/api/trips/:tripId` | Read trip status and latest timeline events | Trip owner, assigned driver, or verified admin |
 
 The request accepts `pickup` and `destination` objects with a short label and numeric latitude/longitude, plus `vehicleCategory` (`economy|family|private`) and `paymentMethod` (`cash|wallet`). The customer UI uses Google Places Autocomplete for address coordinates and browser geolocation only after the customer requests it. The server validates coordinates and preferences, rejects identical endpoints, checks both points against configured service-area bounds, calculates Haversine distance, and calculates the fare from the active server-owned tariff. Client-supplied fare and distance values are ignored. A required `Idempotency-Key` header prevents duplicate trip creation; reusing the same key with a different payload returns 409. Vehicle category and payment method are stored as preferences; the current tariff is not yet category-specific and wallet settlement is not implemented.
+
+The trip read route returns only the trip's operational summary and up to 20 latest timeline events. A non-owner receives 404, avoiding disclosure of whether another customer's trip exists. It does not return customer phone/email or driver private profile details.
 
 The route reads `config/tripPricing` and expects: `enabled: true`, `baseFare`, `perKm`, `minimumFare`, `maximumDistanceKm`, optional `roundingIncrement`, `version`, and `serviceArea: { minLat, maxLat, minLng, maxLng }`. The tariff must be provisioned by a trusted admin process. Missing or invalid pricing fails closed; no hard-coded fare is used. The trip, idempotency record, and initial status timeline event are created in one Firestore transaction.
 
