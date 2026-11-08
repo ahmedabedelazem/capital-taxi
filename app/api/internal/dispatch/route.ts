@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
-import { distanceKm, isValidPoint } from "@/lib/domain/geo";
+import { distanceKm, geohashQueryPrefixes, isValidPoint } from "@/lib/domain/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -100,11 +100,37 @@ export async function POST(request: Request) {
     if (!isValidPoint(tripPoint)) {
       return NextResponse.json({ ok: false, error: "trip_pickup_invalid" }, { status: 422 });
     }
-    const driverSnapshot = await db.collection("drivers")
-      .where("isAvailable", "==", true)
-      .limit(100)
-      .get();
-    const candidates = driverSnapshot.docs.map((doc) => {
+    // New location updates carry a 9-character geohash. Query a conservative
+    // bounding box at a coarser precision, then retain the exact distance test.
+    // A bounded legacy scan keeps drivers without geohash discoverable during rollout.
+    let geohashPrefixes: string[] = [];
+    for (let precision = 4; precision >= 1; precision -= 1) {
+      try {
+        geohashPrefixes = geohashQueryPrefixes(tripPoint, radii[stage] as number, precision);
+        break;
+      } catch (error) {
+        if (!(error instanceof RangeError) || error.message !== "geohash_query_too_broad" || precision === 1) {
+          throw error;
+        }
+      }
+    }
+
+    const driversCollection = db.collection("drivers");
+    const [geohashSnapshots, legacySnapshot] = await Promise.all([
+      Promise.all(geohashPrefixes.map((prefix) => driversCollection
+        .where("isAvailable", "==", true)
+        .where("geohash", ">=", prefix)
+        .where("geohash", "<=", `${prefix}~`)
+        .limit(100)
+        .get())),
+      driversCollection.where("isAvailable", "==", true).limit(100).get(),
+    ]);
+    const driverDocs = new Map(legacySnapshot.docs.map((doc) => [doc.id, doc] as const));
+    for (const snapshot of geohashSnapshots) {
+      for (const doc of snapshot.docs) driverDocs.set(doc.id, doc);
+    }
+
+    const candidates = [...driverDocs.values()].map((doc) => {
       const driver = doc.data();
       const location = driver.location && typeof driver.location === "object"
         ? driver.location as Record<string, unknown>

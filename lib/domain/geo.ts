@@ -2,7 +2,7 @@ export type GeoPoint = { lat: number; lng: number };
 
 const GEOHASH_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz";
 const EARTH_RADIUS_KM = 6371.0088;
-const MAX_QUERY_PREFIXES = 512;
+const MAX_QUERY_PREFIXES = 24;
 
 export function isValidPoint(value: unknown): value is GeoPoint {
   if (!value || typeof value !== "object") return false;
@@ -138,10 +138,11 @@ export function geohashQueryPrefixes(
   const maxLatIndex = cellIndex(maxLat, -90, grid.latitudeStep, grid.latitudeCells);
 
   const reachesPole = minLat <= -90 || maxLat >= 90;
-  const cosine = Math.cos(center.lat * Math.PI / 180);
-  const longitudeDelta = reachesPole || cosine <= 1e-12
+  const maxAbsoluteLatitude = Math.max(Math.abs(minLat), Math.abs(maxLat));
+  const worstCaseCosine = Math.cos(maxAbsoluteLatitude * Math.PI / 180);
+  const longitudeDelta = reachesPole || worstCaseCosine <= 1e-12
     ? 180
-    : Math.min(180, radiusKm / (111.32 * cosine));
+    : Math.min(180, radiusKm / (111.32 * worstCaseCosine));
 
   const longitudeIntervals: Array<[number, number]> = [];
   if (longitudeDelta >= 180) {
