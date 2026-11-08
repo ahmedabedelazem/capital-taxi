@@ -35,6 +35,24 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "trip_not_found" }, { status: 404 });
     }
 
+    const assignedDriverUid = typeof trip.assignedDriverUid === "string" ? trip.assignedDriverUid : null;
+    const canSeeDriverContact = isCustomerOwner &&
+      ["accepted", "driver_arrived", "in_progress"].includes(String(trip.status));
+    let driver: { fullName: string | null; phone: string | null; vehicleType: string | null; vehicleModel: string | null; plateNumber: string | null } | null = null;
+    if (assignedDriverUid && canSeeDriverContact) {
+      const application = await db.collection("driverApplications").doc(assignedDriverUid).get();
+      if (application.exists) {
+        const details = application.data() ?? {};
+        driver = {
+          fullName: typeof details.fullName === "string" ? details.fullName : null,
+          phone: typeof details.phone === "string" ? details.phone : null,
+          vehicleType: typeof details.vehicleType === "string" ? details.vehicleType : null,
+          vehicleModel: typeof details.vehicleModel === "string" ? details.vehicleModel : null,
+          plateNumber: typeof details.plateNumber === "string" ? details.plateNumber : null,
+        };
+      }
+    }
+
     const timelineSnapshot = await tripRef.collection("statusTimeline")
       .orderBy("createdAt", "desc")
       .limit(20)
@@ -60,7 +78,8 @@ export async function GET(
         distanceKm: typeof trip.distanceKm === "number" ? trip.distanceKm : null,
         vehicleCategory: typeof trip.vehicleCategory === "string" ? trip.vehicleCategory : null,
         paymentMethod: typeof trip.paymentMethod === "string" ? trip.paymentMethod : null,
-        assigned: typeof trip.assignedDriverUid === "string" && trip.assignedDriverUid.length > 0,
+        assigned: Boolean(assignedDriverUid),
+        driver,
         createdAt: trip.createdAt?.toDate?.().toISOString?.() ?? null,
         timeline,
       },
