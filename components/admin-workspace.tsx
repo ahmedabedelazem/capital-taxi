@@ -30,6 +30,21 @@ type AdminTrip = {
   updatedAt: string | null;
 };
 
+type SupportTicket = {
+  ticketId: string;
+  uid: string | null;
+  userRole: "customer" | "driver" | null;
+  category: string;
+  subject: string;
+  description: string;
+  tripId: string | null;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  priority: string;
+  adminNote: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 const tripStatusMeta: Record<string, { label: string; className: string }> = {
   pending: { label: "جديدة", className: "border-sky-300/20 bg-sky-300/10 text-sky-200" },
   searching: { label: "جارٍ البحث عن سائق", className: "border-amber-300/20 bg-amber-300/10 text-amber-200" },
@@ -53,6 +68,9 @@ export function AdminWorkspace() {
   const [active, setActive] = useState<(typeof sections)[number]["id"]>("overview");
   const [applications, setApplications] = useState<Application[]>([]);
   const [trips, setTrips] = useState<AdminTrip[]>([]);
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportBusyId, setSupportBusyId] = useState<string | null>(null);
   const [tripsLoading, setTripsLoading] = useState(false);
   const [tripStatusFilter, setTripStatusFilter] = useState("active");
   const [loading, setLoading] = useState(false);
@@ -124,6 +142,54 @@ export function AdminWorkspace() {
       setTripsLoading(false);
     }
   }, [tripStatusFilter]);
+
+  const loadSupportTickets = useCallback(async () => {
+    setSupportLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/support", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (response.status === 401) throw new Error("سجّل الدخول بحساب الإدارة.");
+      if (response.status === 403) throw new Error("هذا الحساب لا يملك صلاحية الإدارة.");
+      if (!response.ok) throw new Error("تعذر تحميل تذاكر الدعم.");
+      const data = await response.json() as { tickets?: SupportTicket[] };
+      setSupportTickets(Array.isArray(data.tickets) ? data.tickets : []);
+      setMessage("تم تحميل تذاكر الدعم من الخادم.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "حدث خطأ أثناء تحميل الدعم.");
+    } finally {
+      setSupportLoading(false);
+    }
+  }, []);
+
+  async function updateSupportTicket(ticketId: string, status: SupportTicket["status"]) {
+    setSupportBusyId(ticketId);
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/support", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId, status }),
+      });
+      if (response.status === 401 || response.status === 403) throw new Error("لا تملك صلاحية تحديث تذكرة الدعم.");
+      if (!response.ok) throw new Error("تعذر تحديث حالة التذكرة.");
+      setSupportTickets((current) => current.map((ticket) =>
+        ticket.ticketId === ticketId ? { ...ticket, status } : ticket
+      ));
+      setMessage("تم تحديث حالة التذكرة وتسجيل الإجراء في سجل الإدارة.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر تحديث التذكرة.");
+    } finally {
+      setSupportBusyId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (active === "support") void loadSupportTickets();
+  }, [active, loadSupportTickets]);
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
@@ -331,7 +397,7 @@ export function AdminWorkspace() {
       <section className="min-h-[360px] rounded-3xl border border-white/10 bg-panel p-5 md:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-gold">CONTROL CENTER</p><h2 className="mt-1 text-xl font-bold">{current.title}</h2></div>
           {active === "overview" && <button type="button" disabled={overviewLoading} onClick={() => setOverviewRefresh((value) => value + 1)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={overviewLoading ? "animate-spin" : ""}/> تحديث المؤشرات</button>}
-          {(active === "drivers" || active === "trips") && <button type="button" disabled={active === "drivers" ? loading : tripsLoading} onClick={() => void (active === "drivers" ? loadApplications() : loadTrips())} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={(active === "drivers" ? loading : tripsLoading) ? "animate-spin" : ""}/> تحديث القائمة</button>}
+          {(active === "drivers" || active === "trips" || active === "support") && <button type="button" disabled={active === "drivers" ? loading : active === "trips" ? tripsLoading : supportLoading} onClick={() => void (active === "drivers" ? loadApplications() : active === "trips" ? loadTrips() : loadSupportTickets())} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={(active === "drivers" ? loading : active === "trips" ? tripsLoading : supportLoading) ? "animate-spin" : ""}/> تحديث القائمة</button>}
           {active === "support" && <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-2 text-[11px] text-amber-200">قيد الاستكمال</span>}
         </div>
         {active === "overview" && <div className="mt-6 grid gap-4 sm:grid-cols-2">{overviewError && <p role="alert" className="sm:col-span-2 rounded-xl border border-rose-300/20 bg-rose-400/5 p-3 text-xs leading-6 text-rose-200">{overviewError}</p>}<div className="rounded-2xl bg-night p-5"><h3 className="font-bold">حالة المنصة</h3><p className="mt-3 text-sm leading-7 text-muted">تم ربط بعض خدمات العميل والسائق والإدارة بخدمات خادمية. لا تُعرض أرقام تشغيل غير متحققة.</p></div><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">الأولويات</h3><ul className="mt-3 space-y-2 text-sm text-muted"><li>• اعتماد السائقين ومراجعة الطلبات</li><li>• ضبط التعريفة ونطاق الخدمة</li><li>• تشغيل مجدول التوزيع الموثوق</li><li>• استكمال متابعة الرحلات والتقارير</li></ul></div></div>}
@@ -412,7 +478,18 @@ export function AdminWorkspace() {
             </form>
           </div>}
         </div>}
-        {active === "support" && <div className="mt-6 grid min-h-56 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><current.icon className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">قسم {current.label}</b><p className="mt-2 max-w-md text-xs leading-6 text-muted">قسم الدعم والشكاوى غير مربوط بعد بواجهة API أو مخزن تذاكر معتمد. لن يتم عرض بيانات افتراضية أو إنشاء سجلات قبل اعتماد بنية الدعم وصلاحياتها.</p></div></div>}
+        {active === "support" && <div className="mt-5 space-y-4">
+          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted"><span>{supportLoading ? "جارٍ تحميل التذاكر…" : `${supportTickets.length} تذكرة معروضة`}</span><span>أحدث 100 تذكرة</span></div>
+          {!supportLoading && supportTickets.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><CircleHelp className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">لا توجد تذاكر دعم حتى الآن</b><p className="mt-2 text-xs text-muted">ستظهر طلبات العملاء والسائقين هنا بعد إرسالها من واجهاتهم.</p></div></div>}
+          {supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-2xl border border-white/10 bg-night p-4 md:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold">{ticket.subject}</h3><p className="mt-1 text-[10px] text-muted" dir="ltr">{ticket.ticketId}</p></div><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px]">{ticket.status === "open" ? "مفتوحة" : ticket.status === "in_progress" ? "قيد المعالجة" : ticket.status === "resolved" ? "تم الحل" : "مغلقة"}</span></div>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted">{ticket.description}</p>
+            <div className="mt-3 grid gap-2 text-[11px] text-muted sm:grid-cols-3"><span>صاحب الطلب: {ticket.userRole === "driver" ? "سائق" : ticket.userRole === "customer" ? "عميل" : "غير محدد"} · <span dir="ltr">{ticket.uid ?? "—"}</span></span><span>التصنيف: {({trip:"رحلة",payment:"مدفوعات",driver:"سائق",account:"حساب",app:"التطبيق",other:"أخرى"} as Record<string,string>)[ticket.category] ?? "أخرى"}</span><span>تاريخ الإرسال: {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span></div>
+            {ticket.tripId && <p className="mt-2 text-[11px] text-muted">رقم الرحلة: <span dir="ltr">{ticket.tripId}</span></p>}
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3"><label className="text-xs text-muted" htmlFor={`support-${ticket.ticketId}`}>تحديث الحالة</label><select id={`support-${ticket.ticketId}`} value={ticket.status} disabled={supportBusyId !== null} onChange={(event) => void updateSupportTicket(ticket.ticketId, event.target.value as SupportTicket["status"])} className="rounded-lg border border-white/10 bg-panel px-3 py-2 text-xs text-white disabled:opacity-50"><option value="open">مفتوحة</option><option value="in_progress">قيد المعالجة</option><option value="resolved">تم الحل</option><option value="closed">مغلقة</option></select>{supportBusyId === ticket.ticketId && <span className="text-[11px] text-gold">جارٍ الحفظ…</span>}</div>
+          </article>)}
+        </div>}
       </section>
     </div>
   </div>;
