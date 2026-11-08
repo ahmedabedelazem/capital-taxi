@@ -331,9 +331,13 @@ export function CustomerRideForm() {
       });
       mapMarkers.current.driver = driverMarker;
     }
-    driverMarker.setPosition({ lat: location.lat, lng: location.lng });
+    const driverPosition = { lat: location.lat, lng: location.lng };
+    driverMarker.setPosition(driverPosition);
     if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
-      map.panTo({ lat: location.lat, lng: location.lng });
+      map.panTo(driverPosition);
+    } else if (map.getBounds() && !map.getBounds()?.contains(driverPosition)) {
+      // Keep the live driver marker visible without resetting the route viewport on every GPS update.
+      map.panTo(driverPosition);
     }
   }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapReady]);
 
