@@ -53,6 +53,25 @@ export async function GET(
       }
     }
 
+    let driverLocation: { lat: number; lng: number; updatedAt: string } | null = null;
+    if (isCustomerOwner && assignedDriverUid && ["accepted", "driver_arrived", "in_progress"].includes(String(trip.status))) {
+      const driverSnapshot = await db.collection("drivers").doc(assignedDriverUid).get();
+      const driverState = driverSnapshot.data() ?? {};
+      const location = driverState.location;
+      const updatedAt = driverState.locationUpdatedAt;
+      const updatedAtMillis = typeof updatedAt?.toMillis === "function" ? updatedAt.toMillis() : 0;
+      const ageMs = Date.now() - updatedAtMillis;
+      if (location && typeof location.lat === "number" && Number.isFinite(location.lat) &&
+          typeof location.lng === "number" && Number.isFinite(location.lng) &&
+          updatedAtMillis > 0 && ageMs >= 0 && ageMs <= 120_000) {
+        driverLocation = {
+          lat: location.lat,
+          lng: location.lng,
+          updatedAt: updatedAt.toDate().toISOString(),
+        };
+      }
+    }
+
     const timelineSnapshot = await tripRef.collection("statusTimeline")
       .orderBy("createdAt", "desc")
       .limit(20)
@@ -80,6 +99,7 @@ export async function GET(
         paymentMethod: typeof trip.paymentMethod === "string" ? trip.paymentMethod : null,
         assigned: Boolean(assignedDriverUid),
         driver,
+        driverLocation,
         createdAt: trip.createdAt?.toDate?.().toISOString?.() ?? null,
         timeline,
       },
