@@ -12,9 +12,13 @@ type TripOffer = {
   expiresAt: string;
 };
 
+type Point = { lat: number; lng: number };
+
 type ActiveTrip = {
   tripId: string;
   status: string;
+  pickupPoint: Point | null;
+  destinationPoint: Point | null;
   pickupLabel: string | null;
   destinationLabel: string | null;
   fareEstimate: number | null;
@@ -56,6 +60,13 @@ export function DriverWorkspace() {
   const [message, setMessage] = useState("سجّل الدخول بحساب سائق معتمد لتفعيل الخدمات.");
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapMessage, setMapMessage] = useState("جارٍ تجهيز خريطة الرحلة.");
+  const [routeSummary, setRouteSummary] = useState("");
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const pickupMarker = useRef<google.maps.Marker | null>(null);
+  const destinationMarker = useRef<google.maps.Marker | null>(null);
   const [showApplication, setShowApplication] = useState(false);
   const [application, setApplication] = useState({ fullName: "", phone: "", vehicleType: "ملاكي", vehicleModel: "", plateNumber: "" });
   const [applicationBusy, setApplicationBusy] = useState(false);
@@ -70,6 +81,149 @@ export function DriverWorkspace() {
   const [supportHistoryLoading, setSupportHistoryLoading] = useState(true);
   const [supportHistoryError, setSupportHistoryError] = useState("");
   const lastLocationSentAt = useRef(0);
+
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) {
+      setMapMessage("خريطة الرحلة تحتاج إعداد مفتاح Google Maps في بيئة التشغيل.");
+      return;
+    }
+    let active = true;
+    const ready = () => {
+      if (!active || !window.google?.maps) return;
+      setMapReady(true);
+      setMapMessage("خريطة الرحلة جاهزة.");
+    };
+    if (window.google?.maps) {
+      ready();
+      return () => { active = false; };
+    }
+    const existing = document.querySelector<HTMLScriptElement>("script[data-capital-taxi-maps]");
+    if (existing) {
+      existing.addEventListener("load", ready);
+      return () => {
+        active = false;
+        existing.removeEventListener("load", ready);
+      };
+    }
+    const script = document.createElement("script");
+    script.dataset.capitalTaxiMaps = "true";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=ar&region=EG`;
+    script.async = true;
+    script.defer = true;
+    script.onload = ready;
+    script.onerror = () => {
+      if (active) setMapMessage("تعذر تحميل Google Maps. راجع المفتاح وتفعيل Maps JavaScript API.");
+    };
+    document.head.appendChild(script);
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!mapReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
+    const map = new google.maps.Map(mapContainer.current, {
+      center: { lat: 31.132, lng: 33.803 },
+      zoom: 12,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      clickableIcons: false,
+      gestureHandling: "cooperative",
+      backgroundColor: "#101923",
+      styles: [
+        { elementType: "geometry", stylers: [{ color: "#182536" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#d8e0eb" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#101923" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#34445a" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#102b42" }] },
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+      ],
+    });
+    mapInstance.current = map;
+    return () => {
+      pickupMarker.current?.setMap(null);
+      destinationMarker.current?.setMap(null);
+      pickupMarker.current = null;
+      destinationMarker.current = null;
+      mapInstance.current = null;
+    };
+  }, [mapReady]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !window.google?.maps) return;
+    const pickup = activeTrip?.pickupPoint ?? null;
+    const destination = activeTrip?.destinationPoint ?? null;
+    if (pickup) {
+      if (!pickupMarker.current) pickupMarker.current = new google.maps.Marker({
+        map, title: "نقطة الانطلاق", label: { text: "ب", color: "#101923", fontWeight: "700" },
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#34d399", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+      });
+      pickupMarker.current.setPosition(pickup);
+    } else if (pickupMarker.current) {
+      pickupMarker.current.setMap(null);
+      pickupMarker.current = null;
+    }
+    if (destination) {
+      if (!destinationMarker.current) destinationMarker.current = new google.maps.Marker({
+        map, title: "الوجهة", label: { text: "و", color: "#101923", fontWeight: "700" },
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#d5ae63", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+      });
+      destinationMarker.current.setPosition(destination);
+    } else if (destinationMarker.current) {
+      destinationMarker.current.setMap(null);
+      destinationMarker.current = null;
+    }
+    if (pickup && destination) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(pickup);
+      bounds.extend(destination);
+      map.fitBounds(bounds, 56);
+    } else if (pickup) {
+      map.panTo(pickup);
+      map.setZoom(15);
+    } else if (destination) {
+      map.panTo(destination);
+      map.setZoom(15);
+    }
+  }, [activeTrip?.pickupPoint, activeTrip?.destinationPoint, mapReady]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    const pickup = activeTrip?.pickupPoint;
+    const destination = activeTrip?.destinationPoint;
+    if (!map || !window.google?.maps || !pickup || !destination) {
+      setRouteSummary("");
+      return;
+    }
+    let active = true;
+    const renderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: true,
+      preserveViewport: true,
+      polylineOptions: { strokeColor: "#d5ae63", strokeOpacity: 0.95, strokeWeight: 6 },
+    });
+    void new google.maps.DirectionsService().route({
+      origin: pickup,
+      destination,
+      travelMode: google.maps.TravelMode.DRIVING,
+      provideRouteAlternatives: false,
+      region: "EG",
+    }).then((result) => {
+      if (!active) return;
+      renderer.setDirections(result);
+      const leg = result.routes[0]?.legs[0];
+      setRouteSummary(leg?.distance?.text && leg.duration?.text
+        ? `مسار القيادة: ${leg.distance.text} • ${leg.duration.text}`
+        : "تم رسم مسار القيادة بين النقطتين.");
+    }).catch(() => {
+      if (active) setRouteSummary("تعذر حساب مسار القيادة. تأكد من تفعيل Directions API.");
+    });
+    return () => {
+      active = false;
+      renderer.setMap(null);
+    };
+  }, [activeTrip?.pickupPoint, activeTrip?.destinationPoint, mapReady]);
 
   const loadOffers = useCallback(async () => {
     const response = await fetch("/api/driver/offers", {
@@ -430,6 +584,11 @@ export function DriverWorkspace() {
             <p className="mt-2 text-sm"><span className="text-muted">إلى:</span> {activeTrip?.destinationLabel || "جارٍ التحميل…"}</p>
             <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted"><span>الأجرة التقديرية: {activeTrip?.fareEstimate ?? "—"} ج.م</span><span>المسافة: {activeTrip?.distanceKm ?? "—"} كم</span></div>
             <p className="mt-3 break-all text-[10px] text-muted" dir="ltr">{activeTripId}</p>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3"><b className="text-xs">خريطة الرحلة</b><span className="text-[10px] text-muted">{routeSummary || mapMessage}</span></div>
+              <div ref={mapContainer} className="h-[280px] w-full sm:h-[340px]" role="img" aria-label="خريطة توضح نقطة الانطلاق والوجهة ومسار القيادة" />
+              {activeTrip && (!activeTrip.pickupPoint || !activeTrip.destinationPoint) && <p className="border-t border-white/10 px-4 py-3 text-xs leading-6 text-amber-200">إحداثيات إحدى نقطتي الرحلة غير متاحة؛ لا يمكن رسم المسار كاملاً.</p>}
+            </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {activeTrip?.status === "accepted" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("driver_arrived")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">تأكيد الوصول لنقطة الانطلاق</button>}
               {activeTrip?.status === "driver_arrived" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("in_progress")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">بدء الرحلة</button>}
