@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BadgeCheck, CarFront, CircleDollarSign, ClipboardList, MapPin, Power, ShieldCheck, WalletCards } from "lucide-react";
 
 type TripOffer = {
@@ -22,7 +22,7 @@ export function DriverWorkspace() {
   const [acceptedTripId, setAcceptedTripId] = useState<string | null>(null);
   const lastLocationSentAt = useRef(0);
 
-  async function loadOffers() {
+  const loadOffers = useCallback(async () => {
     const response = await fetch("/api/driver/offers", {
       credentials: "same-origin",
       cache: "no-store",
@@ -32,7 +32,27 @@ export function DriverWorkspace() {
     if (!response.ok) throw new Error("تعذر تحميل عروض الرحلات حالياً.");
     const data = await response.json() as { offers?: TripOffer[] };
     setOffers(Array.isArray(data.offers) ? data.offers : []);
-  }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    void fetch("/api/driver/availability", { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 401) throw new Error("سجّل الدخول بحساب سائق معتمد.");
+        if (response.status === 403) throw new Error("حساب السائق غير معتمد من الإدارة بعد.");
+        if (!response.ok) throw new Error("تعذر قراءة حالة حساب السائق.");
+        return response.json() as Promise<{ isAvailable?: boolean; activeTripId?: string | null }>;
+      })
+      .then((data) => {
+        if (!mounted) return;
+        setAvailable(data.isAvailable === true);
+        setActiveTripId(data.activeTripId ?? null);
+      })
+      .catch((error: unknown) => {
+        if (mounted) setMessage(error instanceof Error ? error.message : "تعذر تحميل حالة السائق.");
+      });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     if (!available) return;
@@ -85,7 +105,7 @@ export function DriverWorkspace() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [available]);
+  }, [available, loadOffers]);
 
   async function toggleAvailability() {
     setBusy(true);
