@@ -26,12 +26,11 @@ export async function GET(request: Request) {
 
   try {
     const snapshot = await getServerDb().collection("trips")
+      .where("customerUid", "==", user.uid)
       .orderBy("createdAt", "desc")
-      .limit(100)
+      .limit(20)
       .get();
     const trips = snapshot.docs
-      .filter((doc) => doc.data().customerUid === user.uid)
-      .slice(0, 20)
       .map((doc) => {
         const trip = doc.data();
         return {
