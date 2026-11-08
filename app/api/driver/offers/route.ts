@@ -31,7 +31,15 @@ export async function GET(request: Request) {
       .get();
     const now = Date.now();
     const eligible = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          tripId: typeof data.tripId === "string" ? data.tripId : null,
+          status: data.status,
+          expiresAt: data.expiresAt,
+        };
+      })
       .filter((offer) => offer.status === "offered" &&
         typeof offer.expiresAt?.toMillis === "function" &&
         offer.expiresAt.toMillis() > now)
