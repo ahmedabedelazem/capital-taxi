@@ -15,6 +15,20 @@ type Application = {
   submittedAt: string | null;
 };
 
+type AdminTrip = {
+  tripId: string;
+  status: string;
+  pickupLabel: string | null;
+  destinationLabel: string | null;
+  fareEstimate: number | null;
+  distanceKm: number | null;
+  vehicleCategory: string | null;
+  paymentMethod: string | null;
+  driverUid: string | null;
+  driverLocation: { lat: number; lng: number; updatedAt: string } | null;
+  createdAt: string | null;
+};
+
 const sections = [
   { id: "overview", label: "نظرة عامة", icon: ChartNoAxesCombined, title: "مؤشرات التشغيل" },
   { id: "drivers", label: "طلبات السائقين", icon: CarFront, title: "مراجعة طلبات السائقين" },
@@ -26,6 +40,8 @@ const sections = [
 export function AdminWorkspace() {
   const [active, setActive] = useState<(typeof sections)[number]["id"]>("overview");
   const [applications, setApplications] = useState<Application[]>([]);
+  const [trips, setTrips] = useState<AdminTrip[]>([]);
+  const [tripsLoading, setTripsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busyUid, setBusyUid] = useState<string | null>(null);
   const [message, setMessage] = useState("لوحة الإدارة تعرض بيانات الخادم بعد تسجيل الدخول بحساب مدير معتمد.");
@@ -34,6 +50,27 @@ export function AdminWorkspace() {
   const [configLoading, setConfigLoading] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
   const current = sections.find((section) => section.id === active)!;
+
+  const loadTrips = useCallback(async () => {
+    setTripsLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/trips", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (response.status === 401) throw new Error("سجّل الدخول بحساب الإدارة.");
+      if (response.status === 403) throw new Error("هذا الحساب لا يملك صلاحية الإدارة.");
+      if (!response.ok) throw new Error("تعذر تحميل الرحلات.");
+      const data = await response.json() as { trips?: AdminTrip[] };
+      setTrips(Array.isArray(data.trips) ? data.trips : []);
+      setMessage("تم تحديث قائمة الرحلات من الخادم.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "حدث خطأ أثناء تحميل الرحلات.");
+    } finally {
+      setTripsLoading(false);
+    }
+  }, []);
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
@@ -59,6 +96,10 @@ export function AdminWorkspace() {
   useEffect(() => {
     if (active === "drivers") void loadApplications();
   }, [active, loadApplications]);
+
+  useEffect(() => {
+    if (active === "trips") void loadTrips();
+  }, [active, loadTrips]);
 
   useEffect(() => {
     if (active !== "pricing") return;
@@ -202,7 +243,7 @@ export function AdminWorkspace() {
       </nav>
       <section className="min-h-[360px] rounded-3xl border border-white/10 bg-panel p-5 md:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-gold">CONTROL CENTER</p><h2 className="mt-1 text-xl font-bold">{current.title}</h2></div>
-          {active === "drivers" && <button type="button" disabled={loading} onClick={() => void loadApplications()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""}/> تحديث القائمة</button>}
+          {(active === "drivers" || active === "trips") && <button type="button" disabled={active === "drivers" ? loading : tripsLoading} onClick={() => void (active === "drivers" ? loadApplications() : loadTrips())} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-xs text-muted hover:border-gold/40 disabled:opacity-50"><RefreshCw size={15} className={(active === "drivers" ? loading : tripsLoading) ? "animate-spin" : ""}/> تحديث القائمة</button>}
           {active !== "drivers" && <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-2 text-[11px] text-amber-200">قيد الاستكمال</span>}
         </div>
         {active === "overview" && <div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">حالة المنصة</h3><p className="mt-3 text-sm leading-7 text-muted">تم ربط بعض خدمات العميل والسائق والإدارة بخدمات خادمية. لا تُعرض أرقام تشغيل غير متحققة.</p></div><div className="rounded-2xl bg-night p-5"><h3 className="font-bold">الأولويات</h3><ul className="mt-3 space-y-2 text-sm text-muted"><li>• اعتماد السائقين ومراجعة الطلبات</li><li>• ضبط التعريفة ونطاق الخدمة</li><li>• تشغيل مجدول التوزيع الموثوق</li><li>• استكمال متابعة الرحلات والتقارير</li></ul></div></div>}
@@ -215,6 +256,28 @@ export function AdminWorkspace() {
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><span className="block text-[11px] text-muted">نوع المركبة</span><b>{application.vehicleType}</b></div><div><span className="block text-[11px] text-muted">الموديل</span><b>{application.vehicleModel}</b></div><div><span className="block text-[11px] text-muted">رقم اللوحة</span><b>{application.plateNumber}</b></div></div>
             <p className="mt-3 text-[10px] text-muted">معرّف الحساب: <span dir="ltr">{application.uid}</span>{application.submittedAt ? ` • تاريخ الإرسال: ${new Date(application.submittedAt).toLocaleString("ar-EG")}` : ""}</p>
             <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4"><button type="button" disabled={busyUid !== null} onClick={() => void decide(application.uid, "approved")} className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/15 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400/25 disabled:opacity-40"><BadgeCheck size={15}/>{busyUid===application.uid ? "جارٍ الحفظ…" : "اعتماد السائق"}</button><button type="button" disabled={busyUid !== null} onClick={() => void decide(application.uid, "rejected")} className="inline-flex items-center gap-2 rounded-xl border border-rose-300/20 px-4 py-2.5 text-xs text-rose-200 hover:bg-rose-400/10 disabled:opacity-40"><XCircle size={15}/> رفض الطلب</button></div>
+          </article>)}
+        </div>}
+        {active === "trips" && <div className="mt-5 space-y-4">
+          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
+          {tripsLoading && <div className="py-12 text-center text-sm text-muted">جارٍ تحميل الرحلات…</div>}
+          {!tripsLoading && trips.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><Activity className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">لا توجد رحلات نشطة حالياً</b><p className="mt-2 text-xs text-muted">ستظهر هنا الرحلات التي يجري البحث لها عن سائق أو تم قبولها أو تنفيذها.</p></div></div>}
+          {trips.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-white/10 bg-night p-4 md:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div><h3 className="font-bold">{trip.pickupLabel || "نقطة انطلاق غير متاحة"} <span className="text-gold">←</span> {trip.destinationLabel || "وجهة غير متاحة"}</h3><p className="mt-2 text-[10px] text-muted" dir="ltr">{trip.tripId}</p></div>
+              <span className="rounded-full border border-gold/20 bg-gold/5 px-3 py-1.5 text-[11px] text-gold">{({pending:"جديد",searching:"جارٍ البحث",accepted:"تم القبول",driver_arrived:"السائق وصل",in_progress:"قيد التنفيذ"} as Record<string,string>)[trip.status] || trip.status}</span>
+            </div>
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
+              <div><span className="block text-[11px] text-muted">الأجرة التقديرية</span><b>{trip.fareEstimate ?? "—"} ج.م</b></div>
+              <div><span className="block text-[11px] text-muted">المسافة</span><b>{trip.distanceKm ?? "—"} كم</b></div>
+              <div><span className="block text-[11px] text-muted">فئة المركبة</span><b>{trip.vehicleCategory || "—"}</b></div>
+              <div><span className="block text-[11px] text-muted">الدفع</span><b>{trip.paymentMethod === "cash" ? "نقداً" : trip.paymentMethod === "wallet" ? "محفظة" : "—"}</b></div>
+            </div>
+            <div className="mt-4 border-t border-white/10 pt-3 text-xs text-muted">
+              <p>السائق: {trip.driverUid ? <span dir="ltr">{trip.driverUid}</span> : "لم يتم التعيين بعد"}</p>
+              <p className="mt-1">الموقع: {trip.driverLocation ? <span dir="ltr">{trip.driverLocation.lat.toFixed(5)}, {trip.driverLocation.lng.toFixed(5)} · آخر تحديث {new Date(trip.driverLocation.updatedAt).toLocaleTimeString("ar-EG")}</span> : "لا يوجد موقع حديث متاح"}</p>
+              <p className="mt-1">وقت الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</p>
+            </div>
           </article>)}
         </div>}
         {active === "pricing" && <div className="mt-5 space-y-5">
