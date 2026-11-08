@@ -2,7 +2,7 @@ export type GeoPoint = { lat: number; lng: number };
 
 const GEOHASH_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz";
 const EARTH_RADIUS_KM = 6371.0088;
-const MAX_QUERY_PREFIXES = 24;
+const MAX_QUERY_PREFIXES = 512;
 
 export function isValidPoint(value: unknown): value is GeoPoint {
   if (!value || typeof value !== "object") return false;
