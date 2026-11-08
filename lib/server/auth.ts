@@ -21,7 +21,7 @@ function readCookie(request: Request, name: string): string | null {
     const separator = part.indexOf("=");
     if (separator < 0) continue;
     if (part.slice(0, separator).trim() === name) {
-      return decodeURIComponent(part.slice(separator + 1).trim());
+      return part.slice(separator + 1).trim();
     }
   }
   return null;
