@@ -373,6 +373,7 @@ export function DriverWorkspace() {
       });
       if (!response.ok) {
         if (response.status === 409) throw new Error("سبق قبول الرحلة أو لم تعد متاحة. حدّث العروض.");
+        if (response.status === 404) throw new Error("انتهت صلاحية العرض أو لم يعد متاحاً. تم تحديث قائمة العروض.");
         if (response.status === 401) throw new Error("انتهت الجلسة. سجّل الدخول مرة أخرى.");
         throw new Error("تعذر قبول الرحلة.");
       }
