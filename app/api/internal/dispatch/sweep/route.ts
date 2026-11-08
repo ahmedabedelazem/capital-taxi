@@ -78,12 +78,14 @@ export async function POST(request: Request) {
       stage: 0,
     }));
     const searchingDue: DispatchTask[] = [];
+    let invalidSearchingStage = 0;
     for (const snapshot of searchingSnapshot.docs) {
       const trip = snapshot.data();
-      const stage = typeof trip.dispatchStage === "number" && Number.isInteger(trip.dispatchStage)
-        ? trip.dispatchStage : 0;
-      if (stage >= 1 && stage <= radii.length) {
+      const stage = trip.dispatchStage;
+      if (typeof stage === "number" && Number.isInteger(stage) && stage >= 1 && stage <= radii.length) {
         searchingDue.push({ tripId: snapshot.id, stage });
+      } else {
+        invalidSearchingStage += 1;
       }
     }
 
@@ -129,6 +131,7 @@ export async function POST(request: Request) {
       processed,
       deferred,
       failed,
+      invalidSearchingStage,
       truncated: due > batch.length,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
