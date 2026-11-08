@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "tsc --noEmit false --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --strict --esModuleInterop --rootDir . --outDir .test-dist lib/domain/trip.ts tests/trip-domain.test.ts && node --test .test-dist/tests/trip-domain.test.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
