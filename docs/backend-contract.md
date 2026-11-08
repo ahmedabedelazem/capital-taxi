@@ -3,7 +3,7 @@
 ## Scope and status
 
 This document defines the server boundary before any live Firebase integration.
-The current customer, driver, and admin screens are presentation prototypes.
+The customer screen remains a booking preview, the driver workspace is connected to availability/location/offers/acceptance APIs, and the admin screen remains a presentation prototype.
 The endpoints listed under the implemented sections are committed to the repository but are not deployed or connected to a configured Firebase environment.
 
 ## Non-negotiable security boundary
@@ -46,6 +46,7 @@ Driver approval is enforced by both a signed Firebase `driver` custom claim and 
 
 | Method | Route | Purpose | Authorization |
 | --- | --- | --- | --- |
+| GET | `/api/driver/availability` | Read the caller's current availability and active trip ID | Verified approved driver |
 | POST | `/api/driver/availability` | Set the caller's online/offline state | Verified approved driver; server checks the application record again |
 | GET | `/api/driver/offers` | List unexpired offers assigned to the caller | Verified approved and currently available driver |
 | POST | `/api/trips/:tripId/accept` | Accept the caller's assigned offer | Verified approved, available driver; Firestore transaction |
@@ -64,7 +65,7 @@ The following is the canonical Firestore shape expected by these endpoints. It i
 - `tripOffers/{tripId}_{driverUid}`: `tripId`, `driverUid`, `status: offered|accepted|expired|withdrawn`, and Firestore Timestamp `expiresAt`. Create offers only from a trusted dispatch service.
 - `trips/{tripId}/statusTimeline/{eventId}`: append-only event with `from`, `to`, `actorType`, `actorUid`, and server timestamp `createdAt`.
 
-These routes do not create trips or offers and do not implement geographic dispatch yet. A trusted dispatch worker must create eligible offers; the browser cannot nominate itself for an arbitrary trip.
+The worker performs staged proximity selection using the latest driver locations and creates targeted offers. It is an internal API, not a scheduler: a trusted queue or scheduled job must invoke each stage after the configured offer window. It does not create customer trips; the customer trip endpoint creates a pending trip first. The browser cannot nominate itself for an arbitrary trip.
 
 ## Implemented customer trip creation API
 
@@ -88,7 +89,7 @@ The worker endpoint requires `DISPATCH_WORKER_SECRET` (at least 32 characters) a
 
 The endpoint reads `config/dispatch` with `stageRadiiKm: number[]`, `offerTtlSeconds` (15–300), and `maxOffersPerStage` (1–30). Stage values are zero-based; after the final offer window expires, the scheduler calls the final stage index (`stageRadiiKm.length`) to mark the still-searching trip `no_driver`, unless a live offer remains. If the trip was accepted or otherwise changed, stale dispatch attempts are rejected.
 
-Operational driver records must store `isAvailable`, optional `activeTripId`, `location: { lat, lng }`, and Firestore Timestamp `locationUpdatedAt`. This worker does not obtain GPS itself and does not start a scheduler. A trusted scheduled job/queue must call it at the right intervals, and a separate authenticated location-update API is still required before live driver GPS can be safely used.
+Operational driver records must store `isAvailable`, optional `activeTripId`, `location: { lat, lng }`, and Firestore Timestamp `locationUpdatedAt`. The worker does not obtain GPS itself and does not start a scheduler. The authenticated driver location API is implemented separately; a trusted scheduled job/queue must call the worker at the right intervals.
 
 ## Implemented driver location update API
 
