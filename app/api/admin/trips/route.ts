@@ -9,9 +9,9 @@ const filterableStatuses = new Set([
   "completed", "cancelled", "no_driver",
 ]);
 
-const activeStatuses = new Set([
+const activeStatuses = [
   "pending", "searching", "accepted", "driver_arrived", "in_progress",
-]);
+];
 
 function iso(value: unknown): string | null {
   if (value && typeof value === "object" && "toDate" in value &&
@@ -39,14 +39,16 @@ export async function GET(request: Request) {
 
   try {
     const db = getServerDb();
-    const snapshot = await db.collection("trips").orderBy("createdAt", "desc").limit(100).get();
-    const records = snapshot.docs
-      .map((doc) => ({ id: doc.id, data: doc.data() }))
-      .filter(({ data }) => requestedStatus === "all"
-        ? true
-        : requestedStatus
-          ? data.status === requestedStatus
-          : activeStatuses.has(String(data.status)));
+    const tripsCollection = db.collection("trips");
+    const tripsQuery = requestedStatus === "all"
+      ? tripsCollection.orderBy("createdAt", "desc").limit(50)
+      : requestedStatus
+        ? tripsCollection.where("status", "==", requestedStatus)
+          .orderBy("createdAt", "desc").limit(50)
+        : tripsCollection.where("status", "in", activeStatuses)
+          .orderBy("createdAt", "desc").limit(50);
+    const snapshot = await tripsQuery.get();
+    const records = snapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
 
     const driverUids = [...new Set(records
       .map(({ data }) => data.assignedDriverUid)
@@ -56,7 +58,7 @@ export async function GET(request: Request) {
       : [];
     const drivers = new Map(driverSnapshots.map((doc) => [doc.id, doc.data() ?? {}]));
 
-    const trips = records.slice(0, 50).map(({ id, data }) => {
+    const trips = records.map(({ id, data }) => {
       const driverUid = typeof data.assignedDriverUid === "string" ? data.assignedDriverUid : null;
       const driver = driverUid ? drivers.get(driverUid) : undefined;
       const locationUpdatedAt = iso(driver?.locationUpdatedAt);

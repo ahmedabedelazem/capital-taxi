@@ -4,106 +4,66 @@
       "collectionGroup": "trips",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "trips",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "lastDispatchAt",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "trips",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "customerUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "lastDispatchAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "customerUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "tripOffers",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "tripId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "expiresAt",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "tripId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "tripOffers",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "driverUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "expiresAt",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "driverUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "drivers",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "isAvailable",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "geohash",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "isAvailable", "order": "ASCENDING" },
+        { "fieldPath": "geohash", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "drivers",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "isAvailable",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "locationUpdatedAt",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "isAvailable", "order": "ASCENDING" },
+        { "fieldPath": "locationUpdatedAt", "order": "DESCENDING" }
       ]
     }
   ],
