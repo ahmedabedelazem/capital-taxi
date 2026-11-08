@@ -412,7 +412,7 @@ export function AdminWorkspace() {
             </form>
           </div>}
         </div>}
-        {active !== "overview" && active !== "drivers" && active !== "pricing" && <div className="mt-6 grid min-h-56 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><current.icon className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">قسم {current.label}</b><p className="mt-2 max-w-md text-xs leading-6 text-muted">سيتم تفعيل أدوات هذا القسم بعد إضافة API والتحقق من صلاحية المدير على الخادم.</p></div></div>}
+        {active === "support" && <div className="mt-6 grid min-h-56 place-items-center rounded-2xl border border-dashed border-white/10 p-6 text-center"><div><current.icon className="mx-auto mb-3 text-gold" size={30}/><b className="block text-sm">قسم {current.label}</b><p className="mt-2 max-w-md text-xs leading-6 text-muted">قسم الدعم والشكاوى غير مربوط بعد بواجهة API أو مخزن تذاكر معتمد. لن يتم عرض بيانات افتراضية أو إنشاء سجلات قبل اعتماد بنية الدعم وصلاحياتها.</p></div></div>}
       </section>
     </div>
   </div>;
