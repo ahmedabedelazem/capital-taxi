@@ -245,11 +245,13 @@ export function CustomerRideForm() {
         },
       });
     }
-    mapMarkers.current.driver.setPosition({ lat: location.lat, lng: location.lng });
+    const driverMarker = mapMarkers.current.driver;
+    if (!driverMarker) return;
+    driverMarker.setPosition({ lat: location.lat, lng: location.lng });
     if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
       map.panTo({ lat: location.lat, lng: location.lng });
     }
-  }, [tripDetails?.driverLocation?.lat, tripDetails?.driverLocation?.lng, pickupPoint, destinationPoint, mapsReady]);
+  }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapsReady]);
 
   useEffect(() => {
     let active = true;
