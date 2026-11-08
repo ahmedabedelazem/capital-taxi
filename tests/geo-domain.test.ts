@@ -75,8 +75,9 @@ test("covers both sides of the antimeridian", () => {
 });
 
 test("covers polar bounds and validates query arguments", () => {
-  const prefixes = geohashQueryPrefixes({ lat: 89.9, lng: 10 }, 30, 4);
+  const prefixes = geohashQueryPrefixes({ lat: 89.9, lng: 10 }, 30, 3);
   assert.ok(prefixes.length > 0);
+  assert.throws(() => geohashQueryPrefixes({ lat: 89.9, lng: 10 }, 30, 4), /geohash_query_too_broad/);
   assert.throws(() => geohashQueryPrefixes({ lat: 0, lng: 0 }, -1), /invalid_query_radius/);
   assert.throws(() => geohashQueryPrefixes({ lat: 91, lng: 0 }, 1), /invalid_geographic_point/);
   assert.throws(() => geohashQueryPrefixes({ lat: 0, lng: 0 }, 1, 0), /invalid_geohash_precision/);
