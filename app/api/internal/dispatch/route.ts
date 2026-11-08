@@ -60,8 +60,9 @@ export async function POST(request: Request) {
     const radii = config.stageRadiiKm;
     const ttlSeconds = config.offerTtlSeconds;
     const maxOffers = config.maxOffersPerStage;
-    if (!Array.isArray(radii) || !radii.length ||
+    if (!Array.isArray(radii) || !radii.length || radii.length > 6 ||
         !radii.every((v) => typeof v === "number" && Number.isFinite(v) && v > 0) ||
+        radii.some((v, index) => index > 0 && v <= (radii[index - 1] as number)) ||
         typeof ttlSeconds !== "number" || !Number.isInteger(ttlSeconds) || ttlSeconds < 15 || ttlSeconds > 300 ||
         typeof maxOffers !== "number" || !Number.isInteger(maxOffers) || maxOffers < 1 || maxOffers > 30 ||
         stage > radii.length) {
