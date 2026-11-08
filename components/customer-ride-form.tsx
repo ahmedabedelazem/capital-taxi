@@ -73,7 +73,7 @@ export function CustomerRideForm() {
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelMessage, setCancelMessage] = useState("");
-  const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number; distanceKm: number; status: string } | null>(null);
+  const [booking, setBooking] = useState<{ tripId: string; fareEstimate: number | null; distanceKm: number | null; status: string } | null>(null);
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [tripHistory, setTripHistory] = useState<TripHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -341,7 +341,23 @@ export function CustomerRideForm() {
         return response.json() as Promise<{ trips?: TripHistoryItem[] }>;
       })
       .then((data) => {
-        if (active) setTripHistory(Array.isArray(data.trips) ? data.trips : []);
+        if (!active) return;
+        const trips = Array.isArray(data.trips) ? data.trips : [];
+        setTripHistory(trips);
+        const currentTrip = trips.find((trip) =>
+          ["pending", "searching", "accepted", "driver_arrived", "in_progress"].includes(trip.status)
+        );
+        if (currentTrip) {
+          setPickup(currentTrip.pickupLabel ?? "");
+          setDestination(currentTrip.destinationLabel ?? "");
+          setBooking({
+            tripId: currentTrip.tripId,
+            fareEstimate: currentTrip.fareEstimate,
+            distanceKm: currentTrip.distanceKm,
+            status: currentTrip.status,
+          });
+          setPreview(true);
+        }
       })
       .catch(() => {
         if (active) setLocationMessage("تعذر تحميل سجل الرحلات حالياً.");
@@ -609,8 +625,8 @@ export function CustomerRideForm() {
           {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm">
             <b className="text-emerald-300">طلب الرحلة مسجل</b>
             <p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p>
-            <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم</b></p>
-            <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate} ج.م</b></p>
+            <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm === null ? "غير متاحة" : `${booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم`}</b></p>
+            <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate === null ? "غير متاح" : `${booking.fareEstimate} ج.م`}</b></p>
             <p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
             {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
             {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-white/5 p-3 text-xs leading-6 text-muted">{cancelMessage}</p>}
