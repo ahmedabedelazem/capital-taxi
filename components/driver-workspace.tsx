@@ -186,7 +186,7 @@ export function DriverWorkspace() {
       map.panTo(destination);
       map.setZoom(15);
     }
-  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady]);
+  }, [activeTrip?.pickupPoint?.lat, activeTrip?.pickupPoint?.lng, activeTrip?.destinationPoint?.lat, activeTrip?.destinationPoint?.lng, mapReady, section, activeTripId]);
 
   useEffect(() => {
     const map = mapInstance.current;
