@@ -66,6 +66,18 @@ The following is the canonical Firestore shape expected by these endpoints. It i
 
 These routes do not create trips or offers and do not implement geographic dispatch yet. A trusted dispatch worker must create eligible offers; the browser cannot nominate itself for an arbitrary trip.
 
+## Implemented customer trip creation API
+
+| Method | Route | Purpose | Authorization |
+| --- | --- | --- | --- |
+| POST | `/api/trips` | Create a customer trip request and server-side fare estimate | Verified customer session; required idempotency key |
+
+The request accepts `pickup` and `destination` objects with a short label and numeric latitude/longitude. The server validates coordinates, rejects identical endpoints, checks both points against the configured service-area bounds, calculates Haversine distance, and calculates the fare from the active server-owned tariff. Client-supplied fare and distance values are ignored. A required `Idempotency-Key` header prevents duplicate trip creation on retries for the same customer.
+
+The route reads `config/tripPricing` and expects: `enabled: true`, `baseFare`, `perKm`, `minimumFare`, `maximumDistanceKm`, optional `roundingIncrement`, `version`, and `serviceArea: { minLat, maxLat, minLng, maxLng }`. The tariff must be provisioned by a trusted admin process. Missing or invalid pricing fails closed; no hard-coded fare is used. The trip, idempotency record, and initial status timeline event are created in one Firestore transaction.
+
+New trips are created with `status: pending`. This endpoint does not yet dispatch offers; a trusted dispatch worker must move the trip into searching and create targeted offer documents before drivers can see or accept it.
+
 ## Proposed API surface
 
 Session authentication routes are implemented; trip, dispatch, and financial routes below remain proposals, not implemented endpoints.
