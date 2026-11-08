@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsc --noEmit false --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --strict --esModuleInterop --rootDir . --outDir .test-dist lib/domain/trip.ts lib/domain/geo.ts tests/trip-domain.test.ts tests/geo-domain.test.ts && node --test .test-dist/tests/trip-domain.test.js .test-dist/tests/geo-domain.test.js",
+    "test": "tsc --noEmit false --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --strict --esModuleInterop --rootDir . --outDir .test-dist lib/domain/trip.ts lib/domain/geo.ts lib/domain/dispatch-scheduler.ts tests/trip-domain.test.ts tests/geo-domain.test.ts tests/dispatch-scheduler.test.ts && node --test .test-dist/tests/trip-domain.test.js .test-dist/tests/geo-domain.test.js .test-dist/tests/dispatch-scheduler.test.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

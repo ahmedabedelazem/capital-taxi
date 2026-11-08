@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
+import { selectDispatchBatch, type DispatchTask } from "@/lib/domain/dispatch-scheduler";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -69,26 +70,29 @@ export async function POST(request: Request) {
         .limit(70)
         .get(),
     ]);
-    const due: Array<{ tripId: string; stage: number }> = [];
 
-    for (const snapshot of pendingSnapshot.docs) {
-      due.push({ tripId: snapshot.id, stage: 0 });
-    }
-
+    const pendingDue: DispatchTask[] = pendingSnapshot.docs.map((snapshot) => ({
+      tripId: snapshot.id,
+      stage: 0,
+    }));
+    const searchingDue: DispatchTask[] = [];
     for (const snapshot of searchingSnapshot.docs) {
       const trip = snapshot.data();
       const stage = typeof trip.dispatchStage === "number" && Number.isInteger(trip.dispatchStage)
         ? trip.dispatchStage : 0;
       if (stage >= 1 && stage <= radii.length) {
-        due.push({ tripId: snapshot.id, stage });
+        searchingDue.push({ tripId: snapshot.id, stage });
       }
     }
 
+    const due = pendingDue.length + searchingDue.length;
+    // Alternate the two queues so a constant stream of new requests cannot
+    // monopolize the worker and delay trips already waiting for a driver.
+    const batch = selectDispatchBatch(pendingDue, searchingDue, 20);
     let processed = 0;
     let deferred = 0;
     let failed = 0;
     const endpoint = new URL("/api/internal/dispatch", baseUrl);
-    const batch = due.slice(0, 20);
     for (let offset = 0; offset < batch.length; offset += 5) {
       const results = await Promise.all(batch.slice(offset, offset + 5).map(async (item) => {
         try {
@@ -119,11 +123,11 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: failed === 0,
       scanned: pendingSnapshot.size + searchingSnapshot.size,
-      due: due.length,
+      due,
       processed,
       deferred,
       failed,
-      truncated: due.length > 20,
+      truncated: due > batch.length,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ ok: false, error: "dispatch_sweep_failed" }, { status: 503 });
