@@ -56,6 +56,7 @@ export async function POST(request: Request) {
 
     const trip = tripSnapshot.data() ?? {};
     const config = configSnapshot.data() ?? {};
+    const now = Date.now();
     const radii = config.stageRadiiKm;
     const ttlSeconds = config.offerTtlSeconds;
     const maxOffers = config.maxOffersPerStage;
@@ -114,7 +115,6 @@ export async function POST(request: Request) {
       .where("isAvailable", "==", true)
       .limit(100)
       .get();
-    const now = Date.now();
     const candidates = driverSnapshot.docs.map((doc) => {
       const driver = doc.data();
       const location = driver.location && typeof driver.location === "object"
