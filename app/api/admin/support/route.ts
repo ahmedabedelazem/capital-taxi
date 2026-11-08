@@ -80,21 +80,26 @@ export async function PATCH(request: Request) {
       const snapshot = await transaction.get(ticketRef);
       if (!snapshot.exists) throw new Error("TICKET_NOT_FOUND");
       const previousStatus = snapshot.data()?.status ?? "open";
+      const statusChanged = previousStatus !== status;
       transaction.update(ticketRef, {
-        status,
+        ...(statusChanged ? {
+          status,
+          resolvedAt: status === "resolved" || status === "closed"
+            ? FieldValue.serverTimestamp()
+            : null,
+        } : {}),
         ...(adminNote !== undefined ? { adminNote: adminNote || null } : {}),
         updatedAt: FieldValue.serverTimestamp(),
-        ...(status === "resolved" || status === "closed"
-          ? { resolvedAt: FieldValue.serverTimestamp() }
-          : { resolvedAt: null }),
       });
       transaction.create(auditRef, {
         actorUid: user.uid,
-        action: "support_ticket_status_changed",
+        action: "support_ticket_updated",
         targetType: "support_ticket",
         targetId: ticketId,
         previousStatus,
         nextStatus: status,
+        statusChanged,
+        noteUpdated: adminNote !== undefined,
         createdAt: FieldValue.serverTimestamp(),
       });
     });

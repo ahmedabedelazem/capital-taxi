@@ -71,6 +71,7 @@ export function AdminWorkspace() {
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [supportLoading, setSupportLoading] = useState(false);
   const [supportBusyId, setSupportBusyId] = useState<string | null>(null);
+  const [supportNoteDrafts, setSupportNoteDrafts] = useState<Record<string, string>>({});
   const [tripsLoading, setTripsLoading] = useState(false);
   const [tripStatusFilter, setTripStatusFilter] = useState("active");
   const [loading, setLoading] = useState(false);
@@ -164,7 +165,7 @@ export function AdminWorkspace() {
     }
   }, []);
 
-  async function updateSupportTicket(ticketId: string, status: SupportTicket["status"]) {
+  async function updateSupportTicket(ticketId: string, status: SupportTicket["status"], adminNote?: string) {
     setSupportBusyId(ticketId);
     setMessage("");
     try {
@@ -172,14 +173,18 @@ export function AdminWorkspace() {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId, status }),
+        body: JSON.stringify({ ticketId, status, ...(adminNote !== undefined ? { adminNote } : {}) }),
       });
       if (response.status === 401 || response.status === 403) throw new Error("لا تملك صلاحية تحديث تذكرة الدعم.");
       if (!response.ok) throw new Error("تعذر تحديث حالة التذكرة.");
       setSupportTickets((current) => current.map((ticket) =>
-        ticket.ticketId === ticketId ? { ...ticket, status } : ticket
+        ticket.ticketId === ticketId
+          ? { ...ticket, status, ...(adminNote !== undefined ? { adminNote: adminNote.trim() || null } : {}) }
+          : ticket
       ));
-      setMessage("تم تحديث حالة التذكرة وتسجيل الإجراء في سجل الإدارة.");
+      setMessage(adminNote !== undefined
+        ? "تم حفظ رد الإدارة وسيظهر لصاحب الشكوى في سجل طلباته."
+        : "تم تحديث حالة التذكرة وتسجيل الإجراء في سجل الإدارة.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر تحديث التذكرة.");
     } finally {
@@ -487,6 +492,20 @@ export function AdminWorkspace() {
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted">{ticket.description}</p>
             <div className="mt-3 grid gap-2 text-[11px] text-muted sm:grid-cols-3"><span>صاحب الطلب: {ticket.userRole === "driver" ? "سائق" : ticket.userRole === "customer" ? "عميل" : "غير محدد"} · <span dir="ltr">{ticket.uid ?? "—"}</span></span><span>التصنيف: {({trip:"رحلة",payment:"مدفوعات",driver:"سائق",account:"حساب",app:"التطبيق",other:"أخرى"} as Record<string,string>)[ticket.category] ?? "أخرى"}</span><span>تاريخ الإرسال: {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span></div>
             {ticket.tripId && <p className="mt-2 text-[11px] text-muted">رقم الرحلة: <span dir="ltr">{ticket.tripId}</span></p>}
+            <div className="mt-4 space-y-2">
+              <label className="block text-xs text-muted" htmlFor={`support-note-${ticket.ticketId}`}>رد الإدارة الظاهر لصاحب الشكوى</label>
+              <textarea id={`support-note-${ticket.ticketId}`} rows={3} maxLength={1000} disabled={supportBusyId !== null}
+                value={supportNoteDrafts[ticket.ticketId] ?? ticket.adminNote ?? ""}
+                onChange={(event) => setSupportNoteDrafts((current) => ({ ...current, [ticket.ticketId]: event.target.value }))}
+                placeholder="اكتب توضيحاً أو رداً لصاحب الطلب…"
+                className="w-full resize-y rounded-xl border border-white/10 bg-panel px-3 py-3 text-sm leading-6 text-white outline-none focus:border-gold/50 disabled:opacity-50" />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] text-muted">حتى 1000 حرف</span>
+                <button type="button" disabled={supportBusyId !== null}
+                  onClick={() => void updateSupportTicket(ticket.ticketId, ticket.status, supportNoteDrafts[ticket.ticketId] ?? ticket.adminNote ?? "")}
+                  className="rounded-lg border border-gold/30 px-3 py-2 text-xs font-bold text-gold hover:bg-gold/10 disabled:opacity-50">حفظ رد الإدارة</button>
+              </div>
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3"><label className="text-xs text-muted" htmlFor={`support-${ticket.ticketId}`}>تحديث الحالة</label><select id={`support-${ticket.ticketId}`} value={ticket.status} disabled={supportBusyId !== null} onChange={(event) => void updateSupportTicket(ticket.ticketId, event.target.value as SupportTicket["status"])} className="rounded-lg border border-white/10 bg-panel px-3 py-2 text-xs text-white disabled:opacity-50"><option value="open">مفتوحة</option><option value="in_progress">قيد المعالجة</option><option value="resolved">تم الحل</option><option value="closed">مغلقة</option></select>{supportBusyId === ticket.ticketId && <span className="text-[11px] text-gold">جارٍ الحفظ…</span>}</div>
           </article>)}
         </div>}
