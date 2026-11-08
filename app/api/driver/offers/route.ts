@@ -38,11 +38,10 @@ export async function GET(request: Request) {
           id: doc.id,
           tripId: typeof data.tripId === "string" ? data.tripId : null,
           status: typeof data.status === "string" ? data.status : null,
-          expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt : null,
+          expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt : Timestamp.fromMillis(0),
         };
       })
       .filter((offer) => offer.status === "offered" &&
-        offer.expiresAt !== null &&
         offer.expiresAt.toMillis() > now)
       .slice(0, 20);
 
