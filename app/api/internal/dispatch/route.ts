@@ -123,7 +123,14 @@ export async function POST(request: Request) {
         .where("geohash", "<=", `${prefix}~`)
         .limit(100)
         .get())),
-      driversCollection.where("isAvailable", "==", true).limit(100).get(),
+      // Include legacy driver documents that have fresh locations but no geohash.
+      // The timestamp filter avoids an arbitrary first-100 scan; the cap bounds
+      // migration-time reads while geohash queries cover indexed drivers nearby.
+      driversCollection.where("isAvailable", "==", true)
+        .where("locationUpdatedAt", ">=", Timestamp.fromMillis(now - 90_000))
+        .orderBy("locationUpdatedAt", "desc")
+        .limit(500)
+        .get(),
     ]);
     const driverDocs = new Map(legacySnapshot.docs.map((doc) => [doc.id, doc] as const));
     for (const snapshot of geohashSnapshots) {
