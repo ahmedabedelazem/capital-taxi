@@ -8,9 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "tsc --noEmit false --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --strict --esModuleInterop --rootDir . --outDir .test-dist lib/domain/trip.ts lib/domain/geo.ts lib/domain/dispatch-scheduler.ts lib/domain/request-security.ts lib/domain/redirect.ts lib/domain/session.ts tests/trip-domain.test.ts tests/geo-domain.test.ts tests/dispatch-scheduler.test.ts tests/request-security.test.ts tests/redirect.test.ts tests/session.test.ts && node --test .test-dist/tests/trip-domain.test.js .test-dist/tests/geo-domain.test.js .test-dist/tests/dispatch-scheduler.test.js .test-dist/tests/request-security.test.js .test-dist/tests/redirect.test.js .test-dist/tests/session.test.js",
-    "typecheck": "tsc --noEmit",
     "test:rules:run": "tsc --noEmit false --target ES2022 --module commonjs --moduleResolution node --skipLibCheck --strict --esModuleInterop --rootDir . --outDir .test-dist tests/firestore-rules.test.ts tests/trip-acceptance-emulator.test.ts tests/trip-lifecycle-emulator.test.ts && node --test .test-dist/tests/firestore-rules.test.js .test-dist/tests/trip-acceptance-emulator.test.js .test-dist/tests/trip-lifecycle-emulator.test.js",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-capital-taxi \"npm run test:rules:run\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-capital-taxi \"npm run test:rules:run\"",
+    "audit:dispatch:readonly": "node scripts/audit-dispatch-readonly.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
