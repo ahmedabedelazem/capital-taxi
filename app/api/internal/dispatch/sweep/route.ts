@@ -81,23 +81,31 @@ export async function POST(request: Request) {
     let deferred = 0;
     let failed = 0;
     const endpoint = new URL("/api/internal/dispatch", baseUrl);
-    for (const item of due.slice(0, 50)) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-dispatch-secret": process.env.DISPATCH_WORKER_SECRET!,
-          },
-          body: JSON.stringify(item),
-          cache: "no-store",
-          signal: AbortSignal.timeout(12_000),
-        });
-        if (response.ok) processed += 1;
-        else if (response.status === 409) deferred += 1;
+    const batch = due.slice(0, 20);
+    for (let offset = 0; offset < batch.length; offset += 5) {
+      const results = await Promise.all(batch.slice(offset, offset + 5).map(async (item) => {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-dispatch-secret": process.env.DISPATCH_WORKER_SECRET!,
+            },
+            body: JSON.stringify(item),
+            cache: "no-store",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (response.ok) return "processed" as const;
+          if (response.status === 409) return "deferred" as const;
+          return "failed" as const;
+        } catch {
+          return "failed" as const;
+        }
+      }));
+      for (const result of results) {
+        if (result === "processed") processed += 1;
+        else if (result === "deferred") deferred += 1;
         else failed += 1;
-      } catch {
-        failed += 1;
       }
     }
 
@@ -108,7 +116,7 @@ export async function POST(request: Request) {
       processed,
       deferred,
       failed,
-      truncated: due.length > 50,
+      truncated: due.length > 20,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ ok: false, error: "dispatch_sweep_failed" }, { status: 503 });
