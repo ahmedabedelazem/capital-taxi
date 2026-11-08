@@ -153,15 +153,27 @@ export async function POST(request: Request) {
           (stage > 0 && current.status !== "searching") ||
           current.assignedDriverUid) throw new Error("TRIP_NOT_DISPATCHABLE");
 
-      const accepted = candidates.filter((candidate, index) => {
+      const accepted = candidates.flatMap((candidate, index) => {
         const driver = driverStates[index].data() ?? {};
         const application = applicationStates[index].data() ?? {};
-        return application.status === "approved" &&
-          driver.isAvailable === true && !driver.activeTripId &&
-          driver.locationUpdatedAt instanceof Timestamp &&
-          now - driver.locationUpdatedAt.toMillis() >= 0 &&
-          now - driver.locationUpdatedAt.toMillis() <= 90_000 &&
-          !existingOffers[index].exists;
+        const location = driver.location && typeof driver.location === "object"
+          ? driver.location as Record<string, unknown>
+          : {};
+        if (application.status !== "approved" || driver.isAvailable !== true ||
+            driver.activeTripId || !(driver.locationUpdatedAt instanceof Timestamp) ||
+            now - driver.locationUpdatedAt.toMillis() < 0 ||
+            now - driver.locationUpdatedAt.toMillis() > 90_000 ||
+            typeof location.lat !== "number" || !Number.isFinite(location.lat) ||
+            typeof location.lng !== "number" || !Number.isFinite(location.lng) ||
+            !existingOffers[index].exists === false) {
+          return [];
+        }
+        const currentDistance = distanceKm(tripPoint, {
+          lat: location.lat,
+          lng: location.lng,
+        });
+        if (currentDistance > (radii[stage] as number)) return [];
+        return [{ ...candidate, distance: currentDistance }];
       });
       for (const candidate of accepted) {
         const index = candidates.findIndex((item) => item.uid === candidate.uid);
