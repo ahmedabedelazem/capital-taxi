@@ -165,7 +165,7 @@ export async function POST(request: Request) {
             now - driver.locationUpdatedAt.toMillis() > 90_000 ||
             typeof location.lat !== "number" || !Number.isFinite(location.lat) ||
             typeof location.lng !== "number" || !Number.isFinite(location.lng) ||
-            !existingOffers[index].exists === false) {
+            existingOffers[index].exists) {
           return [];
         }
         const currentDistance = distanceKm(tripPoint, {
