@@ -3,92 +3,66 @@ import { randomUUID } from "node:crypto";
 import { after, before, test } from "node:test";
 import { deleteApp, initializeApp, getApps, type App } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
-import { cancelTripForActor } from "../lib/server/trip-lifecycle-core";
+import { setDriverAvailability, updateTripStatusForDriver } from "../lib/server/trip-lifecycle-core";
 
 const projectId = "demo-capital-taxi";
 let app: App;
-
 before(() => {
   assert.match(process.env.FIRESTORE_EMULATOR_HOST ?? "", /^127\.0\.0\.1:8080$/);
   app = getApps().find((item) => item.name === "trip-lifecycle-emulator-tests") ??
     initializeApp({ projectId }, "trip-lifecycle-emulator-tests");
 });
+after(async () => { if (app) await deleteApp(app); });
 
-after(async () => {
-  if (app) await deleteApp(app);
-});
-
-test("cancelling an accepted trip clears the driver and cancels accepted and offered offers", async () => {
-  const db = getFirestore(app);
-  const tripId = `cancel-${randomUUID()}`;
-  const customerUid = `customer-${randomUUID()}`;
-  const driverUid = `driver-${randomUUID()}`;
-  const tripRef = db.collection("trips").doc(tripId);
-  const driverRef = db.collection("drivers").doc(driverUid);
-  const offerRefs = [
-    db.collection("tripOffers").doc(`${tripId}-accepted`),
-    db.collection("tripOffers").doc(`${tripId}-offered`),
-  ];
+test("driver completion releases the active trip and requires explicit return online", async () => {
+  const db = getFirestore(app), tripId = `complete-${randomUUID()}`, driverUid = `driver-${randomUUID()}`;
+  const tripRef = db.collection("trips").doc(tripId), driverRef = db.collection("drivers").doc(driverUid);
+  const applicationRef = db.collection("driverApplications").doc(driverUid);
   try {
     const batch = db.batch();
-    batch.set(tripRef, {
-      status: "accepted",
-      customerUid,
-      assignedDriverUid: driverUid,
-      createdAt: Timestamp.now(),
-    });
+    batch.set(tripRef, { status: "in_progress", assignedDriverUid: driverUid, createdAt: Timestamp.now() });
     batch.set(driverRef, { isAvailable: false, activeTripId: tripId });
-    batch.set(offerRefs[0], { tripId, driverUid, status: "accepted" });
-    batch.set(offerRefs[1], { tripId, driverUid: "another-driver", status: "offered" });
-    await batch.commit();
-
-    const cancelledOffers = await cancelTripForActor(db, tripId, customerUid, "customer");
-    assert.equal(cancelledOffers, 2);
-
-    const [trip, driver, offers, timeline] = await Promise.all([
-      tripRef.get(),
-      driverRef.get(),
-      Promise.all(offerRefs.map((ref) => ref.get())),
-      tripRef.collection("statusTimeline").get(),
-    ]);
-    assert.equal(trip.data()?.status, "cancelled");
-    assert.equal(trip.data()?.cancelledBy?.uid, customerUid);
+    batch.set(applicationRef, { status: "approved" }); await batch.commit();
+    await updateTripStatusForDriver(db, tripId, driverUid, "completed");
+    const [trip, driver, timeline] = await Promise.all([tripRef.get(), driverRef.get(), tripRef.collection("statusTimeline").get()]);
+    assert.equal(trip.data()?.status, "completed");
     assert.equal(driver.data()?.activeTripId, undefined);
     assert.equal(driver.data()?.isAvailable, false);
-    assert.deepEqual(offers.map((item) => item.data()?.status), ["cancelled", "cancelled"]);
     assert.equal(timeline.size, 1);
-    assert.equal(timeline.docs[0].data()?.cancelledOffers, 2);
+    await setDriverAvailability(db, driverUid, true);
+    assert.equal((await driverRef.get()).data()?.isAvailable, true);
   } finally {
-    const cleanup = db.batch();
-    cleanup.delete(tripRef);
-    cleanup.delete(driverRef);
-    for (const ref of offerRefs) cleanup.delete(ref);
-    const timeline = await tripRef.collection("statusTimeline").get();
-    for (const event of timeline.docs) cleanup.delete(event.ref);
+    const cleanup = db.batch(); cleanup.delete(tripRef); cleanup.delete(driverRef); cleanup.delete(applicationRef);
+    const events = await tripRef.collection("statusTimeline").get(); for (const event of events.docs) cleanup.delete(event.ref);
     await cleanup.commit();
   }
 });
 
-test("a customer cannot cancel another customer's trip", async () => {
-  const db = getFirestore(app);
-  const tripId = `protected-${randomUUID()}`;
-  const tripRef = db.collection("trips").doc(tripId);
+test("driver cannot change availability while assigned to an active trip", async () => {
+  const db = getFirestore(app), driverUid = `busy-driver-${randomUUID()}`;
+  const driverRef = db.collection("drivers").doc(driverUid), applicationRef = db.collection("driverApplications").doc(driverUid);
   try {
-    await tripRef.set({
-      status: "searching",
-      customerUid: `owner-${randomUUID()}`,
-      createdAt: Timestamp.now(),
-    });
-    await assert.rejects(
-      cancelTripForActor(db, tripId, `intruder-${randomUUID()}`, "customer"),
-      /TRIP_NOT_ACCESSIBLE/,
-    );
-    assert.equal((await tripRef.get()).data()?.status, "searching");
+    const batch = db.batch(); batch.set(applicationRef, { status: "approved" });
+    batch.set(driverRef, { isAvailable: false, activeTripId: `trip-${randomUUID()}` }); await batch.commit();
+    await assert.rejects(setDriverAvailability(db, driverUid, true), /ACTIVE_TRIP_CANNOT_GO_ONLINE/);
+    await assert.rejects(setDriverAvailability(db, driverUid, false), /ACTIVE_TRIP_CANNOT_GO_OFFLINE/);
+    assert.equal((await driverRef.get()).data()?.isAvailable, false);
   } finally {
-    const cleanup = db.batch();
-    cleanup.delete(tripRef);
-    const timeline = await tripRef.collection("statusTimeline").get();
-    for (const event of timeline.docs) cleanup.delete(event.ref);
-    await cleanup.commit();
+    const cleanup = db.batch(); cleanup.delete(driverRef); cleanup.delete(applicationRef); await cleanup.commit();
+  }
+});
+
+test("unapproved drivers cannot update trip status or availability", async () => {
+  const db = getFirestore(app), tripId = `unapproved-${randomUUID()}`, driverUid = `unapproved-driver-${randomUUID()}`;
+  const tripRef = db.collection("trips").doc(tripId), driverRef = db.collection("drivers").doc(driverUid);
+  const applicationRef = db.collection("driverApplications").doc(driverUid);
+  try {
+    const batch = db.batch(); batch.set(tripRef, { status: "in_progress", assignedDriverUid: driverUid });
+    batch.set(driverRef, { isAvailable: false, activeTripId: tripId }); batch.set(applicationRef, { status: "pending" }); await batch.commit();
+    await assert.rejects(updateTripStatusForDriver(db, tripId, driverUid, "completed"), /DRIVER_NOT_APPROVED/);
+    await assert.rejects(setDriverAvailability(db, driverUid, true), /DRIVER_NOT_APPROVED/);
+    assert.equal((await tripRef.get()).data()?.status, "in_progress");
+  } finally {
+    const cleanup = db.batch(); cleanup.delete(tripRef); cleanup.delete(driverRef); cleanup.delete(applicationRef); await cleanup.commit();
   }
 });
