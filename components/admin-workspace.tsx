@@ -29,6 +29,17 @@ type AdminTrip = {
   createdAt: string | null;
 };
 
+const tripStatusMeta: Record<string, { label: string; className: string }> = {
+  pending: { label: "جديدة", className: "border-sky-300/20 bg-sky-300/10 text-sky-200" },
+  searching: { label: "جارٍ البحث عن سائق", className: "border-amber-300/20 bg-amber-300/10 text-amber-200" },
+  accepted: { label: "تم قبولها", className: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" },
+  driver_arrived: { label: "السائق وصل", className: "border-violet-300/20 bg-violet-300/10 text-violet-200" },
+  in_progress: { label: "قيد التنفيذ", className: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200" },
+  completed: { label: "مكتملة", className: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" },
+  cancelled: { label: "ملغاة", className: "border-rose-300/20 bg-rose-300/10 text-rose-200" },
+  no_driver: { label: "لم يتوفر سائق", className: "border-orange-300/20 bg-orange-300/10 text-orange-200" },
+};
+
 const sections = [
   { id: "overview", label: "نظرة عامة", icon: ChartNoAxesCombined, title: "مؤشرات التشغيل" },
   { id: "drivers", label: "طلبات السائقين", icon: CarFront, title: "مراجعة طلبات السائقين" },
@@ -355,7 +366,7 @@ export function AdminWorkspace() {
           {trips.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-white/10 bg-night p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h3 className="font-bold">{trip.pickupLabel || "نقطة انطلاق غير متاحة"} <span className="text-gold">←</span> {trip.destinationLabel || "وجهة غير متاحة"}</h3><p className="mt-2 text-[10px] text-muted" dir="ltr">{trip.tripId}</p></div>
-              <span className="rounded-full border border-gold/20 bg-gold/5 px-3 py-1.5 text-[11px] text-gold">{({pending:"جديد",searching:"جارٍ البحث",accepted:"تم القبول",driver_arrived:"السائق وصل",in_progress:"قيد التنفيذ"} as Record<string,string>)[trip.status] || trip.status}</span>
+              <span className={`rounded-full border px-3 py-1.5 text-[11px] ${tripStatusMeta[trip.status]?.className || "border-white/10 bg-white/5 text-muted"}`}>{tripStatusMeta[trip.status]?.label || trip.status}</span>
             </div>
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
               <div><span className="block text-[11px] text-muted">الأجرة التقديرية</span><b>{trip.fareEstimate ?? "—"} ج.م</b></div>
@@ -365,7 +376,7 @@ export function AdminWorkspace() {
             </div>
             <div className="mt-4 border-t border-white/10 pt-3 text-xs text-muted">
               <p>السائق: {trip.driverUid ? <span dir="ltr">{trip.driverUid}</span> : "لم يتم التعيين بعد"}</p>
-              <p className="mt-1">الموقع: {trip.driverLocation ? <span dir="ltr">{trip.driverLocation.lat.toFixed(5)}, {trip.driverLocation.lng.toFixed(5)} · آخر تحديث {new Date(trip.driverLocation.updatedAt).toLocaleTimeString("ar-EG")}</span> : "لا يوجد موقع حديث متاح"}</p>
+              <p className="mt-1">موقع السائق: {trip.driverLocation ? <><span className="text-emerald-300">موقع حديث</span><span dir="ltr"> · {trip.driverLocation.lat.toFixed(5)}, {trip.driverLocation.lng.toFixed(5)} · {new Date(trip.driverLocation.updatedAt).toLocaleTimeString("ar-EG")}</span><a className="mr-2 text-gold underline underline-offset-4" href={`https://www.google.com/maps?q=${trip.driverLocation.lat},${trip.driverLocation.lng}`} target="_blank" rel="noreferrer">فتح على الخريطة</a></> : <span className="text-muted">لا يوجد موقع حديث متاح</span>}</p>
               <p className="mt-1">تُعرض إحداثيات GPS إذا كان آخر تحديث خلال 120 ثانية فقط.</p>
               <p className="mt-1">وقت الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</p>
             </div>
