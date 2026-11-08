@@ -64,6 +64,13 @@ export function CustomerRideForm() {
   const pickupInput = useRef<HTMLInputElement>(null);
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const mapMarkers = useRef<{
+    pickup: google.maps.Marker | null;
+    destination: google.maps.Marker | null;
+    driver: google.maps.Marker | null;
+  }>({ pickup: null, destination: null, driver: null });
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -136,6 +143,110 @@ export function CustomerRideForm() {
     document.head.appendChild(script);
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!mapsReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
+    const map = new google.maps.Map(mapContainer.current, {
+      center: { lat: 31.132, lng: 33.803 },
+      zoom: 12,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      clickableIcons: false,
+      gestureHandling: "cooperative",
+      backgroundColor: "#101923",
+      styles: [
+        { elementType: "geometry", stylers: [{ color: "#182536" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#d8e0eb" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#101923" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#34445a" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#102b42" }] },
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+      ],
+    });
+    mapInstance.current = map;
+    return () => {
+      Object.values(mapMarkers.current).forEach((marker) => marker?.setMap(null));
+      mapMarkers.current = { pickup: null, destination: null, driver: null };
+      mapInstance.current = null;
+    };
+  }, [mapsReady]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !window.google?.maps) return;
+    const markers = mapMarkers.current;
+    if (pickupPoint) {
+      if (!markers.pickup) {
+        markers.pickup = new google.maps.Marker({
+          map,
+          title: "نقطة الانطلاق",
+          label: { text: "ب", color: "#101923", fontWeight: "700" },
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#34d399", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+        });
+      }
+      markers.pickup.setPosition(pickupPoint);
+    } else if (markers.pickup) {
+      markers.pickup.setMap(null);
+      markers.pickup = null;
+    }
+    if (destinationPoint) {
+      if (!markers.destination) {
+        markers.destination = new google.maps.Marker({
+          map,
+          title: "الوجهة",
+          label: { text: "و", color: "#101923", fontWeight: "700" },
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#d5ae63", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+        });
+      }
+      markers.destination.setPosition(destinationPoint);
+    } else if (markers.destination) {
+      markers.destination.setMap(null);
+      markers.destination = null;
+    }
+    if (pickupPoint && destinationPoint) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(pickupPoint);
+      bounds.extend(destinationPoint);
+      map.fitBounds(bounds, 56);
+    } else if (pickupPoint) {
+      map.panTo(pickupPoint);
+      map.setZoom(15);
+    } else if (destinationPoint) {
+      map.panTo(destinationPoint);
+      map.setZoom(15);
+    }
+  }, [pickupPoint, destinationPoint, mapsReady]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !window.google?.maps) return;
+    const location = tripDetails?.driverLocation;
+    const marker = mapMarkers.current.driver;
+    if (!location) {
+      marker?.setMap(null);
+      mapMarkers.current.driver = null;
+      return;
+    }
+    if (!mapMarkers.current.driver) {
+      mapMarkers.current.driver = new google.maps.Marker({
+        map,
+        title: "موقع السائق",
+        zIndex: 10,
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#60a5fa",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 1.5,
+          rotation: 0,
+        },
+      });
+    }
+    mapMarkers.current.driver.setPosition({ lat: location.lat, lng: location.lng });
+    map.panTo({ lat: location.lat, lng: location.lng });
+  }, [tripDetails?.driverLocation?.lat, tripDetails?.driverLocation?.lng, mapsReady]);
 
   useEffect(() => {
     let active = true;
@@ -358,10 +469,15 @@ export function CustomerRideForm() {
       <aside className="space-y-4">
         <div className="rounded-3xl border border-white/10 bg-panel p-6">
           <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مسار الرحلة</h3><Navigation className="text-gold" size={20}/></div>
-          <div className="relative grid h-56 place-items-center overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#101923] text-center">
-            <div className="absolute inset-0 opacity-30" style={{backgroundImage:"linear-gradient(35deg,transparent 48%,#718096 49%,#718096 50%,transparent 51%),linear-gradient(125deg,transparent 48%,#718096 49%,#718096 50%,transparent 51%)",backgroundSize:"76px 68px"}}/>
-            <div className="relative px-5"><MapPin className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">تحديد العناوين عبر Google</b><p className="mt-2 text-xs leading-6 text-muted">يتم التحقق من إحداثيات النقطتين قبل إرسال طلب الرحلة. خريطة المسار الحية ستضاف في مرحلة لاحقة.</p></div>
-            <span className="absolute bottom-3 right-3 rounded-lg bg-night/80 px-3 py-1.5 text-[10px] text-muted">لا تعرض مساراً حياً بعد</span>
+          <div className="relative h-64 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
+            {mapsReady ? (
+              <div ref={mapContainer} role="img" aria-label="خريطة تفاعلية لمواقع الانطلاق والوجهة والسائق" className="h-full w-full" />
+            ) : (
+              <div className="grid h-full place-items-center px-5 text-center">
+                <div><MapPin className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">الخريطة غير متاحة حالياً</b><p className="mt-2 text-xs leading-6 text-muted">تحقق من إعداد NEXT_PUBLIC_GOOGLE_MAPS_API_KEY وتفعيل Maps JavaScript API وPlaces API.</p></div>
+              </div>
+            )}
+            <span className="absolute bottom-3 right-3 rounded-lg bg-night/90 px-3 py-1.5 text-[10px] text-muted">علامات المواقع فقط — لا يوجد مسار ملاحي مرسوم</span>
           </div>
         </div>
         <div className="rounded-3xl border border-white/10 bg-panel p-6">
