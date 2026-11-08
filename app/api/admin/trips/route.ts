@@ -4,9 +4,13 @@ import { hasRole, verifyRequestUser } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
-const visibleStatuses = new Set([
+const filterableStatuses = new Set([
   "pending", "searching", "accepted", "driver_arrived", "in_progress",
   "completed", "cancelled", "no_driver",
+]);
+
+const activeStatuses = new Set([
+  "pending", "searching", "accepted", "driver_arrived", "in_progress",
 ]);
 
 function iso(value: unknown): string | null {
@@ -29,7 +33,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const requestedStatus = url.searchParams.get("status");
-  if (requestedStatus && requestedStatus !== "all" && !visibleStatuses.has(requestedStatus)) {
+  if (requestedStatus && requestedStatus !== "all" && !filterableStatuses.has(requestedStatus)) {
     return NextResponse.json({ ok: false, error: "invalid_status_filter" }, { status: 400 });
   }
 
@@ -42,7 +46,7 @@ export async function GET(request: Request) {
         ? true
         : requestedStatus
           ? data.status === requestedStatus
-          : visibleStatuses.has(String(data.status)));
+          : activeStatuses.has(String(data.status)));
 
     const driverUids = [...new Set(records
       .map(({ data }) => data.assignedDriverUid)
