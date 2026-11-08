@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { distanceKm, isValidPoint } from "../lib/domain/geo";
+import { distanceKm, encodeGeohash, isValidPoint } from "../lib/domain/geo";
 
 test("validates geographic coordinate bounds and finite numbers", () => {
   assert.equal(isValidPoint({ lat: 29.95, lng: 32.9 }), true);
@@ -32,4 +32,16 @@ test("handles antimeridian and antipodal points without NaN", () => {
   const antipodal = distanceKm({ lat: 0, lng: 0 }, { lat: 0, lng: 180 });
   assert.ok(Number.isFinite(acrossDateLine) && acrossDateLine > 20 && acrossDateLine < 23);
   assert.ok(Number.isFinite(antipodal) && antipodal > 20_000);
+});
+
+test("encodes standard geohash vectors and supports precision", () => {
+  assert.equal(encodeGeohash({ lat: 42.6, lng: -5.6 }, 9), "ezs42e44y");
+  assert.equal(encodeGeohash({ lat: 0, lng: 0 }, 9), "s00000000");
+  assert.equal(encodeGeohash({ lat: 0, lng: 0 }, 5), "s0000");
+});
+
+test("rejects invalid geohash input and precision", () => {
+  assert.throws(() => encodeGeohash({ lat: 91, lng: 0 }), /invalid_geographic_point/);
+  assert.throws(() => encodeGeohash({ lat: 0, lng: 0 }, 0), /invalid_geohash_precision/);
+  assert.throws(() => encodeGeohash({ lat: 0, lng: 0 }, 13), /invalid_geohash_precision/);
 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
+import { encodeGeohash } from "@/lib/domain/geo";
 import { getServerDb } from "@/lib/server/firebase-admin";
 import { hasRole, verifyRequestUser } from "@/lib/server/auth";
 
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     const driverRef = db.collection("drivers").doc(user.uid);
     const applicationRef = db.collection("driverApplications").doc(user.uid);
     const now = Date.now();
+    const geohash = encodeGeohash({ lat, lng });
     await db.runTransaction(async (transaction) => {
       const [application, driver] = await Promise.all([
         transaction.get(applicationRef),
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
       transaction.set(driverRef, {
         uid: user.uid,
         location: { lat, lng },
+        geohash,
         locationAccuracyMeters: accuracyMeters,
         locationUpdatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
