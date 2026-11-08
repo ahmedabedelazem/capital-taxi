@@ -228,9 +228,10 @@ export function CustomerRideForm() {
       mapMarkers.current.driver = null;
       return;
     }
-    const isFirstDriverPosition = !mapMarkers.current.driver;
-    if (isFirstDriverPosition) {
-      mapMarkers.current.driver = new google.maps.Marker({
+    let driverMarker = mapMarkers.current.driver;
+    const isFirstDriverPosition = !driverMarker;
+    if (!driverMarker) {
+      driverMarker = new google.maps.Marker({
         map,
         title: "موقع السائق",
         zIndex: 10,
@@ -244,9 +245,8 @@ export function CustomerRideForm() {
           rotation: 0,
         },
       });
+      mapMarkers.current.driver = driverMarker;
     }
-    const driverMarker = mapMarkers.current.driver;
-    if (!driverMarker) return;
     driverMarker.setPosition({ lat: location.lat, lng: location.lng });
     if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
       map.panTo({ lat: location.lat, lng: location.lng });
