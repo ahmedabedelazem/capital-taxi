@@ -13,6 +13,19 @@ export interface AuthenticatedUser {
 const validRoles: readonly AppRole[] = ["customer", "driver", "admin"];
 export const SESSION_COOKIE_NAME = "__session";
 
+const unsafeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function isSameOriginMutation(request: Request): boolean {
+  if (!unsafeMethods.has(request.method.toUpperCase())) return true;
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try {
+    return new URL(origin).origin === new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
 function readCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get("cookie");
   if (!cookieHeader) return null;
@@ -70,6 +83,9 @@ export async function verifyRequestUser(
   const sessionCookie = readCookie(request, SESSION_COOKIE_NAME);
 
   if (sessionCookie) {
+    // Cookie-authenticated mutations must originate from this exact site.
+    // SameSite=Lax is defense-in-depth, not a substitute for CSRF validation.
+    if (!isSameOriginMutation(request)) return null;
     try {
       const decoded = await auth.verifySessionCookie(sessionCookie, true);
       return await resolveApprovedRole(toAuthenticatedUser(decoded));
