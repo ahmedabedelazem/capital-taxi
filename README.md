@@ -37,13 +37,15 @@ npm run dev
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` لتفعيل Google Maps وPlaces ورسم مسار القيادة في واجهة العميل\n- `GOOGLE_MAPS_SERVER_API_KEY` مفتاح خادمي سري لتفعيل Routes API وحساب مسافة القيادة المعتمدة للأجرة
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` لتفعيل Google Maps وPlaces ورسم مسار القيادة في واجهة العميل
+- `GOOGLE_MAPS_SERVER_API_KEY` مفتاح خادمي سري لتفعيل Routes API وحساب مسافة القيادة المعتمدة للأجرة
 
 فعّل في مشروع Google Cloud المرتبط بالمفتاح واجهات Google Maps Platform التي يستخدمها الكود:
 
 1. **Maps JavaScript API** لعرض الخريطة.
 2. **Places API** (والخدمة المطلوبة لميزة Autocomplete في إعدادات مشروعك) لاقتراح العناوين.
-3. **Directions API** لخدمة `google.maps.DirectionsService` التي يرسم بها التطبيق مسار القيادة ويعرض المسافة والمدة.\n4. **Routes API** لحساب مسافة القيادة على الخادم، وهي المسافة المعتمدة لحساب الأجرة. يجب حفظ مفتاحها في `GOOGLE_MAPS_SERVER_API_KEY` فقط، وعدم استخدام بادئة `NEXT_PUBLIC_` له.
+3. **Directions API** لخدمة `google.maps.DirectionsService` التي يرسم بها التطبيق مسار القيادة ويعرض المسافة والمدة.
+4. **Routes API** لحساب مسافة القيادة على الخادم، وهي المسافة المعتمدة لحساب الأجرة. يجب حفظ مفتاحها في `GOOGLE_MAPS_SERVER_API_KEY` فقط، وعدم استخدام بادئة `NEXT_PUBLIC_` له.
 
 تفعيل Maps JavaScript API وPlaces وحدهما لا يضمن نجاح رسم المسار. عند فشل Directions قد تظل الخريطة والعلامات ظاهرة، بينما تظهر رسالة تعذر حساب مسار القيادة. راجع أيضاً إعداد الفوترة والقيود الخاصة بالمفتاح، وقيّده بنطاقات الموقع وبالواجهات المطلوبة فقط.
 
