@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
 import { getServerDb } from "@/lib/server/firebase-admin";
 import { hasRole, verifyRequestUser } from "@/lib/server/auth";
-import { canTransitionTrip, isTripStatus } from "@/lib/domain/trip";
+import { cancelTripForActor } from "@/lib/server/trip-lifecycle-core";
 
 export const dynamic = "force-dynamic";
 
@@ -22,64 +21,17 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ ok: false, error: "invalid_trip_id" }, { status: 400 });
   }
 
+  const actor = hasRole(user, ["admin"])
+    ? "admin"
+    : hasRole(user, ["driver"])
+      ? "driver"
+      : hasRole(user, ["customer"])
+        ? "customer"
+        : null;
+  if (!actor) return NextResponse.json({ ok: false, error: "trip_not_found" }, { status: 404 });
+
   try {
-    const db = getServerDb();
-    const tripRef = db.collection("trips").doc(tripId);
-    const timelineRef = tripRef.collection("statusTimeline").doc();
-
-    await db.runTransaction(async (transaction) => {
-      const tripSnapshot = await transaction.get(tripRef);
-      if (!tripSnapshot.exists) throw new Error("TRIP_NOT_FOUND");
-      const trip = tripSnapshot.data() ?? {};
-      const isAdmin = hasRole(user, ["admin"]);
-      const isCustomerOwner = hasRole(user, ["customer"]) && trip.customerUid === user.uid;
-      const isAssignedDriver = hasRole(user, ["driver"]) && trip.assignedDriverUid === user.uid;
-      if (!isAdmin && !isCustomerOwner && !isAssignedDriver) throw new Error("TRIP_NOT_ACCESSIBLE");
-      if (!isTripStatus(trip.status)) throw new Error("INVALID_CURRENT_STATUS");
-
-      const actor = isAdmin ? "admin" : isAssignedDriver ? "driver" : "customer";
-      const transition = canTransitionTrip({ current: trip.status, next: "cancelled", actor });
-      if (!transition.allowed) throw new Error("CANCELLATION_NOT_ALLOWED");
-
-      const assignedDriverUid = typeof trip.assignedDriverUid === "string" ? trip.assignedDriverUid : null;
-      const offersQuery = db.collection("tripOffers")
-        .where("tripId", "==", tripId)
-        .where("status", "in", ["offered", "accepted"])
-        .limit(200);
-      const [driverSnapshot, offersSnapshot] = await Promise.all([
-        assignedDriverUid ? transaction.get(db.collection("drivers").doc(assignedDriverUid)) : Promise.resolve(null),
-        transaction.get(offersQuery),
-      ]);
-
-      transaction.update(tripRef, {
-        status: "cancelled",
-        cancelledAt: FieldValue.serverTimestamp(),
-        cancelledBy: { uid: user.uid, role: actor },
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      if (assignedDriverUid && driverSnapshot?.exists && driverSnapshot.data()?.activeTripId === tripId) {
-        transaction.set(db.collection("drivers").doc(assignedDriverUid), {
-          activeTripId: FieldValue.delete(),
-          isAvailable: false,
-          availabilityUpdatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-      for (const offer of offersSnapshot.docs) {
-        transaction.update(offer.ref, {
-          status: "cancelled",
-          cancelledAt: FieldValue.serverTimestamp(),
-        });
-      }
-      transaction.create(timelineRef, {
-        from: trip.status,
-        to: "cancelled",
-        actorType: actor,
-        actorUid: user.uid,
-        cancelledOffers: offersSnapshot.size,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-    });
-
+    await cancelTripForActor(getServerDb(), tripId, user.uid, actor);
     return NextResponse.json({ ok: true, tripId, status: "cancelled" }, {
       headers: { "Cache-Control": "no-store" },
     });
