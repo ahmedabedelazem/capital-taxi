@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Dependency security audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=moderate
       - name: Lint
         run: npm run lint
       - name: Unit tests
