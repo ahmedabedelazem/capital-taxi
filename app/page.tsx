@@ -5,7 +5,7 @@ import {
   Sparkles, UsersRound, Wallet, Waves
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-import { HomeInteractiveMap } from "@/components/home-interactive-map";
+import { GoogleArishMap } from "@/components/google-arish-map";
 
 const destinations = [
   { name: "شاطئ الريسة", note: "نسيم البحر ورمال الساحل", image: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", alt: "شاطئ الريسة في مدينة العريش" },
@@ -75,12 +75,12 @@ export default function HomePage() {
             <div className="relative overflow-hidden rounded-[34px] border border-white/15 bg-[#101a27]/75 p-2.5 shadow-[0_35px_100px_rgba(0,0,0,.5)] backdrop-blur-xl">
               <div className="relative overflow-hidden rounded-[27px]">
                 <div className="aspect-[4/5] w-full">
-                  <HomeInteractiveMap />
+                  <GoogleArishMap />
                 </div>
                 <div className="pointer-events-none absolute bottom-5 right-5 left-5 z-20 rounded-2xl border border-white/15 bg-[#08111d]/85 p-4 text-white shadow-2xl backdrop-blur-md">
                   <span className="text-[9px] font-bold tracking-[.2em] text-[#e5bd70]">A CITY WE CALL HOME</span>
                   <h2 className="mt-1 text-xl font-black">مشوارك يبدأ من قلب العريش</h2>
-                  <p className="mt-1 text-[10px] leading-6 text-white/75">حرّك الخريطة واستكشف المدينة، واستخدم زر تحديد الموقع لمعرفة موقعك بعد السماح للمتصفح.</p>
+                  <p className="mt-1 text-[10px] leading-6 text-white/75">استكشف موقع العريش على خريطة Google Maps، وافتحها لعرض الاتجاهات والتفاصيل.</p>
                 </div>
               </div>
               <div className="absolute -bottom-1 left-5 flex items-center gap-3 rounded-2xl border border-white/15 bg-[#111d2b]/95 px-4 py-3 shadow-2xl backdrop-blur">
