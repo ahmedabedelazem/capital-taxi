@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { MapboxCustomerMap } from "@/components/mapbox-customer-map";
+
+type AddressSuggestion = { id: string; label: string; lat: number; lng: number };
 import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation } from "lucide-react";
 
 const vehicleOptions = [
@@ -69,8 +72,8 @@ export function CustomerRideForm() {
   const [destinationPoint, setDestinationPoint] = useState<Point | null>(null);
   const [vehicle, setVehicle] = useState("economy");
   const [locating, setLocating] = useState(false);
-  const [mapsReady, setMapsReady] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
+  const [pickupSuggestions, setPickupSuggestions] = useState<AddressSuggestion[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<AddressSuggestion[]>([]);
   const [routeSummary, setRouteSummary] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
@@ -90,256 +93,52 @@ export function CustomerRideForm() {
   const [supportTickets, setSupportTickets] = useState<SupportTicketHistoryItem[]>([]);
   const [supportHistoryLoading, setSupportHistoryLoading] = useState(true);
   const [supportHistoryError, setSupportHistoryError] = useState("");
-  const pickupInput = useRef<HTMLInputElement>(null);
-  const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
   const idempotencyFingerprint = useRef<string | null>(null);
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<google.maps.Map | null>(null);
-  const mapMarkers = useRef<{
-    pickup: google.maps.Marker | null;
-    destination: google.maps.Marker | null;
-    driver: google.maps.Marker | null;
-  }>({ pickup: null, destination: null, driver: null });
 
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) {
-      setLocationMessage("يلزم إعداد مفتاح Google Maps المقيد لتحديد عناوين الانطلاق والوجهة.");
-      return;
-    }
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const query = pickup.trim();
+    if (!token || pickupPoint || query.length < 3) { setPickupSuggestions([]); return; }
     let active = true;
-    const attachPlaces = () => {
-      if (!active || !window.google?.maps) return;
-      setMapReady(true);
-      if (!window.google.maps.places || !pickupInput.current || !destinationInput.current) {
-        setLocationMessage("الخريطة جاهزة. البحث التلقائي عن العناوين يحتاج تفعيل Places API.");
-        return;
-      }
-      const options: google.maps.places.AutocompleteOptions = {
-        componentRestrictions: { country: "eg" },
-        fields: ["formatted_address", "geometry", "name"],
-      };
-      const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput.current, options);
-      const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput.current, options);
-      pickupAutocomplete.addListener("place_changed", () => {
-        const place = pickupAutocomplete.getPlace();
-        const point = place.geometry?.location;
-        if (!point) {
-          setPickupPoint(null);
-          setLocationMessage("اختر عنواناً من قائمة اقتراحات Google حتى نتمكن من تحديد إحداثياته.");
-          return;
-        }
-        setPickupPoint({ lat: point.lat(), lng: point.lng() });
-        setPickup(place.formatted_address || place.name || pickupInput.current?.value || "");
-        setPreview(false);
-        setBooking(null);
-        setLocationMessage("");
-      });
-      destinationAutocomplete.addListener("place_changed", () => {
-        const place = destinationAutocomplete.getPlace();
-        const point = place.geometry?.location;
-        if (!point) {
-          setDestinationPoint(null);
-          setLocationMessage("اختر الوجهة من قائمة اقتراحات Google حتى نتمكن من تحديد إحداثياتها.");
-          return;
-        }
-        setDestinationPoint({ lat: point.lat(), lng: point.lng() });
-        setDestination(place.formatted_address || place.name || destinationInput.current?.value || "");
-        setPreview(false);
-        setBooking(null);
-        setLocationMessage("");
-      });
-      setMapsReady(true);
-      setLocationMessage("خرائط العناوين جاهزة. اختر الانطلاق والوجهة من الاقتراحات.");
-    };
-
-    if (window.google?.maps) {
-      attachPlaces();
-      return () => { active = false; };
-    }
-    const existing = document.querySelector<HTMLScriptElement>("script[data-capital-taxi-maps]");
-    if (existing) {
-      if (window.google?.maps) {
-        attachPlaces();
-        return () => { active = false; };
-      }
-      existing.addEventListener("load", attachPlaces);
-      return () => {
-        active = false;
-        existing.removeEventListener("load", attachPlaces);
-      };
-    }
-    const script = document.createElement("script");
-    script.dataset.capitalTaxiMaps = "true";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=ar&region=EG`;
-    script.async = true;
-    script.defer = true;
-    script.onload = attachPlaces;
-    script.onerror = () => {
-      if (active) setLocationMessage("تعذر تحميل Google Maps. تحقق من المفتاح وتفعيل Maps JavaScript API وPlaces API.");
-    };
-    document.head.appendChild(script);
-    return () => { active = false; };
-  }, []);
+    const timer = window.setTimeout(async () => {
+      try {
+        const url = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&country=EG&language=ar&limit=5&access_token=${encodeURIComponent(token)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Mapbox geocoding failed");
+        const data = await response.json() as { features?: { id?: string; properties?: { full_address?: string; name?: string }; geometry?: { coordinates?: [number, number] } }[] };
+        if (!active) return;
+        setPickupSuggestions((data.features ?? []).flatMap((feature, index) => {
+          const coordinates = feature.geometry?.coordinates;
+          const label = feature.properties?.full_address || feature.properties?.name;
+          return coordinates && label ? [{ id: feature.id || `pickup-${index}`, label, lng: coordinates[0], lat: coordinates[1] }] : [];
+        }));
+      } catch { if (active) setPickupSuggestions([]); }
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [pickup, pickupPoint]);
 
   useEffect(() => {
-    if (!mapReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
-    const map = new google.maps.Map(mapContainer.current, {
-      center: { lat: 31.132, lng: 33.803 },
-      zoom: 12,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: true,
-      clickableIcons: false,
-      gestureHandling: "cooperative",
-      backgroundColor: "#101923",
-      styles: [
-        { elementType: "geometry", stylers: [{ color: "#182536" }] },
-        { elementType: "labels.text.fill", stylers: [{ color: "#d8e0eb" }] },
-        { elementType: "labels.text.stroke", stylers: [{ color: "#101923" }] },
-        { featureType: "road", elementType: "geometry", stylers: [{ color: "#34445a" }] },
-        { featureType: "water", elementType: "geometry", stylers: [{ color: "#102b42" }] },
-        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-      ],
-    });
-    mapInstance.current = map;
-    return () => {
-      Object.values(mapMarkers.current).forEach((marker) => marker?.setMap(null));
-      mapMarkers.current = { pickup: null, destination: null, driver: null };
-      mapInstance.current = null;
-    };
-  }, [mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps) return;
-    const markers = mapMarkers.current;
-    if (pickupPoint) {
-      if (!markers.pickup) {
-        markers.pickup = new google.maps.Marker({
-          map,
-          title: "نقطة الانطلاق",
-          label: { text: "ب", color: "#101923", fontWeight: "700" },
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#34d399", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
-        });
-      }
-      markers.pickup.setPosition(pickupPoint);
-    } else if (markers.pickup) {
-      markers.pickup.setMap(null);
-      markers.pickup = null;
-    }
-    if (destinationPoint) {
-      if (!markers.destination) {
-        markers.destination = new google.maps.Marker({
-          map,
-          title: "الوجهة",
-          label: { text: "و", color: "#101923", fontWeight: "700" },
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#d5ae63", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
-        });
-      }
-      markers.destination.setPosition(destinationPoint);
-    } else if (markers.destination) {
-      markers.destination.setMap(null);
-      markers.destination = null;
-    }
-    if (pickupPoint && destinationPoint) {
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(pickupPoint);
-      bounds.extend(destinationPoint);
-      map.fitBounds(bounds, 56);
-    } else if (pickupPoint) {
-      map.panTo(pickupPoint);
-      map.setZoom(15);
-    } else if (destinationPoint) {
-      map.panTo(destinationPoint);
-      map.setZoom(15);
-    }
-  }, [pickupPoint, destinationPoint, mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps || !pickupPoint || !destinationPoint) {
-      setRouteSummary(null);
-      return;
-    }
-
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const query = destination.trim();
+    if (!token || destinationPoint || query.length < 3) { setDestinationSuggestions([]); return; }
     let active = true;
-    const directionsRenderer = new google.maps.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      preserveViewport: true,
-      polylineOptions: {
-        strokeColor: "#d5ae63",
-        strokeOpacity: 0.95,
-        strokeWeight: 6,
-      },
-    });
-    const directionsService = new google.maps.DirectionsService();
-
-    void directionsService.route({
-      origin: pickupPoint,
-      destination: destinationPoint,
-      travelMode: google.maps.TravelMode.DRIVING,
-      provideRouteAlternatives: false,
-      region: "EG",
-    }).then((result) => {
-      if (!active) return;
-      directionsRenderer.setDirections(result);
-      const leg = result.routes[0]?.legs[0];
-      setRouteSummary(
-        leg?.distance?.text && leg.duration?.text
-          ? `مسار القيادة: ${leg.distance.text} • ${leg.duration.text}`
-          : "تم رسم مسار القيادة بين النقطتين."
-      );
-    }).catch(() => {
-      if (active) setRouteSummary("تعذر حساب مسار القيادة. تحقق من تفعيل Directions API لمفتاح الخرائط.");
-    });
-
-    return () => {
-      active = false;
-      directionsRenderer.setMap(null);
-    };
-  }, [pickupPoint, destinationPoint, mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps) return;
-    const location = tripDetails?.driverLocation;
-    const marker = mapMarkers.current.driver;
-    if (!location) {
-      marker?.setMap(null);
-      mapMarkers.current.driver = null;
-      return;
-    }
-    let driverMarker = mapMarkers.current.driver;
-    const isFirstDriverPosition = !driverMarker;
-    if (!driverMarker) {
-      driverMarker = new google.maps.Marker({
-        map,
-        title: "موقع السائق",
-        zIndex: 10,
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 6,
-          fillColor: "#60a5fa",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 1.5,
-          rotation: 0,
-        },
-      });
-      mapMarkers.current.driver = driverMarker;
-    }
-    const driverPosition = { lat: location.lat, lng: location.lng };
-    driverMarker.setPosition(driverPosition);
-    if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
-      map.panTo(driverPosition);
-    } else if (map.getBounds() && !map.getBounds()?.contains(driverPosition)) {
-      // Keep the live driver marker visible without resetting the route viewport on every GPS update.
-      map.panTo(driverPosition);
-    }
-  }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapReady]);
+    const timer = window.setTimeout(async () => {
+      try {
+        const url = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&country=EG&language=ar&limit=5&access_token=${encodeURIComponent(token)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Mapbox geocoding failed");
+        const data = await response.json() as { features?: { id?: string; properties?: { full_address?: string; name?: string }; geometry?: { coordinates?: [number, number] } }[] };
+        if (!active) return;
+        setDestinationSuggestions((data.features ?? []).flatMap((feature, index) => {
+          const coordinates = feature.geometry?.coordinates;
+          const label = feature.properties?.full_address || feature.properties?.name;
+          return coordinates && label ? [{ id: feature.id || `destination-${index}`, label, lng: coordinates[0], lat: coordinates[1] }] : [];
+        }));
+      } catch { if (active) setDestinationSuggestions([]); }
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [destination, destinationPoint]);
 
   useEffect(() => {
     let active = true;
@@ -594,124 +393,125 @@ export function CustomerRideForm() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-      <section className="rounded-3xl border border-white/10 bg-panel p-5 md:p-7">
+      <section className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-5 shadow-[var(--shadow-card)] md:p-7">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <div><p className="text-xs text-gold">خطوة 01</p><h2 className="mt-1 text-lg font-bold">حدد تفاصيل المشوار</h2></div>
-          <span className="rounded-full border border-gold/20 bg-gold/5 px-3 py-1.5 text-xs text-gold">رحلة جديدة</span>
+          <div><p className="text-xs text-[var(--brand)]">خطوة 01</p><h2 className="mt-1 text-lg font-bold">حدد تفاصيل المشوار</h2></div>
+          <span className="rounded-full border border-[rgba(245,196,0,.28)] bg-[var(--brand-soft)] px-3 py-1.5 text-xs text-[var(--brand)]">رحلة جديدة</span>
         </div>
         <div className="space-y-3">
-          <div className="rounded-2xl border border-white/10 bg-night p-4">
-            <label htmlFor="pickup" className="mb-2 block text-xs text-muted">نقطة الانطلاق</label>
+          <div className="rounded-[20px] border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
+            <label htmlFor="pickup" className="mb-2 block text-xs text-[var(--app-muted)]">نقطة الانطلاق</label>
             <div className="flex items-center gap-3">
               <span className="h-3 w-3 shrink-0 rounded-full border-2 border-emerald-400"/>
-              <input ref={pickupInput} id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPickupPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="اختر عنواناً من الاقتراحات أو استخدم موقعي"/>
-              <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gold/25 px-3 py-2 text-xs text-gold transition hover:bg-gold/10 disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
+              <input id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPickupPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--app-muted)]" placeholder="اختر عنواناً من الاقتراحات أو استخدم موقعي"/>
+              <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[rgba(245,196,0,.38)] px-3 py-2 text-xs text-[var(--brand)] transition hover:bg-[var(--brand-soft)] disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
             </div>
+            {pickupSuggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[#111a26]">{pickupSuggestions.map((suggestion) => <button key={suggestion.id} type="button" onClick={() => { setPickup(suggestion.label); setPickupPoint({ lat: suggestion.lat, lng: suggestion.lng }); setPickupSuggestions([]); setPreview(false); setBooking(null); setLocationMessage(""); }} className="block w-full border-b border-[var(--app-border)] px-4 py-3 text-right text-xs leading-6 last:border-0 hover:bg-[var(--brand-soft)]">{suggestion.label}</button>)}</div>}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-night p-4">
-            <label htmlFor="destination" className="mb-2 block text-xs text-muted">الوجهة</label>
-            <div className="flex items-center gap-3"><MapPin className="shrink-0 text-gold" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
+          <div className="rounded-[20px] border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
+            <label htmlFor="destination" className="mb-2 block text-xs text-[var(--app-muted)]">الوجهة</label>
+            <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[var(--brand)]" size={18}/><input id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--app-muted)]" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
+            {destinationSuggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[#111a26]">{destinationSuggestions.map((suggestion) => <button key={suggestion.id} type="button" onClick={() => { setDestination(suggestion.label); setDestinationPoint({ lat: suggestion.lat, lng: suggestion.lng }); setDestinationSuggestions([]); setPreview(false); setBooking(null); setLocationMessage(""); }} className="block w-full border-b border-[var(--app-border)] px-4 py-3 text-right text-xs leading-6 last:border-0 hover:bg-[var(--brand-soft)]">{suggestion.label}</button>)}</div>}
           </div>
-          <p className="text-[11px] text-muted">{mapsReady ? "اختيار العناوين مدعوم بخرائط Google." : "يلزم مفتاح Google Maps مفعّل عليه Places API لاختيار الوجهة بدقة."}</p>
-          {locationMessage && <p aria-live="polite" className="rounded-xl bg-white/5 px-4 py-3 text-xs leading-6 text-muted">{locationMessage}</p>}
+          <p className="text-[11px] text-[var(--app-muted)]">اكتب اسم المكان واختره من اقتراحات Mapbox لتحديد الإحداثيات بدقة.</p>
+          {locationMessage && <p aria-live="polite" className="rounded-xl bg-[#0d1622] px-4 py-3 text-xs leading-6 text-[var(--app-muted)]">{locationMessage}</p>}
         </div>
 
         <div className="mt-7">
-          <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">اختر فئة السيارة</h3><span className="text-xs text-muted">نوع المركبة</span></div>
+          <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">اختر فئة السيارة</h3><span className="text-xs text-[var(--app-muted)]">نوع المركبة</span></div>
           <div className="grid gap-3 sm:grid-cols-3">
-            {vehicleOptions.map(({id,name,detail,seats,icon:Icon}) => <button key={id} type="button" onClick={() => {setVehicle(id);setPreview(false);setBooking(null);}} aria-pressed={vehicle===id} className={`rounded-2xl border p-4 text-right transition ${vehicle===id ? "border-gold/60 bg-gold/10 shadow-glow" : "border-white/10 bg-night hover:border-white/25"}`}><Icon className={vehicle===id ? "mb-4 text-gold" : "mb-4 text-muted"} size={23}/><b className="block text-sm">{name}</b><span className="mt-1 block text-[11px] text-muted">{detail}</span><span className="mt-3 block text-[10px] text-muted">{seats}</span></button>)}
+            {vehicleOptions.map(({id,name,detail,seats,icon:Icon}) => <button key={id} type="button" onClick={() => {setVehicle(id);setPreview(false);setBooking(null);}} aria-pressed={vehicle===id} className={`rounded-2xl border p-4 text-right transition ${vehicle===id ? "border-[var(--brand)] bg-[var(--brand-soft)] shadow-[0_0_0_1px_rgba(245,196,0,.14),0_14px_34px_rgba(0,0,0,.22)]" : "border-[var(--app-border)] bg-[#111a26] hover:border-[#8cc63f]/50"}`}><Icon className={vehicle===id ? "mb-4 text-[var(--brand)]" : "mb-4 text-[var(--app-muted)]"} size={23}/><b className="block text-sm">{name}</b><span className="mt-1 block text-[11px] text-[var(--app-muted)]">{detail}</span><span className="mt-3 block text-[10px] text-[var(--app-muted)]">{seats}</span></button>)}
           </div>
         </div>
 
         <div className="mt-7">
           <h3 className="mb-3 font-bold">طريقة الدفع</h3>
-          <div className="flex items-center gap-3 rounded-xl border border-gold/40 bg-gold/5 p-4 text-sm text-gold">
+          <div className="flex items-center gap-3 rounded-xl border border-[rgba(245,196,0,.38)] bg-[var(--brand-soft)] p-4 text-sm text-[var(--brand)]">
             <CircleDollarSign size={20}/>
             <span className="font-bold">الدفع نقداً للسائق بعد انتهاء الرحلة</span>
           </div>
         </div>
 
-        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-xl bg-gold px-5 py-4 font-bold text-night transition hover:bg-[#e8c77e]">معاينة تفاصيل الرحلة</button>
-        {preview && <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5">
-          <div className="mb-3 flex items-center gap-2 text-emerald-300"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
-          <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-muted">من</span><b>{pickup}</b></div><div><span className="block text-xs text-muted">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-muted">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-muted">طريقة الدفع</span><b>نقداً للسائق</b></div></div>
-          <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-gold px-4 py-3 font-bold text-night disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
-          {booking && <div role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-night p-4 text-sm">
-            <b className="text-emerald-300">طلب الرحلة مسجل</b>
-            <p className="mt-2 text-xs text-muted">رقم الطلب: {booking.tripId}</p>
+        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-2xl bg-[var(--brand)] px-5 py-4 font-black text-[var(--app-ink)] shadow-[0_10px_24px_rgba(116,170,48,.18)] transition hover:-translate-y-0.5 hover:bg-[#ffd633]">معاينة تفاصيل الرحلة</button>
+        {preview && <div className="mt-5 rounded-[22px] border border-[rgba(245,196,0,.28)] bg-[var(--brand-soft)] p-5">
+          <div className="mb-3 flex items-center gap-2 text-[var(--brand)]"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
+          <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-[var(--app-muted)]">من</span><b>{pickup}</b></div><div><span className="block text-xs text-[var(--app-muted)]">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-[var(--app-muted)]">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-[var(--app-muted)]">طريقة الدفع</span><b>نقداً للسائق</b></div></div>
+          <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-[var(--brand)] px-4 py-3 font-bold text-[var(--app-ink)] disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
+          {booking && <div role="status" className="mt-4 rounded-xl border border-[rgba(245,196,0,.28)] bg-[#111a26] p-4 text-sm">
+            <b className="text-[var(--brand)]">طلب الرحلة مسجل</b>
+            <p className="mt-2 text-xs text-[var(--app-muted)]">رقم الطلب: {booking.tripId}</p>
             <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm === null ? "غير متاحة" : `${booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم`}</b></p>
-            <p className="mt-1">السعر التقديري: <b className="text-gold">{booking.fareEstimate === null ? "غير متاح" : `${booking.fareEstimate} ج.م`}</b></p>
-            <p className="mt-2 text-xs text-muted">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
-            {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
-            {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-white/5 p-3 text-xs leading-6 text-muted">{cancelMessage}</p>}
-            {tripDetails?.driver && <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-3">
-              <b className="text-sm text-gold">بيانات السائق المعيّن</b>
+            <p className="mt-1">السعر التقديري: <b className="text-[var(--brand)]">{booking.fareEstimate === null ? "غير متاح" : `${booking.fareEstimate} ج.م`}</b></p>
+            <p className="mt-2 text-xs text-[var(--app-muted)]">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
+            {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
+            {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-[#0d1622] p-3 text-xs leading-6 text-[var(--app-muted)]">{cancelMessage}</p>}
+            {tripDetails?.driver && <div className="mt-4 rounded-xl border border-[rgba(245,196,0,.28)] bg-[var(--brand-soft)] p-3">
+              <b className="text-sm text-[var(--brand)]">بيانات السائق المعيّن</b>
               <p className="mt-2 text-xs">الاسم: {tripDetails.driver.fullName || "غير متاح"}</p>
               <p className="mt-1 text-xs">المركبة: {[tripDetails.driver.vehicleType, tripDetails.driver.vehicleModel].filter(Boolean).join(" – ") || "غير متاحة"}</p>
               <p className="mt-1 text-xs">رقم اللوحة: {tripDetails.driver.plateNumber || "غير متاح"}</p>
-              {tripDetails.driver.phone && <a href={`tel:${tripDetails.driver.phone}`} className="mt-3 inline-flex rounded-lg bg-gold px-4 py-2 text-xs font-bold text-night">اتصال بالسائق</a>}
+              {tripDetails.driver.phone && <a href={`tel:${tripDetails.driver.phone}`} className="mt-3 inline-flex rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-bold text-[var(--app-ink)]">اتصال بالسائق</a>}
             </div>}
-            {tripDetails?.driverLocation && <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3">
-              <b className="text-xs text-emerald-300">آخر موقع مُحدّث للسائق</b>
-              <p className="mt-2 text-[11px] text-muted" dir="ltr">{tripDetails.driverLocation.lat.toFixed(5)}, {tripDetails.driverLocation.lng.toFixed(5)}</p>
-              <p className="mt-1 text-[10px] text-muted">آخر تحديث: {new Date(tripDetails.driverLocation.updatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</p>
+            {tripDetails?.driverLocation && <div className="mt-4 rounded-xl border border-[rgba(245,196,0,.28)] bg-[var(--brand-soft)] p-3">
+              <b className="text-xs text-[var(--brand)]">آخر موقع مُحدّث للسائق</b>
+              <p className="mt-2 text-[11px] text-[var(--app-muted)]" dir="ltr">{tripDetails.driverLocation.lat.toFixed(5)}, {tripDetails.driverLocation.lng.toFixed(5)}</p>
+              <p className="mt-1 text-[10px] text-[var(--app-muted)]">آخر تحديث: {new Date(tripDetails.driverLocation.updatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</p>
             </div>}
-            {tripDetails?.timeline?.length ? <div className="mt-4 border-t border-white/10 pt-3">
+            {tripDetails?.timeline?.length ? <div className="mt-4 border-t border-[var(--app-border)] pt-3">
               <b className="text-xs">تحديثات الرحلة</b>
-              <div className="mt-2 space-y-2">{[...tripDetails.timeline].reverse().map((event, index) => <div key={`${event.to ?? "event"}-${index}`} className="flex items-center justify-between gap-3 text-[11px] text-muted"><span>{tripStatusLabels[event.to ?? ""] ?? event.to ?? "تحديث"}</span><span>{event.createdAt ? new Date(event.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}</span></div>)}</div>
+              <div className="mt-2 space-y-2">{[...tripDetails.timeline].reverse().map((event, index) => <div key={`${event.to ?? "event"}-${index}`} className="flex items-center justify-between gap-3 text-[11px] text-[var(--app-muted)]"><span>{tripStatusLabels[event.to ?? ""] ?? event.to ?? "تحديث"}</span><span>{event.createdAt ? new Date(event.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : ""}</span></div>)}</div>
             </div> : null}
           </div>}
-          <p className="mt-4 border-t border-white/10 pt-3 text-xs leading-6 text-muted">السعر التقديري يحسبه الخادم من تعريفة الإدارة. لا يتم تأكيد سائق أو تحصيل دفع إلكتروني في هذه المرحلة.</p>
+          <p className="mt-4 border-t border-[var(--app-border)] pt-3 text-xs leading-6 text-[var(--app-muted)]">السعر التقديري يحسبه الخادم من تعريفة الإدارة. لا يتم تأكيد سائق أو تحصيل دفع إلكتروني في هذه المرحلة.</p>
         </div>}
       </section>
 
       <aside className="space-y-4">
-        <div className="rounded-3xl border border-white/10 bg-panel p-6">
-          <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-gold" size={20}/></div>
-          <div className="relative h-64 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
-            {mapReady ? (
-              <div ref={mapContainer} role="img" aria-label="خريطة تفاعلية لمواقع الانطلاق والوجهة والسائق" className="h-full w-full" />
-            ) : (
-              <div className="grid h-full place-items-center px-5 text-center">
-                <div><MapPin className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">الخريطة غير متاحة حالياً</b><p className="mt-2 text-xs leading-6 text-muted">تحقق من إعداد NEXT_PUBLIC_GOOGLE_MAPS_API_KEY وتفعيل Maps JavaScript API وPlaces API.</p></div>
-              </div>
-            )}
-            <span aria-live="polite" className="absolute bottom-3 right-3 rounded-lg bg-night/90 px-3 py-1.5 text-[10px] text-muted">{routeSummary ?? (pickupPoint && destinationPoint ? "جارٍ حساب مسار القيادة…" : "اختر نقطتي الانطلاق والوجهة لرسم المسار")}</span>
+        <div className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+          <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-[var(--brand)]" size={20}/></div>
+          <div className="relative h-64 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[#101a27]">
+            <MapboxCustomerMap
+              pickupPoint={pickupPoint}
+              destinationPoint={destinationPoint}
+              driverLocation={tripDetails?.driverLocation ?? null}
+              onRouteSummary={setRouteSummary}
+            />
+            <span aria-live="polite" className="absolute bottom-3 right-3 rounded-lg bg-[#111a26]/95 px-3 py-1.5 text-[10px] text-[var(--app-muted)]">{routeSummary ?? (pickupPoint && destinationPoint ? "جارٍ حساب مسار القيادة…" : "اختر نقطتي الانطلاق والوجهة لرسم المسار")}</span>
           </div>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-panel p-6">
-          <Clock3 className="mb-4 text-gold" size={22}/>
-          <div className="flex items-center justify-between"><h3 className="font-bold">رحلاتك الأخيرة</h3><span className="text-[10px] text-muted">{tripHistory.length} رحلة</span></div>
-          {historyLoading && <p className="mt-3 text-xs text-muted">جارٍ تحميل السجل…</p>}
-          {!historyLoading && tripHistory.length===0 && <p className="mt-3 text-xs leading-6 text-muted">لا توجد رحلات مسجلة في حسابك حتى الآن.</p>}
-          <div className="mt-4 space-y-3">{tripHistory.map((trip) => <article key={trip.tripId} className="rounded-xl border border-white/10 bg-night p-3">
-            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold">{tripStatusLabels[trip.status] ?? trip.status}</span><span className="text-[10px] text-gold">{trip.fareEstimate === null ? "—" : `${trip.fareEstimate} ج.م`}</span></div>
-            <p className="mt-2 text-xs text-muted">من: {trip.pickupLabel || "غير محدد"}</p>
-            <p className="mt-1 text-xs text-muted">إلى: {trip.destinationLabel || "غير محددة"}</p>
-            <p className="mt-2 text-[10px] text-muted">{trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "تاريخ غير متاح"}</p>
+        <div className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+          <Clock3 className="mb-4 text-[var(--brand)]" size={22}/>
+          <div className="flex items-center justify-between"><h3 className="font-bold">رحلاتك الأخيرة</h3><span className="text-[10px] text-[var(--app-muted)]">{tripHistory.length} رحلة</span></div>
+          {historyLoading && <p className="mt-3 text-xs text-[var(--app-muted)]">جارٍ تحميل السجل…</p>}
+          {!historyLoading && tripHistory.length===0 && <p className="mt-3 text-xs leading-6 text-[var(--app-muted)]">لا توجد رحلات مسجلة في حسابك حتى الآن.</p>}
+          <div className="mt-4 space-y-3">{tripHistory.map((trip) => <article key={trip.tripId} className="rounded-xl border border-[var(--app-border)] bg-[#111a26] p-3">
+            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold">{tripStatusLabels[trip.status] ?? trip.status}</span><span className="text-[10px] text-[var(--brand)]">{trip.fareEstimate === null ? "—" : `${trip.fareEstimate} ج.م`}</span></div>
+            <p className="mt-2 text-xs text-[var(--app-muted)]">من: {trip.pickupLabel || "غير محدد"}</p>
+            <p className="mt-1 text-xs text-[var(--app-muted)]">إلى: {trip.destinationLabel || "غير محددة"}</p>
+            <p className="mt-2 text-[10px] text-[var(--app-muted)]">{trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "تاريخ غير متاح"}</p>
           </article>)}</div>
         </div>
-        <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5"><b className="text-sm text-gold">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-muted">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
-        <section className="rounded-3xl border border-white/10 bg-panel p-6">
-          <h3 className="font-bold">الدعم والشكاوى</h3><p className="mt-1 text-xs leading-6 text-muted">أرسل استفسارك إلى فريق الإدارة. لا تكتب بيانات دفع أو كلمات مرور.</p>
+        <div className="rounded-[22px] border border-[rgba(245,196,0,.28)] bg-[var(--brand-soft)] p-5"><b className="text-sm text-[var(--brand)]">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
+        <section className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+          <h3 className="font-bold">الدعم والشكاوى</h3><p className="mt-1 text-xs leading-6 text-[var(--app-muted)]">أرسل استفسارك إلى فريق الإدارة. لا تكتب بيانات دفع أو كلمات مرور.</p>
           <form onSubmit={submitSupportTicket} className="mt-4 space-y-3">
-            <label className="block text-xs text-muted">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
-            <label className="block text-xs text-muted">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-            <label className="block text-xs text-muted">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-            <label className="block text-xs text-muted">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={booking?.tripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-            <button type="submit" disabled={supportBusy} className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
-            {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-white/10 bg-night p-3 text-xs leading-6 text-muted">{supportMessage}</p>}
+            <label className="block text-xs text-[var(--app-muted)]">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
+            <label className="block text-xs text-[var(--app-muted)]">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+            <label className="block text-xs text-[var(--app-muted)]">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+            <label className="block text-xs text-[var(--app-muted)]">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={booking?.tripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+            <button type="submit" disabled={supportBusy} className="w-full rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-bold text-[var(--app-ink)] disabled:opacity-50">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
+            {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-[var(--app-border)] bg-[#111a26] p-3 text-xs leading-6 text-[var(--app-muted)]">{supportMessage}</p>}
           </form>
-          <div className="mt-5 border-t border-white/10 pt-4">
-            <div className="flex items-center justify-between gap-3"><h4 className="text-sm font-bold">متابعة طلباتك</h4><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-gold disabled:opacity-50">تحديث</button></div>
-            {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-200">{supportHistoryError}</p>}
-            {supportHistoryLoading && <p className="mt-3 text-xs text-muted">جارٍ تحميل الشكاوى…</p>}
-            {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-muted">لا توجد طلبات دعم سابقة.</p>}
-            <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-white/10 bg-night p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-gold/10 px-2 py-1 text-[10px] text-gold">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
-              <p className="mt-2 text-xs leading-6 text-muted">{ticket.description}</p>
-              {ticket.adminNote && <p className="mt-2 rounded-lg border border-emerald-300/10 bg-emerald-300/5 p-2 text-xs leading-6 text-emerald-100">رد الإدارة: {ticket.adminNote}</p>}
-              <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-muted"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
+          <div className="mt-5 border-t border-[var(--app-border)] pt-4">
+            <div className="flex items-center justify-between gap-3"><h4 className="text-sm font-bold">متابعة طلباتك</h4><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-[var(--app-border)] px-3 py-2 text-xs text-[var(--brand)] disabled:opacity-50">تحديث</button></div>
+            {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-700">{supportHistoryError}</p>}
+            {supportHistoryLoading && <p className="mt-3 text-xs text-[var(--app-muted)]">جارٍ تحميل الشكاوى…</p>}
+            {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-[var(--app-muted)]">لا توجد طلبات دعم سابقة.</p>}
+            <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-[var(--app-border)] bg-[#111a26] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[10px] text-[var(--brand)]">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
+              <p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">{ticket.description}</p>
+              {ticket.adminNote && <p className="mt-2 rounded-lg border border-[rgba(245,196,0,.2)] bg-[var(--brand-soft)] p-2 text-xs leading-6 text-[var(--brand)]">رد الإدارة: {ticket.adminNote}</p>}
+              <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[var(--app-muted)]"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
             </article>)}</div>
           </div>
         </section>

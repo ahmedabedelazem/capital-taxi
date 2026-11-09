@@ -129,13 +129,14 @@ export function DriverWorkspace() {
       fullscreenControl: true,
       clickableIcons: false,
       gestureHandling: "cooperative",
-      backgroundColor: "#101923",
+      backgroundColor: "#edf2e7",
       styles: [
-        { elementType: "geometry", stylers: [{ color: "#182536" }] },
-        { elementType: "labels.text.fill", stylers: [{ color: "#d8e0eb" }] },
-        { elementType: "labels.text.stroke", stylers: [{ color: "#101923" }] },
-        { featureType: "road", elementType: "geometry", stylers: [{ color: "#34445a" }] },
-        { featureType: "water", elementType: "geometry", stylers: [{ color: "#102b42" }] },
+        { elementType: "geometry", stylers: [{ color: "#edf2e7" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#53604a" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#edf2e7" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#d6dfce" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#dce8e8" }] },
         { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
       ],
     });
@@ -157,7 +158,7 @@ export function DriverWorkspace() {
     if (pickup) {
       if (!pickupMarker.current) pickupMarker.current = new google.maps.Marker({
         map, title: "نقطة الانطلاق", label: { text: "ب", color: "#101923", fontWeight: "700" },
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#34d399", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#8cc63f", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
       });
       pickupMarker.current.setPosition(pickup);
     } else if (pickupMarker.current) {
@@ -167,7 +168,7 @@ export function DriverWorkspace() {
     if (destination) {
       if (!destinationMarker.current) destinationMarker.current = new google.maps.Marker({
         map, title: "الوجهة", label: { text: "و", color: "#101923", fontWeight: "700" },
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#d5ae63", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#8cc63f", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
       });
       destinationMarker.current.setPosition(destination);
     } else if (destinationMarker.current) {
@@ -201,7 +202,7 @@ export function DriverWorkspace() {
       map,
       suppressMarkers: true,
       preserveViewport: true,
-      polylineOptions: { strokeColor: "#d5ae63", strokeOpacity: 0.95, strokeWeight: 6 },
+      polylineOptions: { strokeColor: "#8cc63f", strokeOpacity: 0.95, strokeWeight: 6 },
     });
     void new google.maps.DirectionsService().route({
       origin: pickup,
@@ -561,94 +562,94 @@ export function DriverWorkspace() {
 
   return <div>
     {showApplication && <section className="mb-5 rounded-3xl border border-gold/20 bg-panel p-6">
-      <div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-gold"/><div><h2 className="font-bold">طلب الانضمام كسائق</h2><p className="mt-1 text-xs text-muted">املأ بياناتك ومركبتك لإرسال الطلب إلى الإدارة.</p></div></div>
+      <div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-[var(--brand)]"/><div><h2 className="font-bold">طلب الانضمام كسائق</h2><p className="mt-1 text-xs text-[var(--app-muted)]">املأ بياناتك ومركبتك لإرسال الطلب إلى الإدارة.</p></div></div>
       <form onSubmit={submitApplication} className="grid gap-4 sm:grid-cols-2">
-        <label className="text-xs text-muted">الاسم بالكامل<input required maxLength={100} value={application.fullName} onChange={e=>setApplication(v=>({...v,fullName:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
-        <label className="text-xs text-muted">رقم الهاتف<input required type="tel" maxLength={25} value={application.phone} onChange={e=>setApplication(v=>({...v,phone:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50" dir="ltr"/></label>
-        <label className="text-xs text-muted">نوع المركبة<input required maxLength={40} value={application.vehicleType} onChange={e=>setApplication(v=>({...v,vehicleType:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
-        <label className="text-xs text-muted">موديل المركبة<input required maxLength={60} value={application.vehicleModel} onChange={e=>setApplication(v=>({...v,vehicleModel:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
-        <label className="text-xs text-muted sm:col-span-2">رقم اللوحة<input required maxLength={30} value={application.plateNumber} onChange={e=>setApplication(v=>({...v,plateNumber:e.target.value}))} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-4 py-3 text-sm text-white outline-none focus:border-gold/50"/></label>
-        <button type="submit" disabled={applicationBusy} className="rounded-xl bg-gold px-5 py-3 text-sm font-bold text-night disabled:opacity-50 sm:col-span-2">{applicationBusy ? "جارٍ إرسال الطلب…" : "إرسال طلب الانضمام"}</button>
+        <label className="text-xs text-[var(--app-muted)]">الاسم بالكامل<input required maxLength={100} value={application.fullName} onChange={e=>setApplication(v=>({...v,fullName:e.target.value}))} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-4 py-3 text-sm text-[var(--app-ink)] outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-[var(--app-muted)]">رقم الهاتف<input required type="tel" maxLength={25} value={application.phone} onChange={e=>setApplication(v=>({...v,phone:e.target.value}))} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-4 py-3 text-sm text-[var(--app-ink)] outline-none focus:border-gold/50" dir="ltr"/></label>
+        <label className="text-xs text-[var(--app-muted)]">نوع المركبة<input required maxLength={40} value={application.vehicleType} onChange={e=>setApplication(v=>({...v,vehicleType:e.target.value}))} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-4 py-3 text-sm text-[var(--app-ink)] outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-[var(--app-muted)]">موديل المركبة<input required maxLength={60} value={application.vehicleModel} onChange={e=>setApplication(v=>({...v,vehicleModel:e.target.value}))} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-4 py-3 text-sm text-[var(--app-ink)] outline-none focus:border-gold/50"/></label>
+        <label className="text-xs text-[var(--app-muted)] sm:col-span-2">رقم اللوحة<input required maxLength={30} value={application.plateNumber} onChange={e=>setApplication(v=>({...v,plateNumber:e.target.value}))} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-4 py-3 text-sm text-[var(--app-ink)] outline-none focus:border-gold/50"/></label>
+        <button type="submit" disabled={applicationBusy} className="rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-bold text-[var(--app-ink)] disabled:opacity-50 sm:col-span-2">{applicationBusy ? "جارٍ إرسال الطلب…" : "إرسال طلب الانضمام"}</button>
       </form>
-      <p className="mt-3 text-[11px] leading-6 text-muted">لا ترفع مستندات حساسة هنا حالياً. ستتم إضافة قناة آمنة لمراجعة المستندات قبل التشغيل.</p>
+      <p className="mt-3 text-[11px] leading-6 text-[var(--app-muted)]">لا ترفع مستندات حساسة هنا حالياً. ستتم إضافة قناة آمنة لمراجعة المستندات قبل التشغيل.</p>
     </section>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {[{label:"حالة الاتصال",value:available ? "متاح – متصل بالخادم" : "غير متصل",icon:Power},{label:"العروض الحالية",value:String(offers.length),icon:ClipboardList},{label:"الرحلة النشطة",value:activeTripId ? "قيد المتابعة" : "لا توجد",icon:CarFront},{label:"اعتماد الحساب",value:"يتحقق منه الخادم",icon:BadgeCheck}].map(({label,value,icon:Icon})=><div key={label} className="rounded-2xl border border-white/10 bg-panel p-5"><Icon className="mb-5 text-gold" size={21}/><p className="text-xs text-muted">{label}</p><b className="mt-2 block text-lg">{value}</b></div>)}
+      {[{label:"حالة الاتصال",value:available ? "متاح – متصل بالخادم" : "غير متصل",icon:Power},{label:"العروض الحالية",value:String(offers.length),icon:ClipboardList},{label:"الرحلة النشطة",value:activeTripId ? "قيد المتابعة" : "لا توجد",icon:CarFront},{label:"اعتماد الحساب",value:"يتحقق منه الخادم",icon:BadgeCheck}].map(({label,value,icon:Icon})=><div key={label} className="rounded-[22px] border border-[var(--app-border)] bg-[#111a26] p-5 shadow-[var(--shadow-card)]"><Icon className="mb-5 text-[var(--brand)]" size={21}/><p className="text-xs text-[var(--app-muted)]">{label}</p><b className="mt-2 block text-lg">{value}</b></div>)}
     </div>
     <div className="mt-5 grid gap-5 lg:grid-cols-[.8fr_1.2fr]">
-      <section className="rounded-3xl border border-white/10 bg-panel p-6">
-        <div className="mb-4 flex items-center justify-between"><CarFront className="text-gold" size={28}/><span className="rounded-full bg-amber-300/10 px-3 py-1 text-[11px] text-amber-200">حساب معتمد فقط</span></div>
+      <section className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+        <div className="mb-4 flex items-center justify-between"><CarFront className="text-[var(--brand)]" size={28}/><span className="rounded-full bg-amber-300/10 px-3 py-1 text-[11px] text-amber-800">حساب معتمد فقط</span></div>
         <h2 className="text-xl font-bold">حالة استقبال الرحلات</h2>
-        <p className="mt-3 text-sm leading-7 text-muted">عند تفعيل التوفر، يطلب المتصفح إذن الموقع ويرسل آخر إحداثياتك أثناء اتصالك فقط. يمكنك إيقاف التوفر في أي وقت ما لم تكن لديك رحلة نشطة.</p>
-        <button type="button" disabled={busy} aria-pressed={available} onClick={toggleAvailability} className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 text-sm font-bold transition disabled:opacity-50 ${available ? "border border-emerald-300/30 bg-emerald-400/15 text-emerald-300" : "bg-gold text-night hover:bg-[#e8c77e]"}`}><Power size={18}/>{busy ? "جارٍ التنفيذ…" : available ? "إيقاف استقبال الرحلات" : "بدء استقبال الرحلات"}</button>
-        <p role="status" className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-6 text-muted">حالة GPS: {available || activeTripId ? locationStatus : "يبدأ تحديث الموقع عند تفعيل التوفر أو وجود رحلة نشطة."}</p>
-        {message && <p role="status" className="mt-4 rounded-xl bg-white/5 p-3 text-xs leading-6 text-muted">{message}</p>}
+        <p className="mt-3 text-sm leading-7 text-[var(--app-muted)]">عند تفعيل التوفر، يطلب المتصفح إذن الموقع ويرسل آخر إحداثياتك أثناء اتصالك فقط. يمكنك إيقاف التوفر في أي وقت ما لم تكن لديك رحلة نشطة.</p>
+        <button type="button" disabled={busy} aria-pressed={available} onClick={toggleAvailability} className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 text-sm font-bold transition disabled:opacity-50 ${available ? "border border-emerald-300/30 bg-emerald-400/15 text-[var(--brand)]" : "bg-[var(--brand)] text-[var(--app-ink)] hover:bg-[#ffd633]"}`}><Power size={18}/>{busy ? "جارٍ التنفيذ…" : available ? "إيقاف استقبال الرحلات" : "بدء استقبال الرحلات"}</button>
+        <p role="status" className="mt-3 rounded-xl border border-[var(--app-border)] bg-[#0d1622] p-3 text-xs leading-6 text-[var(--app-muted)]">حالة GPS: {available || activeTripId ? locationStatus : "يبدأ تحديث الموقع عند تفعيل التوفر أو وجود رحلة نشطة."}</p>
+        {message && <p role="status" className="mt-4 rounded-xl bg-[#0d1622] p-3 text-xs leading-6 text-[var(--app-muted)]">{message}</p>}
       </section>
-      <section className="rounded-3xl border border-white/10 bg-panel p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">مساحة العمل</h2><div className="flex gap-2">{[{id:"offers",label:"العروض"},{id:"active",label:"الرحلة الحالية"},{id:"history",label:"السجل"}].map(item=><button key={item.id} type="button" onClick={()=>setSection(item.id)} className={`rounded-lg px-3 py-2 text-xs ${section===item.id ? "bg-gold text-night font-bold" : "bg-white/5 text-muted"}`}>{item.label}</button>)}</div></div>
+      <section className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">مساحة العمل</h2><div className="flex gap-2">{[{id:"offers",label:"العروض"},{id:"active",label:"الرحلة الحالية"},{id:"history",label:"السجل"}].map(item=><button key={item.id} type="button" onClick={()=>setSection(item.id)} className={`rounded-lg px-3 py-2 text-xs ${section===item.id ? "bg-[var(--brand)] text-[var(--app-ink)] font-bold" : "bg-[#0d1622] text-[var(--app-muted)]"}`}>{item.label}</button>)}</div></div>
         {section==="offers" && <div className="mt-5 space-y-3">
-          {!available && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><ClipboardList className="mx-auto mb-3 text-gold" size={26}/><b className="block text-sm">فعّل التوفر لاستقبال العروض</b><p className="mt-2 text-xs leading-6 text-muted">العروض الحقيقية تظهر بعد اعتماد الحساب وتحديث الموقع.</p></div></div>}
-          {available && offers.length===0 && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><MapPin className="mx-auto mb-3 text-gold" size={26}/><b className="block text-sm">لا توجد عروض متاحة الآن</b><p className="mt-2 text-xs leading-6 text-muted">سيتم تحديث القائمة تلقائياً كل 10 ثوانٍ.</p></div></div>}
-          {offers.map(offer=><article key={offer.offerId} className="rounded-2xl border border-white/10 bg-night p-4"><div className="grid gap-3 sm:grid-cols-2"><div><span className="text-[11px] text-muted">نقطة الانطلاق</span><p className="mt-1 text-sm font-semibold">{offer.pickupLabel ?? "غير محدد"}</p></div><div><span className="text-[11px] text-muted">الوجهة</span><p className="mt-1 text-sm font-semibold">{offer.destinationLabel ?? "غير محددة"}</p></div></div><div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3"><span className="text-sm text-gold">{offer.fareEstimate === null ? "السعر غير متاح" : `تقدير السعر: ${offer.fareEstimate} ج.م`}</span><button type="button" disabled={busy} onClick={()=>acceptOffer(offer)} className="rounded-lg bg-gold px-4 py-2 text-xs font-bold text-night disabled:opacity-50">قبول الرحلة</button></div></article>)}
+          {!available && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-[var(--app-border)] px-5 text-center"><div><ClipboardList className="mx-auto mb-3 text-[var(--brand)]" size={26}/><b className="block text-sm">فعّل التوفر لاستقبال العروض</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">العروض الحقيقية تظهر بعد اعتماد الحساب وتحديث الموقع.</p></div></div>}
+          {available && offers.length===0 && <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-[var(--app-border)] px-5 text-center"><div><MapPin className="mx-auto mb-3 text-[var(--brand)]" size={26}/><b className="block text-sm">لا توجد عروض متاحة الآن</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">سيتم تحديث القائمة تلقائياً كل 10 ثوانٍ.</p></div></div>}
+          {offers.map(offer=><article key={offer.offerId} className="rounded-[20px] border border-[var(--app-border)] bg-[#111a26] p-4 shadow-[0_5px_18px_rgba(28,48,20,.035)]"><div className="grid gap-3 sm:grid-cols-2"><div><span className="text-[11px] text-[var(--app-muted)]">نقطة الانطلاق</span><p className="mt-1 text-sm font-semibold">{offer.pickupLabel ?? "غير محدد"}</p></div><div><span className="text-[11px] text-[var(--app-muted)]">الوجهة</span><p className="mt-1 text-sm font-semibold">{offer.destinationLabel ?? "غير محددة"}</p></div></div><div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--app-border)] pt-3"><span className="text-sm text-[var(--brand)]">{offer.fareEstimate === null ? "السعر غير متاح" : `تقدير السعر: ${offer.fareEstimate} ج.م`}</span><button type="button" disabled={busy} onClick={()=>acceptOffer(offer)} className="rounded-lg bg-[var(--brand)] px-4 py-2 text-xs font-bold text-[var(--app-ink)] disabled:opacity-50">قبول الرحلة</button></div></article>)}
         </div>}
         {section==="active" && <div className="mt-5 space-y-4">
-          {!activeTripId && <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><CarFront className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">لا توجد رحلة نشطة</b><p className="mt-2 text-xs leading-6 text-muted">عند قبول عرض ستظهر تفاصيل الرحلة وخطوات تنفيذها هنا.</p></div></div>}
-          {activeTripId && <article className="rounded-2xl border border-gold/20 bg-night p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-bold">الرحلة الحالية</h3><span className="rounded-full bg-gold/10 px-3 py-1.5 text-xs text-gold">{({accepted:"تم قبول الرحلة",driver_arrived:"وصلت إلى العميل",in_progress:"الرحلة جارية"} as Record<string,string>)[activeTrip?.status ?? ""] || "جارٍ تحميل الحالة"}</span></div>
-            <p className="mt-4 text-sm"><span className="text-muted">من:</span> {activeTrip?.pickupLabel || "جارٍ التحميل…"}</p>
-            <p className="mt-2 text-sm"><span className="text-muted">إلى:</span> {activeTrip?.destinationLabel || "جارٍ التحميل…"}</p>
-            <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted"><span>الأجرة التقديرية: {activeTrip?.fareEstimate ?? "—"} ج.م</span><span>المسافة: {activeTrip?.distanceKm ?? "—"} كم</span></div>
-            <p className="mt-3 break-all text-[10px] text-muted" dir="ltr">{activeTripId}</p>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3"><b className="text-xs">خريطة الرحلة</b><span className="text-[10px] text-muted">{routeSummary || mapMessage}</span></div>
+          {!activeTripId && <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-[var(--app-border)] px-5 text-center"><div><CarFront className="mx-auto mb-3 text-[var(--brand)]" size={28}/><b className="block text-sm">لا توجد رحلة نشطة</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">عند قبول عرض ستظهر تفاصيل الرحلة وخطوات تنفيذها هنا.</p></div></div>}
+          {activeTripId && <article className="rounded-2xl border border-gold/20 bg-[#111a26] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-bold">الرحلة الحالية</h3><span className="rounded-full bg-[var(--brand-soft)] px-3 py-1.5 text-xs text-[var(--brand)]">{({accepted:"تم قبول الرحلة",driver_arrived:"وصلت إلى العميل",in_progress:"الرحلة جارية"} as Record<string,string>)[activeTrip?.status ?? ""] || "جارٍ تحميل الحالة"}</span></div>
+            <p className="mt-4 text-sm"><span className="text-[var(--app-muted)]">من:</span> {activeTrip?.pickupLabel || "جارٍ التحميل…"}</p>
+            <p className="mt-2 text-sm"><span className="text-[var(--app-muted)]">إلى:</span> {activeTrip?.destinationLabel || "جارٍ التحميل…"}</p>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-[var(--app-muted)]"><span>الأجرة التقديرية: {activeTrip?.fareEstimate ?? "—"} ج.م</span><span>المسافة: {activeTrip?.distanceKm ?? "—"} كم</span></div>
+            <p className="mt-3 break-all text-[10px] text-[var(--app-muted)]" dir="ltr">{activeTripId}</p>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[#edf2e7]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--app-border)] px-4 py-3"><b className="text-xs">خريطة الرحلة</b><span className="text-[10px] text-[var(--app-muted)]">{routeSummary || mapMessage}</span></div>
               <div ref={mapContainer} className="h-[280px] w-full sm:h-[340px]" role="img" aria-label="خريطة توضح نقطة الانطلاق والوجهة ومسار القيادة" />
-              {activeTrip && (!activeTrip.pickupPoint || !activeTrip.destinationPoint) && <p className="border-t border-white/10 px-4 py-3 text-xs leading-6 text-amber-200">إحداثيات إحدى نقطتي الرحلة غير متاحة؛ لا يمكن رسم المسار كاملاً.</p>}
+              {activeTrip && (!activeTrip.pickupPoint || !activeTrip.destinationPoint) && <p className="border-t border-[var(--app-border)] px-4 py-3 text-xs leading-6 text-amber-800">إحداثيات إحدى نقطتي الرحلة غير متاحة؛ لا يمكن رسم المسار كاملاً.</p>}
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {activeTrip?.status === "accepted" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("driver_arrived")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">تأكيد الوصول لنقطة الانطلاق</button>}
-              {activeTrip?.status === "driver_arrived" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("in_progress")} className="rounded-xl bg-gold px-4 py-3 text-sm font-bold text-night disabled:opacity-50">بدء الرحلة</button>}
-              {activeTrip?.status === "in_progress" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("completed")} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-night disabled:opacity-50">إنهاء الرحلة</button>}
+              {activeTrip?.status === "accepted" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("driver_arrived")} className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-black text-[var(--app-ink)] shadow-[0_8px_18px_rgba(116,170,48,.14)] disabled:opacity-50">تأكيد الوصول لنقطة الانطلاق</button>}
+              {activeTrip?.status === "driver_arrived" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("in_progress")} className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-black text-[var(--app-ink)] shadow-[0_8px_18px_rgba(116,170,48,.14)] disabled:opacity-50">بدء الرحلة</button>}
+              {activeTrip?.status === "in_progress" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("completed")} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-[var(--app-ink)] disabled:opacity-50">إنهاء الرحلة</button>}
             </div>
-            {activeTrip && !["accepted","driver_arrived","in_progress"].includes(activeTrip.status) && <p className="mt-4 text-xs text-muted">الحالة الحالية: {activeTrip.status}</p>}
+            {activeTrip && !["accepted","driver_arrived","in_progress"].includes(activeTrip.status) && <p className="mt-4 text-xs text-[var(--app-muted)]">الحالة الحالية: {activeTrip.status}</p>}
           </article>}
         </div>}
         {section==="history" && <div className="mt-5 space-y-3">
-          <div className="flex items-center justify-between gap-3"><p className="text-xs text-muted">آخر الرحلات المسندة إلى حسابك (حتى 100 رحلة)</p><button type="button" disabled={historyLoading} onClick={() => void loadDriverHistory()} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-gold disabled:opacity-50">{historyLoading ? "جارٍ التحديث…" : "تحديث السجل"}</button></div>
-          {historyError && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-200">{historyError}</p>}
-          {historyLoading && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 text-xs text-muted">جارٍ تحميل سجل الرحلات…</div>}
-          {!historyLoading && !historyError && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-gold" size={28}/><b className="block text-sm">لا توجد رحلات في السجل</b><p className="mt-2 text-xs leading-6 text-muted">ستظهر هنا الرحلات التي تم إسنادها إلى حسابك.</p></div></div>}
-          {history.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-white/10 bg-night p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-gold/10 px-3 py-1 text-[11px] text-gold">{({accepted:"تم قبولها",driver_arrived:"تم الوصول",in_progress:"قيد التنفيذ",completed:"مكتملة",cancelled:"ملغاة",no_driver:"لم يُعيّن سائق",pending:"معلقة",searching:"جارٍ البحث"} as Record<string,string>)[trip.status] ?? trip.status}</span><b className="text-sm text-gold">{trip.fareEstimate === null ? "الأجرة غير محددة" : `${trip.fareEstimate} ج.م`}</b></div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2"><div><span className="text-[10px] text-muted">نقطة الانطلاق</span><p className="mt-1 text-xs leading-6">{trip.pickupLabel ?? "غير محددة"}</p></div><div><span className="text-[10px] text-muted">الوجهة</span><p className="mt-1 text-xs leading-6">{trip.destinationLabel ?? "غير محددة"}</p></div></div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-[10px] text-muted"><span>المسافة: {trip.distanceKm === null ? "—" : `${trip.distanceKm} كم`}</span><span>تاريخ الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span>{trip.completedAt && <span>الإنهاء: {new Date(trip.completedAt).toLocaleString("ar-EG")}</span>}</div>
-            <p className="mt-2 break-all text-[9px] text-muted" dir="ltr">{trip.tripId}</p>
+          <div className="flex items-center justify-between gap-3"><p className="text-xs text-[var(--app-muted)]">آخر الرحلات المسندة إلى حسابك (حتى 100 رحلة)</p><button type="button" disabled={historyLoading} onClick={() => void loadDriverHistory()} className="rounded-lg border border-[var(--app-border)] px-3 py-2 text-xs text-[var(--brand)] disabled:opacity-50">{historyLoading ? "جارٍ التحديث…" : "تحديث السجل"}</button></div>
+          {historyError && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-700">{historyError}</p>}
+          {historyLoading && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-[var(--app-border)] text-xs text-[var(--app-muted)]">جارٍ تحميل سجل الرحلات…</div>}
+          {!historyLoading && !historyError && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-[var(--app-border)] px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-[var(--brand)]" size={28}/><b className="block text-sm">لا توجد رحلات في السجل</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">ستظهر هنا الرحلات التي تم إسنادها إلى حسابك.</p></div></div>}
+          {history.map((trip) => <article key={trip.tripId} className="rounded-[20px] border border-[var(--app-border)] bg-[#111a26] p-4 shadow-[0_5px_18px_rgba(28,48,20,.035)]">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[11px] text-[var(--brand)]">{({accepted:"تم قبولها",driver_arrived:"تم الوصول",in_progress:"قيد التنفيذ",completed:"مكتملة",cancelled:"ملغاة",no_driver:"لم يُعيّن سائق",pending:"معلقة",searching:"جارٍ البحث"} as Record<string,string>)[trip.status] ?? trip.status}</span><b className="text-sm text-[var(--brand)]">{trip.fareEstimate === null ? "الأجرة غير محددة" : `${trip.fareEstimate} ج.م`}</b></div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2"><div><span className="text-[10px] text-[var(--app-muted)]">نقطة الانطلاق</span><p className="mt-1 text-xs leading-6">{trip.pickupLabel ?? "غير محددة"}</p></div><div><span className="text-[10px] text-[var(--app-muted)]">الوجهة</span><p className="mt-1 text-xs leading-6">{trip.destinationLabel ?? "غير محددة"}</p></div></div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--app-border)] pt-3 text-[10px] text-[var(--app-muted)]"><span>المسافة: {trip.distanceKm === null ? "—" : `${trip.distanceKm} كم`}</span><span>تاريخ الطلب: {trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span>{trip.completedAt && <span>الإنهاء: {new Date(trip.completedAt).toLocaleString("ar-EG")}</span>}</div>
+            <p className="mt-2 break-all text-[9px] text-[var(--app-muted)]" dir="ltr">{trip.tripId}</p>
           </article>)}
         </div>}
       </section>
     </div>
-    <section className="mt-5 rounded-3xl border border-white/10 bg-panel p-6">
-      <h2 className="font-bold">الدعم والشكاوى</h2><p className="mt-1 text-xs leading-6 text-muted">أرسل مشكلة تخص حسابك أو رحلة مسندة إليك إلى الإدارة.</p>
+    <section className="mt-5 rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
+      <h2 className="font-bold">الدعم والشكاوى</h2><p className="mt-1 text-xs leading-6 text-[var(--app-muted)]">أرسل مشكلة تخص حسابك أو رحلة مسندة إليك إلى الإدارة.</p>
       <form onSubmit={submitSupportTicket} className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="text-xs text-muted">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">حساب السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
-        <label className="text-xs text-muted">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={activeTripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-        <label className="text-xs text-muted sm:col-span-2">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-        <label className="text-xs text-muted sm:col-span-2">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-night px-3 py-3 text-sm text-white" /></label>
-        <button type="submit" disabled={supportBusy} className="rounded-xl bg-gold px-5 py-3 text-sm font-bold text-night disabled:opacity-50 sm:col-span-2">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
-        {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-white/10 bg-night p-3 text-xs leading-6 text-muted sm:col-span-2">{supportMessage}</p>}
+        <label className="text-xs text-[var(--app-muted)]">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">حساب السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
+        <label className="text-xs text-[var(--app-muted)]">رقم الرحلة (اختياري)<input maxLength={128} value={supportTripId} onChange={(event) => setSupportTripId(event.target.value)} placeholder={activeTripId || "يمكن تركه فارغاً"} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+        <label className="text-xs text-[var(--app-muted)] sm:col-span-2">عنوان الشكوى<input required minLength={5} maxLength={120} value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+        <label className="text-xs text-[var(--app-muted)] sm:col-span-2">التفاصيل<textarea required minLength={10} maxLength={2500} rows={4} value={supportDescription} onChange={(event) => setSupportDescription(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--app-border)] bg-[#111a26] px-3 py-3 text-sm text-[var(--app-ink)]" /></label>
+        <button type="submit" disabled={supportBusy} className="rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-bold text-[var(--app-ink)] disabled:opacity-50 sm:col-span-2">{supportBusy ? "جارٍ إرسال الشكوى…" : "إرسال إلى الدعم"}</button>
+        {supportMessage && <p role="status" aria-live="polite" className="break-words rounded-xl border border-[var(--app-border)] bg-[#111a26] p-3 text-xs leading-6 text-[var(--app-muted)] sm:col-span-2">{supportMessage}</p>}
       </form>
-      <div className="mt-5 border-t border-white/10 pt-4">
-        <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold">متابعة طلباتك</h3><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-gold disabled:opacity-50">تحديث</button></div>
-        {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-200">{supportHistoryError}</p>}
-        {supportHistoryLoading && <p className="mt-3 text-xs text-muted">جارٍ تحميل الشكاوى…</p>}
-        {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-muted">لا توجد طلبات دعم سابقة.</p>}
-        <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-white/10 bg-night p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-gold/10 px-2 py-1 text-[10px] text-gold">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
-          <p className="mt-2 text-xs leading-6 text-muted">{ticket.description}</p>
-          {ticket.adminNote && <p className="mt-2 rounded-lg border border-emerald-300/10 bg-emerald-300/5 p-2 text-xs leading-6 text-emerald-100">رد الإدارة: {ticket.adminNote}</p>}
-          <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-muted"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
+      <div className="mt-5 border-t border-[var(--app-border)] pt-4">
+        <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold">متابعة طلباتك</h3><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-[var(--app-border)] px-3 py-2 text-xs text-[var(--brand)] disabled:opacity-50">تحديث</button></div>
+        {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-700">{supportHistoryError}</p>}
+        {supportHistoryLoading && <p className="mt-3 text-xs text-[var(--app-muted)]">جارٍ تحميل الشكاوى…</p>}
+        {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-[var(--app-muted)]">لا توجد طلبات دعم سابقة.</p>}
+        <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-[var(--app-border)] bg-[#111a26] p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[10px] text-[var(--brand)]">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
+          <p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">{ticket.description}</p>
+          {ticket.adminNote && <p className="mt-2 rounded-lg border border-emerald-300/10 bg-emerald-300/5 p-2 text-xs leading-6 text-[#466d20]">رد الإدارة: {ticket.adminNote}</p>}
+          <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[var(--app-muted)]"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
         </article>)}</div>
       </div>
     </section>
-    <section className="mt-5 rounded-3xl border border-white/10 bg-panel p-6"><div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-gold"/><h2 className="font-bold">متطلبات تفعيل حساب السائق</h2></div><div className="grid gap-3 sm:grid-cols-3">{["بيانات السائق والتحقق من الهوية","بيانات المركبة والترخيص","موافقة الإدارة وتفعيل الحساب"].map((item,i)=><div key={item} className="flex items-start gap-3 rounded-xl bg-night p-4"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gold/10 text-xs text-gold">{i+1}</span><p className="text-xs leading-6 text-muted">{item}</p></div>)}</div></section>
+    <section className="mt-5 rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]"><div className="mb-4 flex items-center gap-3"><ShieldCheck className="text-[var(--brand)]"/><h2 className="font-bold">متطلبات تفعيل حساب السائق</h2></div><div className="grid gap-3 sm:grid-cols-3">{["بيانات السائق والتحقق من الهوية","بيانات المركبة والترخيص","موافقة الإدارة وتفعيل الحساب"].map((item,i)=><div key={item} className="flex items-start gap-3 rounded-xl bg-[#111a26] p-4"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[var(--brand-soft)] text-xs text-[var(--brand)]">{i+1}</span><p className="text-xs leading-6 text-[var(--app-muted)]">{item}</p></div>)}</div></section>
   </div>;
 }
