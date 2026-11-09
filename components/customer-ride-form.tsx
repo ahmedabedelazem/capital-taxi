@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { MapboxCustomerMap } from "@/components/mapbox-customer-map";
 import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation } from "lucide-react";
 
 const vehicleOptions = [
@@ -70,7 +71,6 @@ export function CustomerRideForm() {
   const [vehicle, setVehicle] = useState("economy");
   const [locating, setLocating] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
   const [routeSummary, setRouteSummary] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
@@ -94,13 +94,10 @@ export function CustomerRideForm() {
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
   const idempotencyFingerprint = useRef<string | null>(null);
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<google.maps.Map | null>(null);
-  const mapMarkers = useRef<{
-    pickup: google.maps.Marker | null;
-    destination: google.maps.Marker | null;
-    driver: google.maps.Marker | null;
-  }>({ pickup: null, destination: null, driver: null });
+  const pickupInput = useRef<HTMLInputElement>(null);
+  const destinationInput = useRef<HTMLInputElement>(null);
+  const idempotencyKey = useRef<string | null>(null);
+  const idempotencyFingerprint = useRef<string | null>(null);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -111,7 +108,6 @@ export function CustomerRideForm() {
     let active = true;
     const attachPlaces = () => {
       if (!active || !window.google?.maps) return;
-      setMapReady(true);
       if (!window.google.maps.places || !pickupInput.current || !destinationInput.current) {
         setLocationMessage("الخريطة جاهزة. البحث التلقائي عن العناوين يحتاج تفعيل Places API.");
         return;
@@ -151,7 +147,7 @@ export function CustomerRideForm() {
         setLocationMessage("");
       });
       setMapsReady(true);
-      setLocationMessage("خرائط العناوين جاهزة. اختر الانطلاق والوجهة من الاقتراحات.");
+      setLocationMessage("بحث العناوين جاهز عبر Google Places. الخريطة ومسار القيادة يعملان عبر Mapbox.");
     };
 
     if (window.google?.maps) {
@@ -182,165 +178,6 @@ export function CustomerRideForm() {
     document.head.appendChild(script);
     return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (!mapReady || !mapContainer.current || !window.google?.maps || mapInstance.current) return;
-    const map = new google.maps.Map(mapContainer.current, {
-      center: { lat: 31.132, lng: 33.803 },
-      zoom: 12,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: true,
-      clickableIcons: false,
-      gestureHandling: "cooperative",
-      backgroundColor: "#edf2e7",
-      styles: [
-        { elementType: "geometry", stylers: [{ color: "#edf2e7" }] },
-        { elementType: "labels.text.fill", stylers: [{ color: "#53604a" }] },
-        { elementType: "labels.text.stroke", stylers: [{ color: "#edf2e7" }] },
-        { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#d6dfce" }] },
-        { featureType: "water", elementType: "geometry", stylers: [{ color: "#dce8e8" }] },
-        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-      ],
-    });
-    mapInstance.current = map;
-    return () => {
-      Object.values(mapMarkers.current).forEach((marker) => marker?.setMap(null));
-      mapMarkers.current = { pickup: null, destination: null, driver: null };
-      mapInstance.current = null;
-    };
-  }, [mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps) return;
-    const markers = mapMarkers.current;
-    if (pickupPoint) {
-      if (!markers.pickup) {
-        markers.pickup = new google.maps.Marker({
-          map,
-          title: "نقطة الانطلاق",
-          label: { text: "ب", color: "#101923", fontWeight: "700" },
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#f5c400", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
-        });
-      }
-      markers.pickup.setPosition(pickupPoint);
-    } else if (markers.pickup) {
-      markers.pickup.setMap(null);
-      markers.pickup = null;
-    }
-    if (destinationPoint) {
-      if (!markers.destination) {
-        markers.destination = new google.maps.Marker({
-          map,
-          title: "الوجهة",
-          label: { text: "و", color: "#101923", fontWeight: "700" },
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#f5c400", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
-        });
-      }
-      markers.destination.setPosition(destinationPoint);
-    } else if (markers.destination) {
-      markers.destination.setMap(null);
-      markers.destination = null;
-    }
-    if (pickupPoint && destinationPoint) {
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(pickupPoint);
-      bounds.extend(destinationPoint);
-      map.fitBounds(bounds, 56);
-    } else if (pickupPoint) {
-      map.panTo(pickupPoint);
-      map.setZoom(15);
-    } else if (destinationPoint) {
-      map.panTo(destinationPoint);
-      map.setZoom(15);
-    }
-  }, [pickupPoint, destinationPoint, mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps || !pickupPoint || !destinationPoint) {
-      setRouteSummary(null);
-      return;
-    }
-
-    let active = true;
-    const directionsRenderer = new google.maps.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      preserveViewport: true,
-      polylineOptions: {
-        strokeColor: "#f5c400",
-        strokeOpacity: 0.95,
-        strokeWeight: 6,
-      },
-    });
-    const directionsService = new google.maps.DirectionsService();
-
-    void directionsService.route({
-      origin: pickupPoint,
-      destination: destinationPoint,
-      travelMode: google.maps.TravelMode.DRIVING,
-      provideRouteAlternatives: false,
-      region: "EG",
-    }).then((result) => {
-      if (!active) return;
-      directionsRenderer.setDirections(result);
-      const leg = result.routes[0]?.legs[0];
-      setRouteSummary(
-        leg?.distance?.text && leg.duration?.text
-          ? `مسار القيادة: ${leg.distance.text} • ${leg.duration.text}`
-          : "تم رسم مسار القيادة بين النقطتين."
-      );
-    }).catch(() => {
-      if (active) setRouteSummary("تعذر حساب مسار القيادة. تحقق من تفعيل Directions API لمفتاح الخرائط.");
-    });
-
-    return () => {
-      active = false;
-      directionsRenderer.setMap(null);
-    };
-  }, [pickupPoint, destinationPoint, mapReady]);
-
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !window.google?.maps) return;
-    const location = tripDetails?.driverLocation;
-    const marker = mapMarkers.current.driver;
-    if (!location) {
-      marker?.setMap(null);
-      mapMarkers.current.driver = null;
-      return;
-    }
-    let driverMarker = mapMarkers.current.driver;
-    const isFirstDriverPosition = !driverMarker;
-    if (!driverMarker) {
-      driverMarker = new google.maps.Marker({
-        map,
-        title: "موقع السائق",
-        zIndex: 10,
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 6,
-          fillColor: "#5e8f25",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 1.5,
-          rotation: 0,
-        },
-      });
-      mapMarkers.current.driver = driverMarker;
-    }
-    const driverPosition = { lat: location.lat, lng: location.lng };
-    driverMarker.setPosition(driverPosition);
-    if (isFirstDriverPosition && !pickupPoint && !destinationPoint) {
-      map.panTo(driverPosition);
-    } else if (map.getBounds() && !map.getBounds()?.contains(driverPosition)) {
-      // Keep the live driver marker visible without resetting the route viewport on every GPS update.
-      map.panTo(driverPosition);
-    }
-  }, [tripDetails?.driverLocation, pickupPoint, destinationPoint, mapReady]);
 
   useEffect(() => {
     let active = true;
@@ -613,7 +450,7 @@ export function CustomerRideForm() {
             <label htmlFor="destination" className="mb-2 block text-xs text-[var(--app-muted)]">الوجهة</label>
             <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[var(--brand)]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--app-muted)]" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
           </div>
-          <p className="text-[11px] text-[var(--app-muted)]">{mapsReady ? "اختيار العناوين مدعوم بخرائط Google." : "يلزم مفتاح Google Maps مفعّل عليه Places API لاختيار الوجهة بدقة."}</p>
+          <p className="text-[11px] text-[var(--app-muted)]">{mapsReady ? "العناوين عبر Google Places، والخريطة ومسار القيادة عبر Mapbox." : "يلزم إعداد Google Places لاختيار العناوين من الاقتراحات."}</p>
           {locationMessage && <p aria-live="polite" className="rounded-xl bg-[#0d1622] px-4 py-3 text-xs leading-6 text-[var(--app-muted)]">{locationMessage}</p>}
         </div>
 
@@ -670,13 +507,12 @@ export function CustomerRideForm() {
         <div className="rounded-[28px] border border-[var(--app-border)] bg-[#111a26] p-6 shadow-[var(--shadow-card)]">
           <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-[var(--brand)]" size={20}/></div>
           <div className="relative h-64 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[#101a27]">
-            {mapReady ? (
-              <div ref={mapContainer} role="img" aria-label="خريطة تفاعلية لمواقع الانطلاق والوجهة والسائق" className="h-full w-full" />
-            ) : (
-              <div className="grid h-full place-items-center px-5 text-center">
-                <div><MapPin className="mx-auto mb-3 text-[var(--brand)]" size={28}/><b className="block text-sm">الخريطة غير متاحة حالياً</b><p className="mt-2 text-xs leading-6 text-[var(--app-muted)]">تحقق من إعداد NEXT_PUBLIC_GOOGLE_MAPS_API_KEY وتفعيل Maps JavaScript API وPlaces API.</p></div>
-              </div>
-            )}
+            <MapboxCustomerMap
+              pickupPoint={pickupPoint}
+              destinationPoint={destinationPoint}
+              driverLocation={tripDetails?.driverLocation ?? null}
+              onRouteSummary={setRouteSummary}
+            />
             <span aria-live="polite" className="absolute bottom-3 right-3 rounded-lg bg-[#111a26]/95 px-3 py-1.5 text-[10px] text-[var(--app-muted)]">{routeSummary ?? (pickupPoint && destinationPoint ? "جارٍ حساب مسار القيادة…" : "اختر نقطتي الانطلاق والوجهة لرسم المسار")}</span>
           </div>
         </div>
