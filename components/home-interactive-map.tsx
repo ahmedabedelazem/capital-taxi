@@ -15,8 +15,8 @@ type MapboxApi = {
     setLngLat(point: [number, number]): { addTo(map: unknown): unknown };
   };
 };
-declare global {
-  interface Window { mapboxgl?: MapboxApi }
+function getMapboxApi(): MapboxApi | undefined {
+  return (window as unknown as { mapboxgl?: MapboxApi }).mapboxgl;
 }
 
 export function HomeInteractiveMap() {
@@ -32,8 +32,9 @@ export function HomeInteractiveMap() {
     let disposed = false;
     let map: InstanceType<MapboxApi["Map"]> | null = null;
     const initialize = () => {
-      if (disposed || !container.current || !window.mapboxgl || map) return;
-      const api = window.mapboxgl;
+      if (disposed || !container.current || !getMapboxApi() || map) return;
+      const api = getMapboxApi();
+      if (!api) return;
       api.accessToken = token;
       map = new api.Map({
         container: container.current,
@@ -64,7 +65,7 @@ export function HomeInteractiveMap() {
       document.head.appendChild(css);
     }
     const existing = document.querySelector<HTMLScriptElement>("script[data-capital-home-mapbox]");
-    if (window.mapboxgl) initialize();
+    if (getMapboxApi()) initialize();
     else if (existing) existing.addEventListener("load", initialize, { once: true });
     else {
       const script = document.createElement("script");
