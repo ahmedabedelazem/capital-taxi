@@ -169,7 +169,8 @@ export function MapboxCustomerMap({ pickupPoint, destinationPoint, driverLocatio
     }).then((data) => {
       if (cancelled) return;
       const route = data.routes?.[0];
-      const routeCoordinates = route?.geometry?.coordinates;
+      if (!route) throw new Error("No route returned");
+      const routeCoordinates = route.geometry?.coordinates;
       if (!routeCoordinates?.length) throw new Error("No route returned");
       const feature: GeoJsonLine = { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: routeCoordinates } };
       if (instance.getLayer("capital-taxi-route")) instance.removeLayer("capital-taxi-route");
