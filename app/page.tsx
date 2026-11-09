@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, CarFront, Check, ShieldCheck, Smartphone, Users, Navigation, Leaf, MapPin, Sparkles } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-import { ArishHeroArt } from "@/components/arish-hero-art";
+
 
 const portals = [
   { href: "/login?next=/customer", title: "اطلب رحلتك", description: "حدد نقطة الانطلاق والوجهة، واستعرض تفاصيل المشوار من واجهة واضحة.", icon: Navigation, tag: "للركاب", number: "01" },
@@ -55,13 +55,39 @@ export default function HomePage() {
           <div className="relative mx-auto w-full max-w-[650px]">
             <div aria-hidden="true" className="absolute -inset-5 -z-10 rounded-[42px] bg-[#8cc63f]/15 blur-3xl"/>
             <div className="relative rounded-[34px] border border-white/80 bg-white/70 p-2.5 shadow-[0_30px_90px_rgba(34,59,28,.16)] backdrop-blur">
-              <div className="overflow-hidden rounded-[27px]"><ArishHeroArt/></div>
+              <div className="overflow-hidden rounded-[27px]"><div className="relative">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ مدينة العريش على البحر المتوسط" className="block aspect-[5/4] w-full object-cover" fetchPriority="high"/>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#080d14]/85 via-transparent to-transparent"/>
+                <div className="absolute bottom-5 right-5 left-5 flex items-end justify-between gap-3 text-white">
+                  <div><span className="text-[10px] font-black tracking-[.2em] text-[#f5c400]">NORTH SINAI · EGYPT</span><h2 className="mt-1 text-2xl font-black md:text-3xl">جمال العريش… في كل مشوار</h2></div>
+                  <span className="rounded-full border border-white/25 bg-black/35 px-3 py-2 text-[10px] font-bold backdrop-blur">شاطئ العريش</span>
+                </div>
+              </div></div>
               <div className="absolute -bottom-5 right-6 flex items-center gap-3 rounded-2xl border border-white/80 bg-white/95 px-4 py-3 shadow-[0_16px_40px_rgba(28,48,20,.14)] backdrop-blur">
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand-deep)]"><CarFront size={21}/></span>
                 <span><b className="block text-[12px] font-black">تاكسي العاصمة</b><small className="text-[10px] font-semibold text-[var(--app-muted)]">رحلتك تبدأ من العريش</small></span>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+
+
+      <section className="border-y border-[var(--app-border)] bg-[#0b121c] py-16 md:py-20">
+        <div className="shell">
+          <div className="mb-9 flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-black tracking-[.24em] text-[var(--brand)]">OUR CITY · EL ARISH</p><h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">من قلب العريش</h2></div><p className="max-w-md text-sm leading-7 text-[var(--app-muted)]">صور حقيقية من شاطئ المدينة ونخيلها وساحلها؛ لأن تاكسي العاصمة جزء من المكان وأهله.</p></div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26]">
+              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ مدينة العريش" loading="lazy" className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.03]"/>
+              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">شاطئ العريش</b><small className="mt-1 block text-xs text-[var(--app-muted)]">ساحل البحر المتوسط</small></span><span className="text-xs font-bold text-[var(--brand)]">01 / EL ARISH</span></figcaption>
+            </figure>
+            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26]">
+              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="نخيل العريش" loading="lazy" className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.03]"/>
+              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">نخيل العريش</b><small className="mt-1 block text-xs text-[var(--app-muted)]">ملامح المدينة الساحلية</small></span><span className="text-xs font-bold text-[var(--brand)]">02 / SINAI</span></figcaption>
+            </figure>
+          </div>
+          <p className="mt-5 text-[10px] leading-6 text-[var(--app-muted)]">مصدر الصور: Wikimedia Commons — <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://commons.wikimedia.org/wiki/Category:Arish" target="_blank" rel="noreferrer">صفحة ملفات العريش وتفاصيل التراخيص والإسناد</a>.</p>
         </div>
       </section>
 

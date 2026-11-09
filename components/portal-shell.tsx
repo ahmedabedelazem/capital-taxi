@@ -22,9 +22,9 @@ const portalLinks = {
 } as const;
 
 const roleMeta = {
-  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب", image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1100&q=85", imageAlt: "سيارة عصرية على الطريق" },
-  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين", image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1100&q=85", imageAlt: "تفاصيل سيارة أنيقة" },
-  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات", image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1100&q=85", imageAlt: "مشهد حضري حديث" },
+  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب", image: "https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "شاطئ مدينة العريش" },
+  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين", image: "https://commons.wikimedia.org/wiki/Special:FilePath/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "نخيل العريش" },
+  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات", image: "https://commons.wikimedia.org/wiki/Special:FilePath/ElArish.jpg", imageAlt: "مشهد من مدينة العريش" },
 } as const;
 
 export function PortalShell({ title, subtitle, role, children }: Props) {
