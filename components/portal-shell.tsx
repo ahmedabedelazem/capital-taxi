@@ -22,9 +22,9 @@ const portalLinks = {
 } as const;
 
 const roleMeta = {
-  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب", image: "https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "شاطئ مدينة العريش" },
-  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين", image: "https://commons.wikimedia.org/wiki/Special:FilePath/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "نخيل العريش" },
-  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات", image: "https://commons.wikimedia.org/wiki/Special:FilePath/ElArish.jpg", imageAlt: "مشهد من مدينة العريش" },
+  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب", image: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "شاطئ مدينة العريش" },
+  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين", image: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg", imageAlt: "نخيل العريش" },
+  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات", image: "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/ISS075-E-351_-_View_of_Egypt_-_Mediterranean_Sea_-_Al_Arish_%28El_Arish%29_-_Wadi_al-Arish_%28cropped%29.jpg/1920px-ISS075-E-351_-_View_of_Egypt_-_Mediterranean_Sea_-_Al_Arish_%28El_Arish%29_-_Wadi_al-Arish_%28cropped%29.jpg", imageAlt: "مشهد من مدينة العريش" },
 } as const;
 
 export function PortalShell({ title, subtitle, role, children }: Props) {
@@ -105,7 +105,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-400/20 bg-rose-950/40 p-4 text-sm text-rose-200">{logoutError}</p>}
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand)]"><ArrowRight size={15} /> الرئيسية</Link>
           <div className="relative mb-8 overflow-hidden rounded-[30px] border border-[var(--app-border)] bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] md:p-8 lg:p-9">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(10,20,32,.98)_0%,rgba(10,20,32,.92)_42%,rgba(10,20,32,.18)_100%)]" />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(10,20,32,.12)_0%,rgba(10,20,32,.52)_38%,rgba(10,20,32,.97)_100%)]" />
             <div aria-hidden="true" className="absolute inset-y-0 left-0 w-[58%] bg-cover bg-center opacity-75 md:w-[48%]" style={{ backgroundImage: `url(${roleMeta[role].image})` }} />
             <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-24 h-64 w-64 rounded-full border border-white/10" />
             <div className="relative z-10 flex min-h-[190px] flex-wrap items-end justify-between gap-6 md:min-h-[220px]">
