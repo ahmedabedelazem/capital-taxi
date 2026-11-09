@@ -411,7 +411,7 @@ export function AdminWorkspace() {
     {active === "overview" && <p className="mt-3 text-[11px] leading-6 text-neutral-500">الأعداد المعروضة مأخوذة من نتائج الإدارة الحالية، وكل واجهة تعرض بحد أقصى 50 سجلاً؛ لذلك قد لا تمثل إجمالي جميع الطلبات أو الرحلات.</p>}
     <div className="mt-5 grid gap-5 lg:grid-cols-[240px_1fr]">
       <nav aria-label="أقسام الإدارة" className="flex gap-2 overflow-x-auto rounded-2xl border border-[#24351c]/10 bg-white p-3 lg:flex-col">
-        {sections.map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>setActive(id)} aria-current={active===id ? "page" : undefined} className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition lg:w-full ${active===id ? "bg-[#8cc63f] text-[#182015] font-bold" : "text-neutral-500 hover:bg-white/5 hover:text-[#182015]"}`}><Icon size={18}/>{label}</button>)}
+        {sections.map(({id,label,icon:Icon})=><button key={id} type="button" onClick={()=>setActive(id)} aria-current={active===id ? "page" : undefined} className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition lg:w-full ${active===id ? "bg-[#8cc63f] text-[#182015] font-bold" : "text-neutral-500 hover:bg-[#f5f7f2] hover:text-[#182015]"}`}><Icon size={18}/>{label}</button>)}
       </nav>
       <section className="min-h-[360px] rounded-3xl border border-[#24351c]/10 bg-white p-5 md:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-[#5e8f25]">CONTROL CENTER</p><h2 className="mt-1 text-xl font-bold">{current.title}</h2></div>
@@ -421,7 +421,7 @@ export function AdminWorkspace() {
         </div>
         {active === "overview" && <div className="mt-6 grid gap-4 sm:grid-cols-2">{overviewError && <p role="alert" className="sm:col-span-2 rounded-xl border border-rose-300/20 bg-rose-400/5 p-3 text-xs leading-6 text-rose-700">{overviewError}</p>}<div className="rounded-2xl bg-white p-5"><h3 className="font-bold">حالة المنصة</h3><p className="mt-3 text-sm leading-7 text-neutral-500">تم ربط بعض خدمات العميل والسائق والإدارة بخدمات خادمية. لا تُعرض أرقام تشغيل غير متحققة.</p></div><div className="rounded-2xl bg-white p-5"><h3 className="font-bold">الأولويات</h3><ul className="mt-3 space-y-2 text-sm text-neutral-500"><li>• اعتماد السائقين ومراجعة الطلبات</li><li>• ضبط التعريفة ونطاق الخدمة</li><li>• تشغيل مجدول التوزيع الموثوق</li><li>• استكمال متابعة الرحلات والتقارير</li></ul></div></div>}
         {active === "drivers" && <div className="mt-5 space-y-4">
-          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-neutral-500">{message}</p>}
+          {message && <p role="status" className="rounded-xl bg-[#f5f7f2] p-3 text-xs leading-6 text-neutral-500">{message}</p>}
           {loading && <div className="py-12 text-center text-sm text-neutral-500">جارٍ تحميل الطلبات…</div>}
           {!loading && applications.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-[#24351c]/10 p-6 text-center"><div><CarFront className="mx-auto mb-3 text-[#5e8f25]" size={30}/><b className="block text-sm">لا توجد طلبات معلقة</b><p className="mt-2 text-xs text-neutral-500">ستظهر هنا طلبات السائقين الجديدة بعد إرسالها.</p></div></div>}
           {applications.map((application) => <article key={application.uid} className="rounded-2xl border border-[#24351c]/10 bg-white p-4 md:p-5">
@@ -452,13 +452,13 @@ export function AdminWorkspace() {
             </label>
             <span className="text-[11px] text-neutral-500">{tripsLoading ? "جارٍ التحديث…" : `${trips.length} رحلة معروضة`}</span>
           </div>
-          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-neutral-500">{message}</p>}
+          {message && <p role="status" className="rounded-xl bg-[#f5f7f2] p-3 text-xs leading-6 text-neutral-500">{message}</p>}
           {tripsLoading && <div className="py-12 text-center text-sm text-neutral-500">جارٍ تحميل الرحلات…</div>}
           {!tripsLoading && trips.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-[#24351c]/10 p-6 text-center"><div><Activity className="mx-auto mb-3 text-[#5e8f25]" size={30}/><b className="block text-sm">{tripStatusFilter === "active" ? "لا توجد رحلات نشطة حالياً" : "لا توجد رحلات بهذه الحالة ضمن السجلات المعروضة"}</b><p className="mt-2 text-xs text-neutral-500">يمكنك تغيير فلتر الحالة أو تحديث القائمة. يتم عرض أحدث 50 رحلة مطابقة للفلتر الحالي.</p></div></div>}
           {trips.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-[#24351c]/10 bg-white p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h3 className="font-bold">{trip.pickupLabel || "نقطة انطلاق غير متاحة"} <span className="text-[#5e8f25]">←</span> {trip.destinationLabel || "وجهة غير متاحة"}</h3><p className="mt-2 text-[10px] text-neutral-500" dir="ltr">{trip.tripId}</p></div>
-              <span className={`rounded-full border px-3 py-1.5 text-[11px] ${tripStatusMeta[trip.status]?.className || "border-[#24351c]/10 bg-white/5 text-neutral-500"}`}>{tripStatusMeta[trip.status]?.label || trip.status}</span>
+              <span className={`rounded-full border px-3 py-1.5 text-[11px] ${tripStatusMeta[trip.status]?.className || "border-[#24351c]/10 bg-[#f5f7f2] text-neutral-500"}`}>{tripStatusMeta[trip.status]?.label || trip.status}</span>
             </div>
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
               <div><span className="block text-[11px] text-neutral-500">الأجرة التقديرية</span><b>{trip.fareEstimate ?? "—"} ج.م</b></div>
@@ -476,12 +476,12 @@ export function AdminWorkspace() {
           </article>)}
         </div>}
         {active === "pricing" && <div className="mt-5 space-y-5">
-          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-neutral-500">{message}</p>}
+          {message && <p role="status" className="rounded-xl bg-[#f5f7f2] p-3 text-xs leading-6 text-neutral-500">{message}</p>}
           {configLoading && <p className="py-8 text-center text-sm text-neutral-500">جارٍ تحميل الإعدادات…</p>}
           {!configLoading && <div className="grid gap-5 xl:grid-cols-2">
             <form onSubmit={savePricing} className="space-y-4 rounded-2xl border border-[#24351c]/10 bg-white p-5">
               <div><h3 className="font-bold">تعريفة الرحلات ونطاق الخدمة</h3><p className="mt-1 text-xs text-neutral-500">كل القيم تحفظ خادمياً ولا يحدد العميل السعر.</p></div>
-              <label className="flex items-center justify-between rounded-xl bg-white/5 p-3 text-sm"><span>تفعيل التعريفة</span><input type="checkbox" disabled={configSaving} checked={pricingForm.enabled} onChange={e=>setPricingForm(v=>({...v,enabled:e.target.checked}))}/></label>
+              <label className="flex items-center justify-between rounded-xl bg-[#f5f7f2] p-3 text-sm"><span>تفعيل التعريفة</span><input type="checkbox" disabled={configSaving} checked={pricingForm.enabled} onChange={e=>setPricingForm(v=>({...v,enabled:e.target.checked}))}/></label>
               <div className="grid grid-cols-2 gap-3">
                 {([{key:"baseFare",label:"فتح العداد",max:100000},{key:"perKm",label:"السعر لكل كم",max:10000},{key:"minimumFare",label:"الحد الأدنى",max:100000},{key:"maximumDistanceKm",label:"أقصى مسافة كم",max:500},{key:"roundingIncrement",label:"خطوة التقريب",max:1000}] as const).map(field=><label key={field.key} className="text-xs text-neutral-500">{field.label}<input required type="number" min="0" max={field.max} step="0.01" disabled={configSaving} value={pricingForm[field.key]} onChange={e=>setPricingForm(v=>({...v,[field.key]:e.target.value}))} className="mt-2 w-full rounded-lg border border-[#24351c]/10 bg-white px-3 py-2.5 text-sm text-[#182015] outline-none focus:border-[#8cc63f]/50 disabled:cursor-not-allowed disabled:opacity-60"/></label>)}
               </div>
@@ -501,11 +501,11 @@ export function AdminWorkspace() {
           </div>}
         </div>}
         {active === "support" && <div className="mt-5 space-y-4">
-          {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-xs leading-6 text-neutral-500">{message}</p>}
+          {message && <p role="status" className="rounded-xl bg-[#f5f7f2] p-3 text-xs leading-6 text-neutral-500">{message}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500"><span>{supportLoading ? "جارٍ تحميل التذاكر…" : `${supportTickets.length} تذكرة معروضة`}</span><span>أحدث 100 تذكرة</span></div>
           {!supportLoading && supportTickets.length === 0 && <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-[#24351c]/10 p-6 text-center"><div><CircleHelp className="mx-auto mb-3 text-[#5e8f25]" size={30}/><b className="block text-sm">لا توجد تذاكر دعم حتى الآن</b><p className="mt-2 text-xs text-neutral-500">ستظهر طلبات العملاء والسائقين هنا بعد إرسالها من واجهاتهم.</p></div></div>}
           {supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-2xl border border-[#24351c]/10 bg-white p-4 md:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold">{ticket.subject}</h3><p className="mt-1 text-[10px] text-neutral-500" dir="ltr">{ticket.ticketId}</p></div><span className="rounded-full border border-[#24351c]/10 bg-white/5 px-3 py-1.5 text-[11px]">{ticket.status === "open" ? "مفتوحة" : ticket.status === "in_progress" ? "قيد المعالجة" : ticket.status === "resolved" ? "تم الحل" : "مغلقة"}</span></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold">{ticket.subject}</h3><p className="mt-1 text-[10px] text-neutral-500" dir="ltr">{ticket.ticketId}</p></div><span className="rounded-full border border-[#24351c]/10 bg-[#f5f7f2] px-3 py-1.5 text-[11px]">{ticket.status === "open" ? "مفتوحة" : ticket.status === "in_progress" ? "قيد المعالجة" : ticket.status === "resolved" ? "تم الحل" : "مغلقة"}</span></div>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-neutral-500">{ticket.description}</p>
             <div className="mt-3 grid gap-2 text-[11px] text-neutral-500 sm:grid-cols-3"><span>صاحب الطلب: {ticket.userRole === "driver" ? "سائق" : ticket.userRole === "customer" ? "عميل" : "غير محدد"} · <span dir="ltr">{ticket.uid ?? "—"}</span></span><span>التصنيف: {({trip:"رحلة",payment:"مدفوعات",driver:"سائق",account:"حساب",app:"التطبيق",other:"أخرى"} as Record<string,string>)[ticket.category] ?? "أخرى"}</span><span>تاريخ الإرسال: {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString("ar-EG") : "غير متاح"}</span></div>
             {ticket.tripId && <p className="mt-2 text-[11px] text-neutral-500">رقم الرحلة: <span dir="ltr">{ticket.tripId}</span></p>}
