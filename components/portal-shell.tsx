@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, CarFront, LayoutDashboard, LogOut, Menu, UserRound } from "lucide-react";
+import { ArrowRight, CarFront, LayoutDashboard, LogOut, Menu, UserRound, ShieldCheck, Sparkles } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 import { getFirebaseClientAuth } from "@/lib/firebase/client";
@@ -21,11 +21,18 @@ const portalLinks = {
   "الإدارة": [{ href: "/admin", label: "مركز التحكم", icon: LayoutDashboard }],
 } as const;
 
+const roleMeta = {
+  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب" },
+  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين" },
+  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات" },
+} as const;
+
 export function PortalShell({ title, subtitle, role, children }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const RoleIcon = roleMeta[role].icon;
 
   async function handleLogout() {
     setLogoutBusy(true);
@@ -37,11 +44,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
         cache: "no-store",
       });
       if (!response.ok) throw new Error("تعذر إنهاء جلسة الخادم.");
-      try {
-        await signOut(getFirebaseClientAuth());
-      } catch {
-        // The server session has already been revoked.
-      }
+      try { await signOut(getFirebaseClientAuth()); } catch { /* Server session already revoked. */ }
       window.location.assign("/login");
     } catch {
       setLogoutError("لم نتمكن من تسجيل الخروج. تحقق من الاتصال ثم حاول مرة أخرى.");
@@ -50,47 +53,47 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f7f2] text-[#182015]">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
-      <header className="sticky top-0 z-30 border-b border-[#24351c]/10 bg-white/95 text-[#182015] backdrop-blur-xl">
-        <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
-            <BrandMark size={40} />
-            <span><b className="block text-sm">تاكسي العاصمة</b><small className="text-[10px] tracking-[.2em] text-neutral-500">CAPITAL TAXI</small></span>
+    <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-ink)]">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
+      <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-white/90 text-[var(--app-ink)] shadow-[0_8px_30px_rgba(28,48,20,.035)] backdrop-blur-2xl">
+        <div className="shell flex h-[76px] items-center justify-between gap-4">
+          <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
+            <BrandMark size={44} className="rounded-[15px] shadow-[0_7px_18px_rgba(92,143,37,.18)] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105" />
+            <span><b className="block text-[15px] font-black tracking-tight">تاكسي العاصمة</b><small className="text-[9px] font-bold tracking-[.24em] text-[var(--app-muted)]">CAPITAL TAXI</small></span>
           </Link>
 
           <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-2 md:flex">
             {portalLinks[role].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${pathname === href ? "bg-[#8cc63f] text-[#182015]" : "text-neutral-600 hover:bg-[#edf6df] hover:text-[#182015]"}`}>
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand-deep)] shadow-[inset_0_0_0_1px_rgba(92,143,37,.12)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
                 <Icon size={16} />{label}
               </Link>
             ))}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden rounded-full border border-[#24351c]/15 px-3 py-2 text-xs text-neutral-600 sm:inline-flex">حساب {role}</span>
+            <span className="hidden items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3.5 py-2 text-[11px] font-bold text-[var(--app-muted)] sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-deep)]" /> حساب {role}</span>
             <button type="button" onClick={handleLogout} disabled={logoutBusy}
-              className="hidden items-center gap-2 rounded-full bg-[#8cc63f] px-4 py-2.5 text-xs font-bold text-[#182015] transition hover:bg-[#a2d75c] disabled:opacity-50 sm:inline-flex">
-              <LogOut size={15} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
+              className="hidden items-center gap-2 rounded-full bg-[var(--app-ink)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_7px_18px_rgba(24,32,21,.12)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-deep)] disabled:opacity-50 sm:inline-flex">
+              <LogOut size={14} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
             </button>
             <button type="button" onClick={() => setOpen(!open)} aria-label="فتح القائمة" aria-expanded={open}
-              className="rounded-xl border border-[#24351c]/15 p-2 text-[#182015] md:hidden">
-              <Menu size={20} />
+              className="rounded-xl border border-[var(--app-border)] bg-white p-2.5 text-[var(--app-ink)] shadow-sm transition hover:bg-[var(--app-bg)] md:hidden">
+              <Menu size={19} />
             </button>
           </div>
         </div>
         {open && (
-          <div className="border-t border-[#24351c]/10 bg-white md:hidden">
+          <div className="border-t border-[var(--app-border)] bg-white/95 shadow-xl md:hidden">
             <nav className="shell flex flex-col gap-1 py-3" aria-label="قائمة الهاتف">
               {portalLinks[role].map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href} onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#182015] hover:bg-[#edf6df]">
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[var(--app-ink)] transition hover:bg-[var(--brand-soft)]">
                   <Icon size={17} />{label}
                 </Link>
               ))}
               <button type="button" onClick={handleLogout} disabled={logoutBusy}
-                className="flex items-center gap-3 rounded-xl px-3 py-3 text-right text-sm text-[#182015] hover:bg-[#edf6df] disabled:opacity-50">
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-right text-sm font-semibold text-[var(--app-ink)] transition hover:bg-[var(--brand-soft)] disabled:opacity-50">
                 <LogOut size={17} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
               </button>
             </nav>
@@ -98,24 +101,27 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
         )}
       </header>
 
-      <section id="main-content" className="shell py-7 md:py-10">
-        {logoutError && <p role="alert" className="mb-5 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-800">{logoutError}</p>}
-        <Link href="/" className="mb-7 inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-[#5e8f25]"><ArrowRight size={16} /> الرئيسية</Link>
-        <div className="mb-8 border-b border-[#24351c]/10 pb-7">
-          <p className="mb-2 text-xs font-semibold tracking-[.18em] text-neutral-500">CAPITAL TAXI / {role}</p>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{title}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-neutral-600">{subtitle}</p>
+      <section id="main-content" className="relative isolate min-h-[calc(100vh-150px)] overflow-hidden py-7 md:py-10">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(140,198,63,.13),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(115,168,162,.10),transparent_48%)]" />
+        <div className="shell">
+          {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{logoutError}</p>}
+          <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand-deep)]"><ArrowRight size={15} /> الرئيسية</Link>
+          <div className="relative mb-8 overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white p-6 shadow-[0_18px_55px_rgba(28,48,20,.055)] md:p-8">
+            <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-20 h-56 w-56 rounded-full bg-[var(--brand-soft)] blur-3xl" />
+            <div className="relative flex flex-wrap items-end justify-between gap-6">
+              <div className="max-w-3xl">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1.5 text-[10px] font-extrabold tracking-wide text-[var(--brand-deep)]"><Sparkles size={13} /> {roleMeta[role].accent} <span className="text-[var(--app-muted)]">/ CAPITAL TAXI</span></div>
+                <p className="mb-2 text-xs font-bold text-[var(--app-muted)]">{roleMeta[role].eyebrow}</p>
+                <h1 className="text-[28px] font-black leading-tight tracking-tight text-[var(--app-ink)] md:text-[38px]">{title}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--app-muted)] md:text-[15px]">{subtitle}</p>
+              </div>
+              <div className="hidden h-16 w-16 items-center justify-center rounded-[22px] bg-[var(--brand-soft)] text-[var(--brand-deep)] md:flex"><RoleIcon size={30} strokeWidth={1.8} /></div>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#24351c]/15 px-3 py-2 text-xs text-neutral-600">
-              <span className="h-2 w-2 rounded-full bg-neutral-400" /> بوابة {role}
-            </span>
           </div>
+          {children}
         </div>
-        {children}
       </section>
-      <footer className="border-t border-[#24351c]/10 py-6 text-center text-xs text-neutral-500">
+      <footer className="border-t border-[var(--app-border)] bg-white/75 py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
         © {new Date().getFullYear()} تاكسي العاصمة · العريش، شمال سيناء
       </footer>
     </main>
