@@ -614,7 +614,7 @@ export function CustomerRideForm() {
             <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[#5e8f25]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-500" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
           </div>
           <p className="text-[11px] text-neutral-500">{mapsReady ? "اختيار العناوين مدعوم بخرائط Google." : "يلزم مفتاح Google Maps مفعّل عليه Places API لاختيار الوجهة بدقة."}</p>
-          {locationMessage && <p aria-live="polite" className="rounded-xl bg-white/5 px-4 py-3 text-xs leading-6 text-neutral-500">{locationMessage}</p>}
+          {locationMessage && <p aria-live="polite" className="rounded-xl bg-[#f5f7f2] px-4 py-3 text-xs leading-6 text-neutral-600">{locationMessage}</p>}
         </div>
 
         <div className="mt-7">
@@ -632,7 +632,7 @@ export function CustomerRideForm() {
           </div>
         </div>
 
-        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-xl bg-[#8cc63f] px-5 py-4 font-bold text-[#182015] transition hover:bg-[#e8c77e]">معاينة تفاصيل الرحلة</button>
+        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-xl bg-[#8cc63f] px-5 py-4 font-bold text-[#182015] transition hover:bg-[#a2d75c]">معاينة تفاصيل الرحلة</button>
         {preview && <div className="mt-5 rounded-2xl border border-[#8cc63f]/30 bg-[#edf6df] p-5">
           <div className="mb-3 flex items-center gap-2 text-[#5e8f25]"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-neutral-500">من</span><b>{pickup}</b></div><div><span className="block text-xs text-neutral-500">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-neutral-500">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-neutral-500">طريقة الدفع</span><b>نقداً للسائق</b></div></div>
@@ -644,7 +644,7 @@ export function CustomerRideForm() {
             <p className="mt-1">السعر التقديري: <b className="text-[#5e8f25]">{booking.fareEstimate === null ? "غير متاح" : `${booking.fareEstimate} ج.م`}</b></p>
             <p className="mt-2 text-xs text-neutral-500">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
             {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
-            {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-white/5 p-3 text-xs leading-6 text-neutral-500">{cancelMessage}</p>}
+            {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-[#f5f7f2] p-3 text-xs leading-6 text-neutral-600">{cancelMessage}</p>}
             {tripDetails?.driver && <div className="mt-4 rounded-xl border border-[#8cc63f]/30 bg-[#edf6df] p-3">
               <b className="text-sm text-[#5e8f25]">بيانات السائق المعيّن</b>
               <p className="mt-2 text-xs">الاسم: {tripDetails.driver.fullName || "غير متاح"}</p>
@@ -652,7 +652,7 @@ export function CustomerRideForm() {
               <p className="mt-1 text-xs">رقم اللوحة: {tripDetails.driver.plateNumber || "غير متاح"}</p>
               {tripDetails.driver.phone && <a href={`tel:${tripDetails.driver.phone}`} className="mt-3 inline-flex rounded-lg bg-[#8cc63f] px-4 py-2 text-xs font-bold text-[#182015]">اتصال بالسائق</a>}
             </div>}
-            {tripDetails?.driverLocation && <div className="mt-4 rounded-xl border border-emerald-400/20 bg-[#edf6df] p-3">
+            {tripDetails?.driverLocation && <div className="mt-4 rounded-xl border border-[#8cc63f]/30 bg-[#edf6df] p-3">
               <b className="text-xs text-[#5e8f25]">آخر موقع مُحدّث للسائق</b>
               <p className="mt-2 text-[11px] text-neutral-500" dir="ltr">{tripDetails.driverLocation.lat.toFixed(5)}, {tripDetails.driverLocation.lng.toFixed(5)}</p>
               <p className="mt-1 text-[10px] text-neutral-500">آخر تحديث: {new Date(tripDetails.driverLocation.updatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</p>
@@ -711,7 +711,7 @@ export function CustomerRideForm() {
             <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-[#24351c]/10 bg-white p-3">
               <div className="flex flex-wrap items-center justify-between gap-2"><b className="text-xs">{ticket.subject}</b><span className="rounded-full bg-[#edf6df] px-2 py-1 text-[10px] text-[#5e8f25]">{({open:"مفتوحة",in_progress:"قيد المراجعة",resolved:"تم الحل",closed:"مغلقة"} as Record<string,string>)[ticket.status] ?? ticket.status}</span></div>
               <p className="mt-2 text-xs leading-6 text-neutral-500">{ticket.description}</p>
-              {ticket.adminNote && <p className="mt-2 rounded-lg border border-emerald-300/10 bg-emerald-300/5 p-2 text-xs leading-6 text-[#466d20]">رد الإدارة: {ticket.adminNote}</p>}
+              {ticket.adminNote && <p className="mt-2 rounded-lg border border-[#8cc63f]/20 bg-[#edf6df] p-2 text-xs leading-6 text-[#426b1e]">رد الإدارة: {ticket.adminNote}</p>}
               <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-neutral-500"><span>رقم المتابعة: <b dir="ltr">{ticket.ticketId}</b></span><span>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString("ar-EG") : "التاريخ غير متاح"}</span></div>
             </article>)}</div>
           </div>
