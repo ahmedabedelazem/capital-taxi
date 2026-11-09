@@ -595,13 +595,13 @@ export function CustomerRideForm() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-      <section className="rounded-3xl border border-[#24351c]/10 bg-panel p-5 md:p-7">
+      <section className="rounded-[28px] border border-[var(--app-border)] bg-white p-5 shadow-[var(--shadow-card)] md:p-7">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div><p className="text-xs text-[#5e8f25]">خطوة 01</p><h2 className="mt-1 text-lg font-bold">حدد تفاصيل المشوار</h2></div>
           <span className="rounded-full border border-[#8cc63f]/30 bg-[#edf6df] px-3 py-1.5 text-xs text-[#5e8f25]">رحلة جديدة</span>
         </div>
         <div className="space-y-3">
-          <div className="rounded-2xl border border-[#24351c]/10 bg-white p-4">
+          <div className="rounded-[20px] border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
             <label htmlFor="pickup" className="mb-2 block text-xs text-neutral-500">نقطة الانطلاق</label>
             <div className="flex items-center gap-3">
               <span className="h-3 w-3 shrink-0 rounded-full border-2 border-emerald-400"/>
@@ -609,7 +609,7 @@ export function CustomerRideForm() {
               <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#8cc63f]/40 px-3 py-2 text-xs text-[#5e8f25] transition hover:bg-[#edf6df] disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
             </div>
           </div>
-          <div className="rounded-2xl border border-[#24351c]/10 bg-white p-4">
+          <div className="rounded-[20px] border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
             <label htmlFor="destination" className="mb-2 block text-xs text-neutral-500">الوجهة</label>
             <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[#5e8f25]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-500" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
           </div>
@@ -632,8 +632,8 @@ export function CustomerRideForm() {
           </div>
         </div>
 
-        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-xl bg-[#8cc63f] px-5 py-4 font-bold text-[#182015] transition hover:bg-[#a2d75c]">معاينة تفاصيل الرحلة</button>
-        {preview && <div className="mt-5 rounded-2xl border border-[#8cc63f]/30 bg-[#edf6df] p-5">
+        <button type="button" onClick={showPreview} className="mt-7 w-full rounded-2xl bg-[var(--brand)] px-5 py-4 font-black text-[var(--app-ink)] shadow-[0_10px_24px_rgba(116,170,48,.18)] transition hover:-translate-y-0.5 hover:bg-[#a2d75c]">معاينة تفاصيل الرحلة</button>
+        {preview && <div className="mt-5 rounded-[22px] border border-[#8cc63f]/30 bg-[var(--brand-soft)] p-5">
           <div className="mb-3 flex items-center gap-2 text-[#5e8f25]"><CheckCircle2 size={18}/><b className="text-sm">تم التحقق من نقطتي الرحلة</b></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="block text-xs text-neutral-500">من</span><b>{pickup}</b></div><div><span className="block text-xs text-neutral-500">إلى</span><b>{destination}</b></div><div><span className="block text-xs text-neutral-500">السيارة</span><b>{selectedVehicle?.name}</b></div><div><span className="block text-xs text-neutral-500">طريقة الدفع</span><b>نقداً للسائق</b></div></div>
           <button type="button" disabled={submitting || Boolean(booking)} onClick={createTrip} className="mt-5 w-full rounded-xl bg-[#8cc63f] px-4 py-3 font-bold text-[#182015] disabled:opacity-50">{submitting ? "جارٍ تسجيل الطلب…" : booking ? "تم تسجيل الطلب" : "تأكيد طلب الرحلة"}</button>
@@ -667,7 +667,7 @@ export function CustomerRideForm() {
       </section>
 
       <aside className="space-y-4">
-        <div className="rounded-3xl border border-[#24351c]/10 bg-panel p-6">
+        <div className="rounded-[28px] border border-[var(--app-border)] bg-white p-6 shadow-[var(--shadow-card)]">
           <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">مواقع الرحلة</h3><Navigation className="text-[#5e8f25]" size={20}/></div>
           <div className="relative h-64 overflow-hidden rounded-2xl border border-[#24351c]/10 bg-[#edf2e7]">
             {mapReady ? (
@@ -680,7 +680,7 @@ export function CustomerRideForm() {
             <span aria-live="polite" className="absolute bottom-3 right-3 rounded-lg bg-white/95 px-3 py-1.5 text-[10px] text-neutral-500">{routeSummary ?? (pickupPoint && destinationPoint ? "جارٍ حساب مسار القيادة…" : "اختر نقطتي الانطلاق والوجهة لرسم المسار")}</span>
           </div>
         </div>
-        <div className="rounded-3xl border border-[#24351c]/10 bg-panel p-6">
+        <div className="rounded-[28px] border border-[var(--app-border)] bg-white p-6 shadow-[var(--shadow-card)]">
           <Clock3 className="mb-4 text-[#5e8f25]" size={22}/>
           <div className="flex items-center justify-between"><h3 className="font-bold">رحلاتك الأخيرة</h3><span className="text-[10px] text-neutral-500">{tripHistory.length} رحلة</span></div>
           {historyLoading && <p className="mt-3 text-xs text-neutral-500">جارٍ تحميل السجل…</p>}
@@ -692,8 +692,8 @@ export function CustomerRideForm() {
             <p className="mt-2 text-[10px] text-neutral-500">{trip.createdAt ? new Date(trip.createdAt).toLocaleString("ar-EG") : "تاريخ غير متاح"}</p>
           </article>)}</div>
         </div>
-        <div className="rounded-2xl border border-[#8cc63f]/30 bg-[#edf6df] p-5"><b className="text-sm text-[#5e8f25]">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-neutral-500">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
-        <section className="rounded-3xl border border-[#24351c]/10 bg-panel p-6">
+        <div className="rounded-[22px] border border-[#8cc63f]/30 bg-[var(--brand-soft)] p-5"><b className="text-sm text-[#5e8f25]">خصوصيتك أولاً</b><p className="mt-2 text-xs leading-6 text-neutral-500">لا نطلب موقعك إلا عند ضغط زر «موقعي»، ولا نرسل الإحداثيات إلا عند تأكيد طلب الرحلة.</p></div>
+        <section className="rounded-[28px] border border-[var(--app-border)] bg-white p-6 shadow-[var(--shadow-card)]">
           <h3 className="font-bold">الدعم والشكاوى</h3><p className="mt-1 text-xs leading-6 text-neutral-500">أرسل استفسارك إلى فريق الإدارة. لا تكتب بيانات دفع أو كلمات مرور.</p>
           <form onSubmit={submitSupportTicket} className="mt-4 space-y-3">
             <label className="block text-xs text-neutral-500">نوع الطلب<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)} className="mt-2 w-full rounded-xl border border-[#24351c]/10 bg-white px-3 py-3 text-sm text-[#182015]"><option value="trip">مشكلة في رحلة</option><option value="payment">الدفع</option><option value="driver">السائق</option><option value="account">الحساب</option><option value="app">التطبيق</option><option value="other">أخرى</option></select></label>
