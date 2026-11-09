@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, CarFront, Check, MapPin, ShieldCheck, Smartphone, Users, Navigation, Leaf } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 
 const portals = [
   { href: "/login?next=/customer", title: "اطلب رحلة", description: "حدد مكانك ووجهتك، واختر السيارة المناسبة لمشوارك.", icon: Navigation, tag: "للركاب" },
@@ -18,7 +19,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-[#24351c]/10 bg-white/95 backdrop-blur">
         <nav className="shell flex h-[76px] items-center justify-between gap-4" aria-label="التنقل الرئيسي">
           <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#8cc63f] text-sm font-black text-[#182015]">CT</span>
+            <BrandMark size={44} className="rounded-2xl" />
             <span><b className="block text-base font-extrabold leading-tight">تاكسي العاصمة</b><span className="text-[9px] font-semibold tracking-[.24em] text-neutral-500">CAPITAL TAXI</span></span>
           </Link>
           <div className="hidden items-center gap-7 text-sm font-medium text-neutral-700 md:flex">
