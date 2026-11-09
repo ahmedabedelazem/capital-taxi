@@ -22,9 +22,9 @@ const portalLinks = {
 } as const;
 
 const roleMeta = {
-  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب" },
-  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين" },
-  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات" },
+  "العميل": { eyebrow: "رحلتك تبدأ من هنا", icon: UserRound, accent: "منصة الركاب", image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1100&q=85", imageAlt: "سيارة عصرية على الطريق" },
+  "السائق": { eyebrow: "كل مشوار بخطوة أوضح", icon: CarFront, accent: "منصة السائقين", image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1100&q=85", imageAlt: "تفاصيل سيارة أنيقة" },
+  "الإدارة": { eyebrow: "إدارة التشغيل بوضوح", icon: ShieldCheck, accent: "مركز العمليات", image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1100&q=85", imageAlt: "مشهد حضري حديث" },
 } as const;
 
 export function PortalShell({ title, subtitle, role, children }: Props) {
@@ -55,26 +55,24 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
   return (
     <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-ink)]">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
-      <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-white/90 text-[var(--app-ink)] shadow-[0_8px_30px_rgba(28,48,20,.035)] backdrop-blur-2xl">
+      <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-white/90 text-[var(--app-ink)] shadow-[0_8px_30px_rgba(16,29,45,.06)] backdrop-blur-2xl">
         <div className="shell flex h-[76px] items-center justify-between gap-4">
           <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
-            <BrandMark size={44} className="rounded-[15px] shadow-[0_7px_18px_rgba(92,143,37,.18)] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105" />
+            <BrandMark size={44} className="rounded-[15px] shadow-[0_7px_18px_rgba(184,139,0,.22)] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105" />
             <span><b className="block text-[15px] font-black tracking-tight">تاكسي العاصمة</b><small className="text-[9px] font-bold tracking-[.24em] text-[var(--app-muted)]">CAPITAL TAXI</small></span>
           </Link>
-
           <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-2 md:flex">
             {portalLinks[role].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand-deep)] shadow-[inset_0_0_0_1px_rgba(92,143,37,.12)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--app-ink)] shadow-[inset_0_0_0_1px_rgba(184,139,0,.18)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
                 <Icon size={16} />{label}
               </Link>
             ))}
           </nav>
-
           <div className="flex shrink-0 items-center gap-2">
             <span className="hidden items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3.5 py-2 text-[11px] font-bold text-[var(--app-muted)] sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-deep)]" /> حساب {role}</span>
             <button type="button" onClick={handleLogout} disabled={logoutBusy}
-              className="hidden items-center gap-2 rounded-full bg-[var(--app-ink)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_7px_18px_rgba(24,32,21,.12)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-deep)] disabled:opacity-50 sm:inline-flex">
+              className="hidden items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_7px_18px_rgba(16,29,45,.16)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-deep)] disabled:opacity-50 sm:inline-flex">
               <LogOut size={14} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
             </button>
             <button type="button" onClick={() => setOpen(!open)} aria-label="فتح القائمة" aria-expanded={open}
@@ -102,26 +100,29 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
       </header>
 
       <section id="main-content" className="relative isolate min-h-[calc(100vh-150px)] overflow-hidden py-7 md:py-10">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(140,198,63,.13),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(115,168,162,.10),transparent_48%)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(245,196,0,.16),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(16,29,45,.07),transparent_48%)]" />
         <div className="shell">
           {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{logoutError}</p>}
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand-deep)]"><ArrowRight size={15} /> الرئيسية</Link>
-          <div className="relative mb-8 overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white p-6 shadow-[0_18px_55px_rgba(28,48,20,.055)] md:p-8">
-            <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-20 h-56 w-56 rounded-full bg-[var(--brand-soft)] blur-3xl" />
-            <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="relative mb-8 overflow-hidden rounded-[30px] border border-[var(--app-border)] bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] md:p-8 lg:p-9">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(10,20,32,.98)_0%,rgba(10,20,32,.92)_42%,rgba(10,20,32,.18)_100%)]" />
+            <div aria-hidden="true" className="absolute inset-y-0 left-0 w-[58%] bg-cover bg-center opacity-75 md:w-[48%]" style={{ backgroundImage: `url(${roleMeta[role].image})` }} />
+            <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-24 h-64 w-64 rounded-full border border-white/10" />
+            <div className="relative z-10 flex min-h-[190px] flex-wrap items-end justify-between gap-6 md:min-h-[220px]">
               <div className="max-w-3xl">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1.5 text-[10px] font-extrabold tracking-wide text-[var(--brand-deep)]"><Sparkles size={13} /> {roleMeta[role].accent} <span className="text-[var(--app-muted)]">/ CAPITAL TAXI</span></div>
-                <p className="mb-2 text-xs font-bold text-[var(--app-muted)]">{roleMeta[role].eyebrow}</p>
-                <h1 className="text-[28px] font-black leading-tight tracking-tight text-[var(--app-ink)] md:text-[38px]">{title}</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--app-muted)] md:text-[15px]">{subtitle}</p>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold tracking-wide text-[var(--brand)] backdrop-blur"><Sparkles size={13} /> {roleMeta[role].accent} <span className="text-white/60">/ CAPITAL TAXI</span></div>
+                <p className="mb-2 text-xs font-bold text-white/70">{roleMeta[role].eyebrow}</p>
+                <h1 className="text-[28px] font-black leading-tight tracking-tight text-white md:text-[40px]">{title}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75 md:text-[15px]">{subtitle}</p>
               </div>
-              <div className="hidden h-16 w-16 items-center justify-center rounded-[22px] bg-[var(--brand-soft)] text-[var(--brand-deep)] md:flex"><RoleIcon size={30} strokeWidth={1.8} /></div>
+              <div className="hidden h-16 w-16 items-center justify-center rounded-[22px] border border-white/20 bg-white/10 text-[var(--brand)] backdrop-blur md:flex"><RoleIcon size={30} strokeWidth={1.8} /></div>
             </div>
+            <div className="absolute bottom-0 right-0 h-1.5 w-40 bg-[var(--brand)]" />
           </div>
           {children}
         </div>
       </section>
-      <footer className="border-t border-[var(--app-border)] bg-white/75 py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
+      <footer className="border-t border-[var(--app-border)] bg-white/80 py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
         © {new Date().getFullYear()} تاكسي العاصمة · العريش، شمال سيناء
       </footer>
     </main>
