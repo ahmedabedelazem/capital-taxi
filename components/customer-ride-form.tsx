@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MapboxCustomerMap } from "@/components/mapbox-customer-map";
+
+type AddressSuggestion = { id: string; label: string; lat: number; lng: number };
 import { CarFront, CheckCircle2, CircleDollarSign, Clock3, LocateFixed, MapPin, Navigation } from "lucide-react";
 
 const vehicleOptions = [
@@ -70,7 +72,8 @@ export function CustomerRideForm() {
   const [destinationPoint, setDestinationPoint] = useState<Point | null>(null);
   const [vehicle, setVehicle] = useState("economy");
   const [locating, setLocating] = useState(false);
-  const [mapsReady, setMapsReady] = useState(false);
+  const [pickupSuggestions, setPickupSuggestions] = useState<AddressSuggestion[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<AddressSuggestion[]>([]);
   const [routeSummary, setRouteSummary] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [preview, setPreview] = useState(false);
@@ -90,90 +93,52 @@ export function CustomerRideForm() {
   const [supportTickets, setSupportTickets] = useState<SupportTicketHistoryItem[]>([]);
   const [supportHistoryLoading, setSupportHistoryLoading] = useState(true);
   const [supportHistoryError, setSupportHistoryError] = useState("");
-  const pickupInput = useRef<HTMLInputElement>(null);
-  const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
   const idempotencyFingerprint = useRef<string | null>(null);
 
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) {
-      setLocationMessage("يلزم إعداد مفتاح Google Maps المقيد لتحديد عناوين الانطلاق والوجهة.");
-      return;
-    }
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const query = pickup.trim();
+    if (!token || pickupPoint || query.length < 3) { setPickupSuggestions([]); return; }
     let active = true;
-    const attachPlaces = () => {
-      if (!active || !window.google?.maps) return;
-      if (!window.google.maps.places || !pickupInput.current || !destinationInput.current) {
-        setLocationMessage("الخريطة جاهزة. البحث التلقائي عن العناوين يحتاج تفعيل Places API.");
-        return;
-      }
-      const options: google.maps.places.AutocompleteOptions = {
-        componentRestrictions: { country: "eg" },
-        fields: ["formatted_address", "geometry", "name"],
-      };
-      const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput.current, options);
-      const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput.current, options);
-      pickupAutocomplete.addListener("place_changed", () => {
-        const place = pickupAutocomplete.getPlace();
-        const point = place.geometry?.location;
-        if (!point) {
-          setPickupPoint(null);
-          setLocationMessage("اختر عنواناً من قائمة اقتراحات Google حتى نتمكن من تحديد إحداثياته.");
-          return;
-        }
-        setPickupPoint({ lat: point.lat(), lng: point.lng() });
-        setPickup(place.formatted_address || place.name || pickupInput.current?.value || "");
-        setPreview(false);
-        setBooking(null);
-        setLocationMessage("");
-      });
-      destinationAutocomplete.addListener("place_changed", () => {
-        const place = destinationAutocomplete.getPlace();
-        const point = place.geometry?.location;
-        if (!point) {
-          setDestinationPoint(null);
-          setLocationMessage("اختر الوجهة من قائمة اقتراحات Google حتى نتمكن من تحديد إحداثياتها.");
-          return;
-        }
-        setDestinationPoint({ lat: point.lat(), lng: point.lng() });
-        setDestination(place.formatted_address || place.name || destinationInput.current?.value || "");
-        setPreview(false);
-        setBooking(null);
-        setLocationMessage("");
-      });
-      setMapsReady(true);
-      setLocationMessage("بحث العناوين جاهز عبر Google Places. الخريطة ومسار القيادة يعملان عبر Mapbox.");
-    };
+    const timer = window.setTimeout(async () => {
+      try {
+        const url = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&country=EG&language=ar&limit=5&access_token=${encodeURIComponent(token)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Mapbox geocoding failed");
+        const data = await response.json() as { features?: { id?: string; properties?: { full_address?: string; name?: string }; geometry?: { coordinates?: [number, number] } }[] };
+        if (!active) return;
+        setPickupSuggestions((data.features ?? []).flatMap((feature, index) => {
+          const coordinates = feature.geometry?.coordinates;
+          const label = feature.properties?.full_address || feature.properties?.name;
+          return coordinates && label ? [{ id: feature.id || `pickup-${index}`, label, lng: coordinates[0], lat: coordinates[1] }] : [];
+        }));
+      } catch { if (active) setPickupSuggestions([]); }
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [pickup, pickupPoint]);
 
-    if (window.google?.maps) {
-      attachPlaces();
-      return () => { active = false; };
-    }
-    const existing = document.querySelector<HTMLScriptElement>("script[data-capital-taxi-maps]");
-    if (existing) {
-      if (window.google?.maps) {
-        attachPlaces();
-        return () => { active = false; };
-      }
-      existing.addEventListener("load", attachPlaces);
-      return () => {
-        active = false;
-        existing.removeEventListener("load", attachPlaces);
-      };
-    }
-    const script = document.createElement("script");
-    script.dataset.capitalTaxiMaps = "true";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=ar&region=EG`;
-    script.async = true;
-    script.defer = true;
-    script.onload = attachPlaces;
-    script.onerror = () => {
-      if (active) setLocationMessage("تعذر تحميل Google Maps. تحقق من المفتاح وتفعيل Maps JavaScript API وPlaces API.");
-    };
-    document.head.appendChild(script);
-    return () => { active = false; };
-  }, []);
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const query = destination.trim();
+    if (!token || destinationPoint || query.length < 3) { setDestinationSuggestions([]); return; }
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const url = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&country=EG&language=ar&limit=5&access_token=${encodeURIComponent(token)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Mapbox geocoding failed");
+        const data = await response.json() as { features?: { id?: string; properties?: { full_address?: string; name?: string }; geometry?: { coordinates?: [number, number] } }[] };
+        if (!active) return;
+        setDestinationSuggestions((data.features ?? []).flatMap((feature, index) => {
+          const coordinates = feature.geometry?.coordinates;
+          const label = feature.properties?.full_address || feature.properties?.name;
+          return coordinates && label ? [{ id: feature.id || `destination-${index}`, label, lng: coordinates[0], lat: coordinates[1] }] : [];
+        }));
+      } catch { if (active) setDestinationSuggestions([]); }
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [destination, destinationPoint]);
 
   useEffect(() => {
     let active = true;
@@ -441,12 +406,14 @@ export function CustomerRideForm() {
               <input ref={pickupInput} id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPickupPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--app-muted)]" placeholder="اختر عنواناً من الاقتراحات أو استخدم موقعي"/>
               <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[rgba(245,196,0,.38)] px-3 py-2 text-xs text-[var(--brand)] transition hover:bg-[var(--brand-soft)] disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
             </div>
+            {pickupSuggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[#111a26]">{pickupSuggestions.map((suggestion) => <button key={suggestion.id} type="button" onClick={() => { setPickup(suggestion.label); setPickupPoint({ lat: suggestion.lat, lng: suggestion.lng }); setPickupSuggestions([]); setPreview(false); setBooking(null); setLocationMessage(""); }} className="block w-full border-b border-[var(--app-border)] px-4 py-3 text-right text-xs leading-6 last:border-0 hover:bg-[var(--brand-soft)]">{suggestion.label}</button>)}</div>}
           </div>
           <div className="rounded-[20px] border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
             <label htmlFor="destination" className="mb-2 block text-xs text-[var(--app-muted)]">الوجهة</label>
             <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[var(--brand)]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--app-muted)]" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
+            {destinationSuggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-xl border border-[var(--app-border)] bg-[#111a26]">{destinationSuggestions.map((suggestion) => <button key={suggestion.id} type="button" onClick={() => { setDestination(suggestion.label); setDestinationPoint({ lat: suggestion.lat, lng: suggestion.lng }); setDestinationSuggestions([]); setPreview(false); setBooking(null); setLocationMessage(""); }} className="block w-full border-b border-[var(--app-border)] px-4 py-3 text-right text-xs leading-6 last:border-0 hover:bg-[var(--brand-soft)]">{suggestion.label}</button>)}</div>}
           </div>
-          <p className="text-[11px] text-[var(--app-muted)]">{mapsReady ? "العناوين عبر Google Places، والخريطة ومسار القيادة عبر Mapbox." : "يلزم إعداد Google Places لاختيار العناوين من الاقتراحات."}</p>
+          <p className="text-[11px] text-[var(--app-muted)]">اكتب اسم المكان واختره من اقتراحات Mapbox لتحديد الإحداثيات بدقة.</p>
           {locationMessage && <p aria-live="polite" className="rounded-xl bg-[#0d1622] px-4 py-3 text-xs leading-6 text-[var(--app-muted)]">{locationMessage}</p>}
         </div>
 
