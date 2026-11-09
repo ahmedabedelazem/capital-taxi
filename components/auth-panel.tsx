@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { getFirebaseClientAuth } from "@/lib/firebase/client";
 import { safeInternalRedirectPath } from "@/lib/domain/redirect";
+import { BrandMark } from "@/components/brand-mark";
 
 type Mode = "login" | "register";
 
@@ -125,7 +126,7 @@ export function AuthPanel() {
   return (
     <section className="mx-auto w-full max-w-md rounded-3xl border border-[#24351c]/10 bg-white p-6 shadow-[0_24px_70px_rgba(35,55,25,.10)] md:p-8">
       <div className="mb-7 text-center">
-        <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-[#8cc63f]/40 bg-[#edf6df] font-bold text-[#5e8f25]">CT</span>
+        <BrandMark size={56} className="mx-auto mb-4 rounded-2xl" />
         <h1 className="text-2xl font-bold">{mode === "login" ? "تسجيل الدخول" : "إنشاء حساب جديد"}</h1>
         <p className="mt-2 text-sm leading-6 text-neutral-600">ادخل إلى بوابة تاكسي العاصمة بأمان.</p>
       </div>
