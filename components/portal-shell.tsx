@@ -54,7 +54,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
 
   return (
     <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-ink)]">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-[#111a26] focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-[var(--brand)] focus:px-4 focus:py-3 focus:text-[#101722]">تخطي إلى المحتوى</a>
       <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-[#0a111b]/95 text-[var(--app-ink)] shadow-[0_10px_35px_rgba(0,0,0,.32)] backdrop-blur-2xl">
         <div className="shell flex h-[76px] items-center justify-between gap-4">
           <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
@@ -64,7 +64,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-2 md:flex">
             {portalLinks[role].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--app-ink)] shadow-[inset_0_0_0_1px_rgba(245,196,0,.18)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand)] shadow-[inset_0_0_0_1px_rgba(245,196,0,.24)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
                 <Icon size={16} />{label}
               </Link>
             ))}
@@ -72,7 +72,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           <div className="flex shrink-0 items-center gap-2">
             <span className="hidden items-center gap-2 rounded-full border border-[var(--app-border)] bg-[#111b28] px-3.5 py-2 text-[11px] font-bold text-[var(--app-muted)] sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-deep)]" /> حساب {role}</span>
             <button type="button" onClick={handleLogout} disabled={logoutBusy}
-              className="hidden items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_7px_18px_rgba(16,29,45,.16)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-deep)] disabled:opacity-50 sm:inline-flex">
+              className="hidden items-center gap-2 rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-black text-[#101722] shadow-[0_7px_18px_rgba(245,196,0,.16)] transition hover:-translate-y-0.5 hover:bg-[#ffd633] disabled:opacity-50 sm:inline-flex">
               <LogOut size={14} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
             </button>
             <button type="button" onClick={() => setOpen(!open)} aria-label="فتح القائمة" aria-expanded={open}
@@ -86,7 +86,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
             <nav className="shell flex flex-col gap-1 py-3" aria-label="قائمة الهاتف">
               {portalLinks[role].map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href} onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[var(--app-ink)] transition hover:bg-[var(--brand-soft)]">
+                  aria-current={pathname === href ? "page" : undefined}\n                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--app-ink)] hover:bg-[var(--brand-soft)]"}`}>
                   <Icon size={17} />{label}
                 </Link>
               ))}
@@ -104,9 +104,9 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
         <div className="shell">
           {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-400/20 bg-rose-950/40 p-4 text-sm text-rose-200">{logoutError}</p>}
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand)]"><ArrowRight size={15} /> الرئيسية</Link>
-          <div className="relative mb-8 overflow-hidden rounded-[30px] border border-[var(--app-border)] bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] md:p-8 lg:p-9">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(10,20,32,.12)_0%,rgba(10,20,32,.52)_38%,rgba(10,20,32,.97)_100%)]" />
-            <div aria-hidden="true" className="absolute inset-y-0 left-0 w-[58%] bg-cover bg-center opacity-75 md:w-[48%]" style={{ backgroundImage: `url(${roleMeta[role].image})` }} />
+          <div className="relative mb-8 overflow-hidden rounded-[32px] border border-white/10 bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] ring-1 ring-black/20 md:p-8 lg:p-9">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(10,20,32,.18)_0%,rgba(10,20,32,.58)_38%,rgba(10,20,32,.98)_100%)]" />
+            <div aria-hidden="true" className="absolute inset-y-0 left-0 w-[58%] scale-[1.03] bg-cover bg-center opacity-75 saturate-[.82] transition-transform duration-700 md:w-[48%]" style={{ backgroundImage: `url(${roleMeta[role].image})` }} />
             <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-24 h-64 w-64 rounded-full border border-white/10" />
             <div className="relative z-10 flex min-h-[190px] flex-wrap items-end justify-between gap-6 md:min-h-[220px]">
               <div className="max-w-3xl">
@@ -122,7 +122,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           {children}
         </div>
       </section>
-      <footer className="border-t border-[var(--app-border)] bg-[#0a111b] py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
+      <footer className="border-t border-[var(--app-border)] bg-[#0a111b] py-7 text-center text-[11px] font-medium text-[var(--app-muted)]">
         © {new Date().getFullYear()} تاكسي العاصمة · العريش، شمال سيناء
       </footer>
     </main>
