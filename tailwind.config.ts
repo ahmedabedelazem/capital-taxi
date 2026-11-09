@@ -5,14 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        night: "#080808",
-        panel: "#141414",
-        panel2: "#202020",
-        gold: "#FFFFFF",
-        muted: "#A3A3A3",
+        night: "#F5F7F2",
+        panel: "#FFFFFF",
+        panel2: "#EEF2E9",
+        gold: "#8CC63F",
+        muted: "#66705E",
+        brand: "#8CC63F",
+        "brand-dark": "#5E8F25",
       },
       fontFamily: { sans: ["var(--font-cairo)", "Arial", "sans-serif"] },
-      boxShadow: { glow: "0 18px 60px rgba(0,0,0,.22)" },
+      boxShadow: { glow: "0 18px 60px rgba(72,108,36,.12)" },
     },
   },
   plugins: [],
