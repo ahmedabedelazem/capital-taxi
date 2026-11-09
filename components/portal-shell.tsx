@@ -55,7 +55,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
   return (
     <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-ink)]">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
-      <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-white/90 text-[var(--app-ink)] shadow-[0_8px_30px_rgba(16,29,45,.06)] backdrop-blur-2xl">
+      <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-[#0a111b]/95 text-[var(--app-ink)] shadow-[0_10px_35px_rgba(0,0,0,.32)] backdrop-blur-2xl">
         <div className="shell flex h-[76px] items-center justify-between gap-4">
           <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
             <BrandMark size={44} className="rounded-[15px] shadow-[0_7px_18px_rgba(184,139,0,.22)] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105" />
@@ -70,19 +70,19 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
             ))}
           </nav>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3.5 py-2 text-[11px] font-bold text-[var(--app-muted)] sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-deep)]" /> حساب {role}</span>
+            <span className="hidden items-center gap-2 rounded-full border border-[var(--app-border)] bg-[#111b28] px-3.5 py-2 text-[11px] font-bold text-[var(--app-muted)] sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-deep)]" /> حساب {role}</span>
             <button type="button" onClick={handleLogout} disabled={logoutBusy}
               className="hidden items-center gap-2 rounded-full bg-[var(--navy)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_7px_18px_rgba(16,29,45,.16)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-deep)] disabled:opacity-50 sm:inline-flex">
               <LogOut size={14} />{logoutBusy ? "جارٍ الخروج…" : "تسجيل الخروج"}
             </button>
             <button type="button" onClick={() => setOpen(!open)} aria-label="فتح القائمة" aria-expanded={open}
-              className="rounded-xl border border-[var(--app-border)] bg-white p-2.5 text-[var(--app-ink)] shadow-sm transition hover:bg-[var(--app-bg)] md:hidden">
+              className="rounded-xl border border-[var(--app-border)] bg-[#111c2a] p-2.5 text-[var(--app-ink)] shadow-sm transition hover:bg-[var(--app-bg)] md:hidden">
               <Menu size={19} />
             </button>
           </div>
         </div>
         {open && (
-          <div className="border-t border-[var(--app-border)] bg-white/95 shadow-xl md:hidden">
+          <div className="border-t border-[var(--app-border)] bg-[#0b1420]/98 shadow-xl md:hidden">
             <nav className="shell flex flex-col gap-1 py-3" aria-label="قائمة الهاتف">
               {portalLinks[role].map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href} onClick={() => setOpen(false)}
@@ -100,10 +100,10 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
       </header>
 
       <section id="main-content" className="relative isolate min-h-[calc(100vh-150px)] overflow-hidden py-7 md:py-10">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(245,196,0,.16),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(16,29,45,.07),transparent_48%)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(245,196,0,.11),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(36,92,132,.16),transparent_48%)]" />
         <div className="shell">
           {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{logoutError}</p>}
-          <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand-deep)]"><ArrowRight size={15} /> الرئيسية</Link>
+          <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand)]"><ArrowRight size={15} /> الرئيسية</Link>
           <div className="relative mb-8 overflow-hidden rounded-[30px] border border-[var(--app-border)] bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] md:p-8 lg:p-9">
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(10,20,32,.98)_0%,rgba(10,20,32,.92)_42%,rgba(10,20,32,.18)_100%)]" />
             <div aria-hidden="true" className="absolute inset-y-0 left-0 w-[58%] bg-cover bg-center opacity-75 md:w-[48%]" style={{ backgroundImage: `url(${roleMeta[role].image})` }} />
@@ -122,7 +122,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           {children}
         </div>
       </section>
-      <footer className="border-t border-[var(--app-border)] bg-white/80 py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
+      <footer className="border-t border-[var(--app-border)] bg-[#0a111b] py-6 text-center text-[11px] font-medium text-[var(--app-muted)]">
         © {new Date().getFullYear()} تاكسي العاصمة · العريش، شمال سيناء
       </footer>
     </main>
