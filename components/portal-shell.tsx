@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { useState } from "react";
 import { getFirebaseClientAuth } from "@/lib/firebase/client";
 import { BrandMark } from "@/components/brand-mark";
+import { GoogleArishMap } from "@/components/google-arish-map";
 
 type Props = {
   title: string;
@@ -120,6 +121,14 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
             </div>
             <div className="absolute bottom-0 right-0 h-1.5 w-40 bg-[var(--brand)]" />
           </div>
+          <section aria-label="خريطة العريش" className="mb-8 overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-[#101a27] shadow-[0_20px_55px_rgba(0,0,0,.22)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 text-white md:px-6">
+              <div><p className="text-[9px] font-black tracking-[.22em] text-[var(--brand)]">GOOGLE MAPS · EL ARISH</p><h2 className="mt-1 text-base font-black">خريطة العريش ومحيط الخدمة</h2></div>
+              <a href="https://www.google.com/maps?q=31.137964865936812,33.779992824945815" target="_blank" rel="noreferrer" className="rounded-full border border-white/15 px-4 py-2 text-[10px] font-bold text-white/80 transition hover:border-[var(--brand)] hover:text-[var(--brand)]">فتح في خرائط Google</a>
+            </div>
+            <div className="h-[280px] w-full sm:h-[340px] lg:h-[390px]"><GoogleArishMap /></div>
+            <p className="border-t border-white/10 px-5 py-3 text-[10px] leading-6 text-white/55">هذه خريطة مرجعية لموقع العريش؛ لا تعرض مواقع السائقين أو الرحلات بشكل مباشر.</p>
+          </section>
           {children}
         </div>
       </section>
