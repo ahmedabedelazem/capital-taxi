@@ -98,14 +98,14 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
       </header>
 
       <section id="main-content" className="shell py-7 md:py-10">
-        {logoutError && <p role="alert" className="mb-5 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-200">{logoutError}</p>}
+        {logoutError && <p role="alert" className="mb-5 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-800">{logoutError}</p>}
         <Link href="/" className="mb-7 inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-[#5e8f25]"><ArrowRight size={16} /> الرئيسية</Link>
         <div className="mb-8 border-b border-[#24351c]/10 pb-7">
           <p className="mb-2 text-xs font-semibold tracking-[.18em] text-neutral-400">CAPITAL TAXI / {role}</p>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{title}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-neutral-400">{subtitle}</p>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-neutral-600">{subtitle}</p>
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#24351c]/15 px-3 py-2 text-xs text-neutral-600">
               <span className="h-2 w-2 rounded-full bg-neutral-400" /> بوابة {role}
