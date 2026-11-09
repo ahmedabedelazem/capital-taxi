@@ -86,7 +86,8 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
             <nav className="shell flex flex-col gap-1 py-3" aria-label="قائمة الهاتف">
               {portalLinks[role].map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href} onClick={() => setOpen(false)}
-                  aria-current={pathname === href ? "page" : undefined}\n                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--app-ink)] hover:bg-[var(--brand-soft)]"}`}>
+                  aria-current={pathname === href ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--app-ink)] hover:bg-[var(--brand-soft)]"}`}>
                   <Icon size={17} />{label}
                 </Link>
               ))}
