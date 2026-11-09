@@ -578,7 +578,7 @@ export function DriverWorkspace() {
     </div>
     <div className="mt-5 grid gap-5 lg:grid-cols-[.8fr_1.2fr]">
       <section className="rounded-3xl border border-[#24351c]/10 bg-panel p-6">
-        <div className="mb-4 flex items-center justify-between"><CarFront className="text-[#5e8f25]" size={28}/><span className="rounded-full bg-amber-300/10 px-3 py-1 text-[11px] text-amber-200">حساب معتمد فقط</span></div>
+        <div className="mb-4 flex items-center justify-between"><CarFront className="text-[#5e8f25]" size={28}/><span className="rounded-full bg-amber-300/10 px-3 py-1 text-[11px] text-amber-800">حساب معتمد فقط</span></div>
         <h2 className="text-xl font-bold">حالة استقبال الرحلات</h2>
         <p className="mt-3 text-sm leading-7 text-neutral-500">عند تفعيل التوفر، يطلب المتصفح إذن الموقع ويرسل آخر إحداثياتك أثناء اتصالك فقط. يمكنك إيقاف التوفر في أي وقت ما لم تكن لديك رحلة نشطة.</p>
         <button type="button" disabled={busy} aria-pressed={available} onClick={toggleAvailability} className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 text-sm font-bold transition disabled:opacity-50 ${available ? "border border-emerald-300/30 bg-emerald-400/15 text-[#5e8f25]" : "bg-[#8cc63f] text-[#182015] hover:bg-[#e8c77e]"}`}><Power size={18}/>{busy ? "جارٍ التنفيذ…" : available ? "إيقاف استقبال الرحلات" : "بدء استقبال الرحلات"}</button>
@@ -603,7 +603,7 @@ export function DriverWorkspace() {
             <div className="mt-5 overflow-hidden rounded-2xl border border-[#24351c]/10 bg-[#edf2e7]">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#24351c]/10 px-4 py-3"><b className="text-xs">خريطة الرحلة</b><span className="text-[10px] text-neutral-500">{routeSummary || mapMessage}</span></div>
               <div ref={mapContainer} className="h-[280px] w-full sm:h-[340px]" role="img" aria-label="خريطة توضح نقطة الانطلاق والوجهة ومسار القيادة" />
-              {activeTrip && (!activeTrip.pickupPoint || !activeTrip.destinationPoint) && <p className="border-t border-[#24351c]/10 px-4 py-3 text-xs leading-6 text-amber-200">إحداثيات إحدى نقطتي الرحلة غير متاحة؛ لا يمكن رسم المسار كاملاً.</p>}
+              {activeTrip && (!activeTrip.pickupPoint || !activeTrip.destinationPoint) && <p className="border-t border-[#24351c]/10 px-4 py-3 text-xs leading-6 text-amber-800">إحداثيات إحدى نقطتي الرحلة غير متاحة؛ لا يمكن رسم المسار كاملاً.</p>}
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               {activeTrip?.status === "accepted" && <button type="button" disabled={busy} onClick={() => void updateActiveTripStatus("driver_arrived")} className="rounded-xl bg-[#8cc63f] px-4 py-3 text-sm font-bold text-[#182015] disabled:opacity-50">تأكيد الوصول لنقطة الانطلاق</button>}
@@ -615,7 +615,7 @@ export function DriverWorkspace() {
         </div>}
         {section==="history" && <div className="mt-5 space-y-3">
           <div className="flex items-center justify-between gap-3"><p className="text-xs text-neutral-500">آخر الرحلات المسندة إلى حسابك (حتى 100 رحلة)</p><button type="button" disabled={historyLoading} onClick={() => void loadDriverHistory()} className="rounded-lg border border-[#24351c]/10 px-3 py-2 text-xs text-[#5e8f25] disabled:opacity-50">{historyLoading ? "جارٍ التحديث…" : "تحديث السجل"}</button></div>
-          {historyError && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-200">{historyError}</p>}
+          {historyError && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-xs leading-6 text-red-700">{historyError}</p>}
           {historyLoading && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-[#24351c]/10 text-xs text-neutral-500">جارٍ تحميل سجل الرحلات…</div>}
           {!historyLoading && !historyError && history.length === 0 && <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-[#24351c]/10 px-5 text-center"><div><WalletCards className="mx-auto mb-3 text-[#5e8f25]" size={28}/><b className="block text-sm">لا توجد رحلات في السجل</b><p className="mt-2 text-xs leading-6 text-neutral-500">ستظهر هنا الرحلات التي تم إسنادها إلى حسابك.</p></div></div>}
           {history.map((trip) => <article key={trip.tripId} className="rounded-2xl border border-[#24351c]/10 bg-white p-4">
@@ -639,7 +639,7 @@ export function DriverWorkspace() {
       </form>
       <div className="mt-5 border-t border-[#24351c]/10 pt-4">
         <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold">متابعة طلباتك</h3><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-[#24351c]/10 px-3 py-2 text-xs text-[#5e8f25] disabled:opacity-50">تحديث</button></div>
-        {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-200">{supportHistoryError}</p>}
+        {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-700">{supportHistoryError}</p>}
         {supportHistoryLoading && <p className="mt-3 text-xs text-neutral-500">جارٍ تحميل الشكاوى…</p>}
         {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-neutral-500">لا توجد طلبات دعم سابقة.</p>}
         <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-[#24351c]/10 bg-white p-3">
