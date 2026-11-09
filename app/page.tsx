@@ -56,7 +56,7 @@ export default function HomePage() {
             <div aria-hidden="true" className="absolute -inset-5 -z-10 rounded-[42px] bg-[#f5c400]/15 blur-3xl"/>
             <div className="relative rounded-[34px] border border-white/10 bg-[#111a26]/75 p-2.5 shadow-[0_30px_90px_rgba(34,59,28,.16)] backdrop-blur">
               <div className="overflow-hidden rounded-[27px]"><div className="relative">
-                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ مدينة العريش على البحر المتوسط" className="block aspect-[5/4] w-full object-cover" fetchPriority="high"/>
+                <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ مدينة العريش على البحر المتوسط" className="block aspect-[5/4] w-full object-cover" fetchPriority="high"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080d14]/85 via-transparent to-transparent"/>
                 <div className="absolute bottom-5 right-5 left-5 flex items-end justify-between gap-3 text-white">
                   <div><span className="text-[10px] font-black tracking-[.2em] text-[#f5c400]">NORTH SINAI · EGYPT</span><h2 className="mt-1 text-2xl font-black md:text-3xl">جمال العريش… في كل مشوار</h2></div>
@@ -77,17 +77,24 @@ export default function HomePage() {
       <section className="border-y border-[var(--app-border)] bg-[#0b121c] py-16 md:py-20">
         <div className="shell">
           <div className="mb-9 flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-black tracking-[.24em] text-[var(--brand)]">OUR CITY · EL ARISH</p><h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">من قلب العريش</h2></div><p className="max-w-md text-sm leading-7 text-[var(--app-muted)]">صور حقيقية من شاطئ المدينة ونخيلها وساحلها؛ لأن تاكسي العاصمة جزء من المكان وأهله.</p></div>
-          <div className="grid gap-5 md:grid-cols-2">
-            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26]">
-              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D8%B4%D8%A7%D8%B7%D8%A6_%D9%85%D8%AF%D9%8A%D9%86%D8%A9_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ مدينة العريش" loading="lazy" className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.03]"/>
-              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">شاطئ العريش</b><small className="mt-1 block text-xs text-[var(--app-muted)]">ساحل البحر المتوسط</small></span><span className="text-xs font-bold text-[var(--brand)]">01 / EL ARISH</span></figcaption>
+          <div className="grid gap-5 md:grid-cols-3">
+            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26] shadow-[0_18px_50px_rgba(0,0,0,.22)]">
+              <div className="overflow-hidden"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D8%B4%D8%A7%D8%B7%D8%A6_%D8%A7%D9%84%D8%B1%D9%8A%D8%B3%D8%A9_%D8%A8%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="شاطئ الريسة بالعريش والبحر المتوسط والنخيل" loading="lazy" className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-[1.05]"/></div>
+              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">شاطئ الريسة</b><small className="mt-1 block text-xs text-[var(--app-muted)]">رمال الساحل ومياه المتوسط</small></span><span className="text-xs font-bold text-[var(--brand)]">01 / EL ARISH</span></figcaption>
             </figure>
-            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26]">
-              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="نخيل العريش" loading="lazy" className="aspect-[16/9] w-full object-cover transition duration-700 group-hover:scale-[1.03]"/>
-              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">نخيل العريش</b><small className="mt-1 block text-xs text-[var(--app-muted)]">ملامح المدينة الساحلية</small></span><span className="text-xs font-bold text-[var(--brand)]">02 / SINAI</span></figcaption>
+            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26] shadow-[0_18px_50px_rgba(0,0,0,.22)]">
+              <div className="overflow-hidden"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg/1280px-%D9%86%D8%AE%D9%8A%D9%84_%D8%A7%D9%84%D8%B9%D8%B1%D9%8A%D8%B4.jpg" alt="صفوف النخيل على شاطئ العريش" loading="lazy" className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-[1.05]"/></div>
+              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">نخيل العريش</b><small className="mt-1 block text-xs text-[var(--app-muted)]">من أجمل ملامح الشاطئ</small></span><span className="text-xs font-bold text-[var(--brand)]">02 / SINAI</span></figcaption>
+            </figure>
+            <figure className="group overflow-hidden rounded-[26px] border border-white/10 bg-[#111a26] shadow-[0_18px_50px_rgba(0,0,0,.22)]">
+              <div className="overflow-hidden"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/ISS075-E-351_-_View_of_Egypt_-_Mediterranean_Sea_-_Al_Arish_%28El_Arish%29_-_Wadi_al-Arish_%28cropped%29.jpg/1920px-ISS075-E-351_-_View_of_Egypt_-_Mediterranean_Sea_-_Al_Arish_%28El_Arish%29_-_Wadi_al-Arish_%28cropped%29.jpg" alt="صورة جوية حديثة لساحل مدينة العريش ووادي العريش" loading="lazy" className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-[1.05]"/></div>
+              <figcaption className="flex items-center justify-between gap-3 p-5"><span><b className="block text-base font-black">العريش من السماء</b><small className="mt-1 block text-xs text-[var(--app-muted)]">صورة جوية من محطة الفضاء الدولية · 2026</small></span><span className="text-xs font-bold text-[var(--brand)]">03 / NASA</span></figcaption>
             </figure>
           </div>
-          <p className="mt-5 text-[10px] leading-6 text-[var(--app-muted)]">مصدر الصور: Wikimedia Commons — <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://commons.wikimedia.org/wiki/Category:Arish" target="_blank" rel="noreferrer">صفحة ملفات العريش وتفاصيل التراخيص والإسناد</a>.</p>
+          <div className="mt-5 rounded-2xl border border-white/10 bg-[#111a26]/70 px-5 py-4 text-[10px] leading-7 text-[var(--app-muted)]">
+            <p>حقوق الصور والإسناد: شاطئ الريسة ونخيل العريش — تصوير Hesham Farouk Ragab، بترخيص <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. الصورة الجوية — NASA / Earth Science and Remote Sensing Unit، ضمن الملكية العامة الأمريكية.</p>
+            <p className="mt-1">يمكن فتح تفاصيل الصور ومصادرها من <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://commons.wikimedia.org/wiki/Category:Arish" target="_blank" rel="noreferrer">أرشيف صور العريش على Wikimedia Commons</a>.</p>
+          </div>
         </div>
       </section>
 
