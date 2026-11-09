@@ -1,89 +1,102 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpLeft, CarFront, Check, MapPin, ShieldCheck, Smartphone, Users, Navigation, Leaf } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, CarFront, Check, ShieldCheck, Smartphone, Users, Navigation, Leaf, MapPin, Sparkles } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { ArishHeroArt } from "@/components/arish-hero-art";
 
 const portals = [
-  { href: "/login?next=/customer", title: "اطلب رحلة", description: "حدد مكانك ووجهتك، واختر السيارة المناسبة لمشوارك.", icon: Navigation, tag: "للركاب" },
-  { href: "/login?next=/driver/apply", title: "انضم كسائق", description: "قدّم طلب الانضمام وتابع حالة اعتماد حسابك.", icon: CarFront, tag: "للسائقين" },
-  { href: "/login?next=/admin", title: "إدارة التشغيل", description: "تابع الرحلات وطلبات السائقين وإعدادات الخدمة.", icon: ShieldCheck, tag: "للإدارة" },
+  { href: "/login?next=/customer", title: "اطلب رحلتك", description: "حدد نقطة الانطلاق والوجهة، واستعرض تفاصيل المشوار من واجهة واضحة.", icon: Navigation, tag: "للركاب", number: "01" },
+  { href: "/login?next=/driver/apply", title: "كن سائقًا معنا", description: "قدّم طلب الانضمام وتابع حالة حسابك من مساحة مخصصة للسائقين.", icon: CarFront, tag: "للسائقين", number: "02" },
+  { href: "/login?next=/admin", title: "مركز الإدارة", description: "تابع التشغيل والرحلات وطلبات السائقين من بوابة الإدارة.", icon: ShieldCheck, tag: "للإدارة", number: "03" },
 ];
 const steps = [
-  { number: "01", title: "حدد مشوارك", description: "أدخل مكان الانطلاق والوجهة وحدد تفاصيل رحلتك." },
-  { number: "02", title: "راجع العرض", description: "راجع فئة السيارة والسعر التقديري قبل تأكيد الطلب." },
-  { number: "03", title: "تحرك بثقة", description: "تابع حالة الرحلة وبيانات السائق بعد قبول الطلب." },
+  { number: "01", title: "حدد مشوارك", description: "اختر نقطة الانطلاق والوجهة من خريطة وعناوين واضحة." },
+  { number: "02", title: "راجع التفاصيل", description: "اطّلع على فئة السيارة وتفاصيل الرحلة قبل إرسال الطلب." },
+  { number: "03", title: "تابع رحلتك", description: "تابع حالة الطلب وتفاصيل السائق بعد إسناد الرحلة." },
 ];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f5f7f2] text-[#182015]">
-      <header className="sticky top-0 z-40 border-b border-[#24351c]/10 bg-white/95 backdrop-blur">
-        <nav className="shell flex h-[76px] items-center justify-between gap-4" aria-label="التنقل الرئيسي">
-          <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
-            <BrandMark size={44} className="rounded-2xl" />
-            <span><b className="block text-base font-extrabold leading-tight">تاكسي العاصمة</b><span className="text-[9px] font-semibold tracking-[.24em] text-neutral-500">CAPITAL TAXI</span></span>
+    <main className="min-h-screen overflow-hidden bg-[var(--app-bg)] text-[var(--app-ink)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--app-border)] bg-white/90 shadow-[0_8px_30px_rgba(28,48,20,.04)] backdrop-blur-2xl">
+        <nav className="shell flex h-[78px] items-center justify-between gap-4" aria-label="التنقل الرئيسي">
+          <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
+            <BrandMark size={46} className="rounded-[16px] shadow-[0_8px_20px_rgba(92,143,37,.2)] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105" />
+            <span><b className="block text-[16px] font-black leading-tight tracking-tight">تاكسي العاصمة</b><span className="text-[9px] font-bold tracking-[.25em] text-[var(--app-muted)]">CAPITAL TAXI</span></span>
           </Link>
-          <div className="hidden items-center gap-7 text-sm font-medium text-neutral-700 md:flex">
-            <a href="#how-it-works" className="transition hover:text-[#5e8f25]">كيف تعمل الخدمة</a>
-            <a href="#portals" className="transition hover:text-[#5e8f25]">بوابات الاستخدام</a>
-            <span className="text-neutral-500">العريش · شمال سيناء</span>
+          <div className="hidden items-center gap-8 text-[13px] font-bold text-[var(--app-muted)] md:flex">
+            <a href="#how-it-works" className="transition hover:text-[var(--brand-deep)]">كيف تعمل الخدمة</a>
+            <a href="#portals" className="transition hover:text-[var(--brand-deep)]">بوابات الاستخدام</a>
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-soft)] px-3 py-2 text-[11px] font-extrabold text-[var(--brand-deep)]"><MapPin size={13}/> العريش · شمال سيناء</span>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="hidden rounded-full px-4 py-3 text-sm font-semibold transition hover:bg-neutral-100 sm:inline-flex">تسجيل الدخول</Link>
-            <Link href="/login?next=/customer" className="rounded-full bg-[#8cc63f] px-5 py-3 text-sm font-extrabold text-[#182015] transition hover:bg-[#7db432]">اطلب رحلة</Link>
+            <Link href="/login" className="hidden rounded-full px-4 py-3 text-[13px] font-bold text-[var(--app-muted)] transition hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)] sm:inline-flex">تسجيل الدخول</Link>
+            <Link href="/login?next=/customer" className="inline-flex items-center gap-2 rounded-full bg-[var(--brand)] px-5 py-3 text-[12px] font-black text-[var(--app-ink)] shadow-[0_8px_20px_rgba(116,170,48,.2)] transition hover:-translate-y-0.5 hover:bg-[#a0d653]">اطلب رحلة <ArrowLeft size={15}/></Link>
           </div>
         </nav>
       </header>
 
-      <section className="shell grid min-h-[650px] items-center gap-12 py-14 lg:grid-cols-[1fr_.95fr] lg:py-20">
-        <div className="max-w-2xl">
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#8cc63f]/40 bg-[#edf6df] px-4 py-2 text-xs font-bold text-[#466d20]">
-            <Leaf size={15} /> تنقّل أسهل في العريش وشمال سيناء
+      <section className="relative isolate overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_20%,rgba(145,200,62,.13),transparent_35%),radial-gradient(ellipse_at_90%_60%,rgba(115,168,162,.15),transparent_34%)]"/>
+        <div className="shell grid min-h-[690px] items-center gap-10 py-12 lg:grid-cols-[.95fr_1.05fr] lg:gap-14 lg:py-16">
+          <div className="relative z-10 max-w-2xl">
+            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#8cc63f]/35 bg-white/80 px-4 py-2 text-[11px] font-extrabold text-[var(--brand-deep)] shadow-sm backdrop-blur"><Sparkles size={14}/> تنقّل محلي بتجربة أكثر وضوحًا <span className="mx-1 h-1 w-1 rounded-full bg-[var(--brand)]"/> العريش وشمال سيناء</div>
+            <h1 className="text-[48px] font-black leading-[1.15] tracking-[-.045em] sm:text-[64px] lg:text-[78px]">مشوارك،<br/><span className="relative inline-block text-[var(--brand-deep)]">اختيارك.</span></h1>
+            <p className="mt-7 max-w-xl text-[15px] leading-8 text-[var(--app-muted)] md:text-[17px]">من أول نقطة على الخريطة إلى نهاية الطريق؛ تجربة تاكسي العاصمة مصممة لتجعل تفاصيل مشوارك أوضح وأسهل.</p>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link href="/login?next=/customer" className="inline-flex min-h-14 items-center gap-3 rounded-2xl bg-[var(--brand)] px-7 py-4 text-[13px] font-black text-[var(--app-ink)] shadow-[0_14px_30px_rgba(116,170,48,.22)] transition hover:-translate-y-1 hover:bg-[#a0d653]">ابدأ طلب رحلتك <ArrowLeft size={18}/></Link>
+              <a href="#how-it-works" className="inline-flex min-h-14 items-center gap-2 rounded-2xl border border-[var(--app-border)] bg-white/85 px-6 py-4 text-[13px] font-extrabold text-[var(--app-ink)] transition hover:border-[#8cc63f]/60 hover:bg-white"><ArrowUpLeft size={17}/> اكتشف التجربة</a>
+            </div>
+            <div className="mt-12 grid max-w-xl grid-cols-3 gap-3 border-t border-[var(--app-border)] pt-6">
+              <div><div className="mb-2 flex items-center gap-2 text-[var(--brand-deep)]"><MapPin size={16}/><span className="text-[10px] font-black">محلي</span></div><p className="text-[11px] font-bold text-[var(--app-muted)]">مصمم للعريش</p></div>
+              <div><div className="mb-2 flex items-center gap-2 text-[var(--brand-deep)]"><Smartphone size={16}/><span className="text-[10px] font-black">مرن</span></div><p className="text-[11px] font-bold text-[var(--app-muted)]">متوافق مع الهاتف</p></div>
+              <div><div className="mb-2 flex items-center gap-2 text-[var(--brand-deep)]"><ShieldCheck size={16}/><span className="text-[10px] font-black">منظم</span></div><p className="text-[11px] font-bold text-[var(--app-muted)]">بوابات حسب الدور</p></div>
+            </div>
           </div>
-          <h1 className="text-5xl font-black leading-[1.2] tracking-tight sm:text-6xl lg:text-[76px]">
-            مشوارك،<br /><span className="text-[#65972c]">اختيارك.</span>
-          </h1>
-          <p className="mt-7 max-w-xl text-base leading-8 text-neutral-600 md:text-lg">
-            تاكسي العاصمة يقرّبك من مشوارك بخطوات واضحة وتجربة مرنة، من تحديد نقطة الانطلاق حتى متابعة الرحلة.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link href="/login?next=/customer" className="inline-flex min-h-14 items-center gap-3 rounded-xl bg-[#8cc63f] px-7 py-4 text-sm font-extrabold text-[#182015] transition hover:bg-[#7db432]">ابدأ طلب رحلتك <ArrowLeft size={18} /></Link>
-            <a href="#how-it-works" className="inline-flex min-h-14 items-center gap-2 rounded-xl border border-black/15 bg-white px-6 py-4 text-sm font-bold transition hover:bg-[#edf6df]">اعرف كيف تعمل <ArrowUpLeft size={17} /></a>
-          </div>
-          <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-black/10 pt-7 text-sm text-neutral-600">
-            <span className="inline-flex items-center gap-2"><Check size={17} className="text-[#65972c]" /> واجهة عربية</span>
-            <span className="inline-flex items-center gap-2"><Smartphone size={17} className="text-[#65972c]" /> مناسبة للهاتف</span>
-            <span className="inline-flex items-center gap-2"><ShieldCheck size={17} className="text-[#65972c]" /> حسابات بصلاحيات</span>
+          <div className="relative mx-auto w-full max-w-[650px]">
+            <div aria-hidden="true" className="absolute -inset-5 -z-10 rounded-[42px] bg-[#8cc63f]/15 blur-3xl"/>
+            <div className="relative rounded-[34px] border border-white/80 bg-white/70 p-2.5 shadow-[0_30px_90px_rgba(34,59,28,.16)] backdrop-blur">
+              <div className="overflow-hidden rounded-[27px]"><ArishHeroArt/></div>
+              <div className="absolute -bottom-5 right-6 flex items-center gap-3 rounded-2xl border border-white/80 bg-white/95 px-4 py-3 shadow-[0_16px_40px_rgba(28,48,20,.14)] backdrop-blur">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand-deep)]"><CarFront size={21}/></span>
+                <span><b className="block text-[12px] font-black">تاكسي العاصمة</b><small className="text-[10px] font-semibold text-[var(--app-muted)]">رحلتك تبدأ من العريش</small></span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <ArishHeroArt />
       </section>
 
-      <section id="how-it-works" className="bg-white py-20">
+      <section id="how-it-works" className="border-y border-[var(--app-border)] bg-white py-20 md:py-24">
         <div className="shell">
-          <div className="max-w-2xl"><p className="text-xs font-bold tracking-[.2em] text-[#65972c]">ببساطة</p><h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">خطوات واضحة. ومشوار أسهل.</h2></div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {steps.map((step) => <article key={step.number} className="border-t-4 border-[#8cc63f] pt-5"><span className="text-xs font-bold tracking-widest text-neutral-500">{step.number}</span><h3 className="mt-7 text-xl font-extrabold">{step.title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-neutral-600">{step.description}</p></article>)}
+          <div className="flex flex-wrap items-end justify-between gap-6"><div className="max-w-2xl"><p className="text-[10px] font-black tracking-[.24em] text-[var(--brand-deep)]">ثلاث خطوات بسيطة</p><h2 className="mt-4 text-[32px] font-black leading-tight tracking-tight md:text-[48px]">طريق أوضح، من البداية.</h2></div><p className="max-w-sm text-[13px] leading-7 text-[var(--app-muted)]">كل مرحلة في مكانها؛ من تفاصيل الطلب إلى متابعة الرحلة.</p></div>
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {steps.map((step, index) => <article key={step.number} className="group relative overflow-hidden rounded-[24px] border border-[var(--app-border)] bg-[var(--app-bg)] p-6 transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[var(--shadow-float)]">
+              <div className="flex items-center justify-between"><span className="text-[12px] font-black tracking-[.2em] text-[var(--brand-deep)]">{step.number}</span><span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-[var(--brand-deep)] shadow-sm transition group-hover:bg-[var(--brand-soft)]"><Check size={18}/></span></div>
+              <h3 className="mt-9 text-[19px] font-black">{step.title}</h3><p className="mt-3 text-[13px] leading-7 text-[var(--app-muted)]">{step.description}</p>
+              {index<2 && <div aria-hidden="true" className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-[var(--brand-soft)] blur-2xl"/>}
+            </article>)}
           </div>
         </div>
       </section>
 
-      <section id="portals" className="shell py-20">
-        <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs font-bold tracking-[.2em] text-[#65972c]">منصة واحدة</p><h2 className="mt-3 text-3xl font-black tracking-tight md:text-5xl">كل شخص له تجربته.</h2></div><p className="max-w-md text-sm leading-7 text-neutral-600">اختر البوابة المناسبة. تظهر الوظائف وفق نوع الحساب والصلاحيات المعتمدة.</p></div>
+      <section id="portals" className="shell py-20 md:py-24">
+        <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-[10px] font-black tracking-[.24em] text-[var(--brand-deep)]">منصة واحدة · ثلاث تجارب</p><h2 className="mt-4 text-[32px] font-black tracking-tight md:text-[48px]">كل دور له مساحته.</h2></div><p className="max-w-md text-[13px] leading-7 text-[var(--app-muted)]">واجهات مخصصة للعميل والسائق والإدارة، مع تجربة بصرية موحدة وهوية واحدة.</p></div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {portals.map(({ href, title, description, icon: Icon, tag }) => <Link key={href} href={href} className="group flex min-h-[250px] flex-col rounded-2xl border border-[#24351c]/10 bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-[#8cc63f] hover:shadow-[0_18px_50px_rgba(54,83,30,.10)]">
-            <div className="flex items-center justify-between"><span className="grid h-12 w-12 place-items-center rounded-xl bg-[#edf6df] text-[#5e8f25] transition group-hover:bg-[#8cc63f] group-hover:text-[#182015]"><Icon size={23} /></span><span className="text-xs font-semibold text-neutral-500">{tag}</span></div>
-            <h3 className="mt-9 text-xl font-extrabold">{title}</h3><p className="mt-3 text-sm leading-7 text-neutral-600">{description}</p><span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-bold text-[#527e25]">متابعة <ArrowLeft size={16} /></span>
+          {portals.map(({ href, title, description, icon: Icon, tag, number }) => <Link key={href} href={href} className="group relative flex min-h-[280px] flex-col overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-white p-6 shadow-[0_8px_28px_rgba(28,48,20,.035)] transition duration-300 hover:-translate-y-1.5 hover:border-[#8cc63f]/60 hover:shadow-[var(--shadow-float)]">
+            <span className="absolute left-5 top-5 text-[11px] font-black tracking-[.2em] text-[#a5ad9e]">{number}</span>
+            <div className="flex items-center justify-between"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-deep)] transition duration-300 group-hover:rotate-[-4deg] group-hover:bg-[var(--brand)] group-hover:text-[var(--app-ink)]"><Icon size={25}/></span><span className="rounded-full border border-[var(--app-border)] px-3 py-1.5 text-[10px] font-bold text-[var(--app-muted)]">{tag}</span></div>
+            <h3 className="mt-9 text-[20px] font-black">{title}</h3><p className="mt-3 text-[13px] leading-7 text-[var(--app-muted)]">{description}</p><span className="mt-auto inline-flex items-center gap-2 pt-7 text-[12px] font-black text-[var(--brand-deep)]">الدخول إلى البوابة <ArrowLeft size={15} className="transition group-hover:-translate-x-1"/></span>
           </Link>)}
         </div>
       </section>
 
-      <section className="bg-[#182015] py-16 text-white"><div className="shell flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-        <div><div className="mb-4 flex items-center gap-2 text-[#b6d88a]"><Users size={17} /><span className="text-xs font-semibold tracking-[.2em]">CAPITAL TAXI</span></div><h2 className="text-3xl font-black tracking-tight md:text-4xl">جاهز للمشوار؟</h2><p className="mt-3 text-sm leading-7 text-neutral-300">ابدأ من بوابة العميل واطلب رحلتك.</p></div>
-        <Link href="/login?next=/customer" className="inline-flex min-h-14 items-center gap-3 rounded-xl bg-[#8cc63f] px-7 py-4 text-sm font-extrabold text-[#182015] transition hover:bg-[#a2d75c]">اطلب رحلتك الآن <ArrowLeft size={18} /></Link>
-      </div></section>
-      <footer className="bg-[#182015] px-5 pb-8 text-white"><div className="shell flex flex-col justify-between gap-4 border-t border-white/15 pt-6 text-xs text-neutral-300 sm:flex-row"><span>© {new Date().getFullYear()} تاكسي العاصمة · CAPITAL TAXI</span><span>العريش · شمال سيناء</span></div></footer>
+      <section className="relative isolate overflow-hidden bg-[#172116] py-16 text-white md:py-20">
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_80%_10%,rgba(145,200,62,.22),transparent_35%),linear-gradient(115deg,transparent_40%,rgba(255,255,255,.035))]"/>
+        <div className="shell flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div><div className="mb-4 flex items-center gap-3 text-[#b9df8a]"><BrandMark size={32}/><span className="text-[10px] font-black tracking-[.24em]">CAPITAL TAXI</span></div><h2 className="text-[32px] font-black tracking-tight md:text-[44px]">العريش أقرب… مع تاكسي العاصمة.</h2><p className="mt-3 text-[13px] leading-7 text-white/65">ابدأ من بوابة العميل واطلب رحلتك بخطوات واضحة.</p></div>
+          <Link href="/login?next=/customer" className="inline-flex min-h-14 items-center gap-3 rounded-2xl bg-[var(--brand)] px-7 py-4 text-[13px] font-black text-[var(--app-ink)] shadow-[0_12px_28px_rgba(145,200,62,.18)] transition hover:-translate-y-1 hover:bg-[#a0d653]">اطلب رحلتك الآن <ArrowLeft size={18}/></Link>
+        </div>
+      </section>
+      <footer className="bg-[#172116] px-5 pb-8 text-white"><div className="shell flex flex-col justify-between gap-4 border-t border-white/15 pt-6 text-[11px] font-medium text-white/55 sm:flex-row"><span>© {new Date().getFullYear()} تاكسي العاصمة · CAPITAL TAXI</span><span className="inline-flex items-center gap-2"><MapPin size={13}/> العريش · شمال سيناء</span></div></footer>
     </main>
   );
 }
