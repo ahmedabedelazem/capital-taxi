@@ -8,8 +8,8 @@ export default async function CustomerPage() {
   return (
     <PortalShell
       role="العميل"
-      title="اطلب رحلتك"
-      subtitle="حدد نقطة الانطلاق والوجهة، واختر السيارة وطريقة الدفع."
+      title="إلى أين نذهب؟"
+      subtitle="حدد مكان الانطلاق والوجهة، اختر فئة السيارة، وراجع تقدير الرحلة قبل تأكيد الطلب. الدفع النقدي متاح حالياً."
     >
       <CustomerRideForm />
     </PortalShell>
