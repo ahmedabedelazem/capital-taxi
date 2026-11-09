@@ -6,6 +6,7 @@ import { ArrowRight, CarFront, LayoutDashboard, LogOut, Menu, UserRound } from "
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 import { getFirebaseClientAuth } from "@/lib/firebase/client";
+import { BrandMark } from "@/components/brand-mark";
 
 type Props = {
   title: string;
@@ -54,7 +55,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
       <header className="sticky top-0 z-30 border-b border-[#24351c]/10 bg-white/95 text-[#182015] backdrop-blur-xl">
         <div className="shell flex h-[72px] items-center justify-between gap-4">
           <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#8cc63f] font-black text-[#182015]">CT</span>
+            <BrandMark size={40} />
             <span><b className="block text-sm">تاكسي العاصمة</b><small className="text-[10px] tracking-[.2em] text-neutral-500">CAPITAL TAXI</small></span>
           </Link>
 
