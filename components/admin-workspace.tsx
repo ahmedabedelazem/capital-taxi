@@ -46,14 +46,14 @@ type SupportTicket = {
 };
 
 const tripStatusMeta: Record<string, { label: string; className: string }> = {
-  pending: { label: "جديدة", className: "border-sky-300/20 bg-sky-300/10 text-sky-200" },
-  searching: { label: "جارٍ البحث عن سائق", className: "border-amber-300/20 bg-amber-300/10 text-amber-200" },
-  accepted: { label: "تم قبولها", className: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" },
-  driver_arrived: { label: "السائق وصل", className: "border-violet-300/20 bg-violet-300/10 text-violet-200" },
-  in_progress: { label: "قيد التنفيذ", className: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200" },
-  completed: { label: "مكتملة", className: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" },
-  cancelled: { label: "ملغاة", className: "border-rose-300/20 bg-rose-300/10 text-rose-200" },
-  no_driver: { label: "لم يتوفر سائق", className: "border-orange-300/20 bg-orange-300/10 text-orange-200" },
+  pending: { label: "جديدة", className: "border-sky-700/15 bg-sky-50 text-sky-800" },
+  searching: { label: "جارٍ البحث عن سائق", className: "border-amber-700/15 bg-amber-50 text-amber-800" },
+  accepted: { label: "تم قبولها", className: "border-emerald-700/15 bg-emerald-50 text-emerald-800" },
+  driver_arrived: { label: "السائق وصل", className: "border-violet-700/15 bg-violet-50 text-violet-800" },
+  in_progress: { label: "قيد التنفيذ", className: "border-cyan-700/15 bg-cyan-50 text-cyan-800" },
+  completed: { label: "مكتملة", className: "border-emerald-700/15 bg-emerald-50 text-emerald-800" },
+  cancelled: { label: "ملغاة", className: "border-rose-700/15 bg-rose-50 text-rose-800" },
+  no_driver: { label: "لم يتوفر سائق", className: "border-orange-700/15 bg-orange-50 text-orange-800" },
 };
 
 const sections = [
