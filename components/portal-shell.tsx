@@ -102,7 +102,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
       <section id="main-content" className="relative isolate min-h-[calc(100vh-150px)] overflow-hidden py-7 md:py-10">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[390px] bg-[radial-gradient(ellipse_at_top_right,rgba(245,196,0,.11),transparent_55%),radial-gradient(ellipse_at_top_left,rgba(36,92,132,.16),transparent_48%)]" />
         <div className="shell">
-          {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{logoutError}</p>}
+          {logoutError && <p role="alert" className="mb-5 rounded-2xl border border-rose-400/20 bg-rose-950/40 p-4 text-sm text-rose-200">{logoutError}</p>}
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-[var(--app-muted)] transition hover:text-[var(--brand)]"><ArrowRight size={15} /> الرئيسية</Link>
           <div className="relative mb-8 overflow-hidden rounded-[30px] border border-[var(--app-border)] bg-[var(--navy)] p-6 text-white shadow-[var(--shadow-float)] md:p-8 lg:p-9">
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(10,20,32,.98)_0%,rgba(10,20,32,.92)_42%,rgba(10,20,32,.18)_100%)]" />
