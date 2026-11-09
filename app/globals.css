@@ -1,4 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root{color-scheme:dark}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#0B0F16;color:#F4F1EA;font-family:var(--font-cairo),Arial,sans-serif}a{color:inherit;text-decoration:none}button,input{font:inherit}::selection{background:rgba(213,174,99,.3);color:#fff}.shell{width:min(1180px,calc(100% - 40px));margin-inline:auto}.gold-text{color:#D5AE63}.glass{background:rgba(20,29,43,.78);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(18px)}.grid-glow{background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+
+:root {
+  color-scheme: dark;
+  --app-bg: #080808;
+  --app-panel: #141414;
+  --app-border: rgba(255,255,255,.12);
+  --app-muted: #a3a3a3;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--app-bg); }
+body {
+  margin: 0;
+  background: var(--app-bg);
+  color: #fff;
+  font-family: var(--font-cairo), Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+::selection { background: rgba(255,255,255,.22); color: #fff; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.shell { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+.gold-text { color: #fff; }
+.glass {
+  background: rgba(20,20,20,.92);
+  border: 1px solid var(--app-border);
+  backdrop-filter: blur(18px);
+}
+.grid-glow {
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom,black,transparent 90%);
+}
+::placeholder { color: #777; opacity: 1; }
+input, select, textarea { color-scheme: dark; }
