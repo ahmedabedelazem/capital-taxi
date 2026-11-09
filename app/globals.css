@@ -3,18 +3,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --app-bg: #080808;
-  --app-panel: #141414;
-  --app-border: rgba(255,255,255,.12);
-  --app-muted: #a3a3a3;
+  color-scheme: light;
+  --app-bg: #f5f7f2;
+  --app-panel: #ffffff;
+  --app-border: rgba(27, 42, 20, .12);
+  --app-muted: #66705e;
+  --brand: #8cc63f;
+  --brand-dark: #5e8f25;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--app-bg); }
 body {
   margin: 0;
   background: var(--app-bg);
-  color: #fff;
+  color: #182015;
   font-family: var(--font-cairo), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -22,19 +24,19 @@ a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-::selection { background: rgba(255,255,255,.22); color: #fff; }
-:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+::selection { background: rgba(140,198,63,.28); color: #182015; }
+:focus-visible { outline: 3px solid #8cc63f; outline-offset: 3px; }
 .shell { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
-.gold-text { color: #fff; }
+.gold-text { color: var(--brand-dark); }
 .glass {
-  background: rgba(20,20,20,.92);
+  background: rgba(255,255,255,.94);
   border: 1px solid var(--app-border);
   backdrop-filter: blur(18px);
 }
 .grid-glow {
-  background-image: linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-image: linear-gradient(rgba(35,55,25,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(35,55,25,.045) 1px,transparent 1px);
   background-size: 44px 44px;
   mask-image: linear-gradient(to bottom,black,transparent 90%);
 }
-::placeholder { color: #777; opacity: 1; }
-input, select, textarea { color-scheme: dark; }
+::placeholder { color: #7c8575; opacity: 1; }
+input, select, textarea { color-scheme: light; }
