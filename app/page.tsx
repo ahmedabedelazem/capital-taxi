@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, CarFront, Check, MapPin, ShieldCheck, Smartphone, Users, Navigation, Leaf } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { ArishHeroArt } from "@/components/arish-hero-art";
 
 const portals = [
   { href: "/login?next=/customer", title: "اطلب رحلة", description: "حدد مكانك ووجهتك، واختر السيارة المناسبة لمشوارك.", icon: Navigation, tag: "للركاب" },
@@ -56,28 +57,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[570px]">
-          <div className="overflow-hidden rounded-[30px] border border-[#24351c]/10 bg-white p-3 shadow-[0_24px_80px_rgba(54,83,30,.14)] sm:p-4">
-            <div className="relative min-h-[390px] overflow-hidden rounded-[22px] bg-[#e8eee1]">
-              <div className="absolute inset-0 opacity-80" aria-hidden="true" style={{ backgroundImage: "linear-gradient(28deg,transparent 47%,#fff 48%,#fff 51%,transparent 52%),linear-gradient(112deg,transparent 43%,#fff 44%,#fff 47%,transparent 48%),linear-gradient(160deg,transparent 62%,#d4dfca 63%,#d4dfca 65%,transparent 66%)", backgroundSize: "190px 150px,220px 180px,280px 210px" }} />
-              <div className="absolute -left-12 top-24 h-32 w-[130%] rotate-[-18deg] border-y-[18px] border-white/90" />
-              <svg viewBox="0 0 520 390" className="absolute inset-0 h-full w-full" role="img" aria-label="رسم توضيحي لمسار رحلة">
-                <path d="M104 92 C170 110 166 204 260 194 S350 246 414 292" fill="none" stroke="#fff" strokeWidth="13" strokeLinecap="round" />
-                <path d="M104 92 C170 110 166 204 260 194 S350 246 414 292" fill="none" stroke="#6b9d32" strokeWidth="5" strokeDasharray="3 10" strokeLinecap="round" />
-              </svg>
-              <div className="absolute left-[18%] top-[20%] h-4 w-4 rounded-full border-4 border-white bg-[#8cc63f] shadow" />
-              <div className="absolute right-[20%] bottom-[24%] h-4 w-4 rounded-full border-4 border-white bg-[#182015] shadow" />
-              <div className="absolute right-5 top-5 rounded-xl bg-white px-4 py-3 shadow-lg"><small className="block text-[10px] text-neutral-500">نقطة الانطلاق</small><b className="mt-1 block text-sm">موقعك الحالي</b></div>
-              <div className="absolute bottom-5 left-5 rounded-xl bg-white px-4 py-3 shadow-lg"><small className="block text-[10px] text-neutral-500">الوجهة</small><b className="mt-1 block text-sm">اختار مكانك</b></div>
-              <div className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl bg-[#8cc63f] text-[#182015] shadow-xl"><CarFront size={29} /></div>
-              <span className="absolute bottom-5 right-5 rounded-full bg-white/90 px-3 py-2 text-[10px] font-semibold text-neutral-600">تصوّر توضيحي للمسار</span>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-2 pb-1 pt-4">
-              <div><b className="block text-sm">تاكسي العاصمة</b><span className="text-xs text-neutral-500">رحلات داخل العريش وخارجها</span></div>
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#edf6df] text-[#5e8f25]"><MapPin size={18} /></span>
-            </div>
-          </div>
-        </div>
+        <ArishHeroArt />
       </section>
 
       <section id="how-it-works" className="bg-white py-20">
