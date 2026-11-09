@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpLeft, CarFront, Check, ShieldCheck, Smartphone, Navigation, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, CarFront, Check, ShieldCheck, Smartphone, Navigation, MapPin, Sparkles, UsersRound, BadgeCheck } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 
 
@@ -94,6 +94,37 @@ export default function HomePage() {
           <div className="mt-5 rounded-2xl border border-white/10 bg-[#111a26]/70 px-5 py-4 text-[10px] leading-7 text-[var(--app-muted)]">
             <p>حقوق الصور والإسناد: شاطئ الريسة ونخيل العريش — تصوير Hesham Farouk Ragab، بترخيص <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. الصورة الجوية — NASA / Earth Science and Remote Sensing Unit، ضمن الملكية العامة الأمريكية.</p>
             <p className="mt-1">يمكن فتح تفاصيل الصور ومصادرها من <a className="underline decoration-white/30 underline-offset-4 hover:text-[var(--brand)]" href="https://commons.wikimedia.org/wiki/Category:Arish" target="_blank" rel="noreferrer">أرشيف صور العريش على Wikimedia Commons</a>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-y border-[var(--app-border)] bg-[#080d14] py-16 md:py-20">
+        <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-[rgba(245,196,0,.07)] blur-3xl"/>
+        <div className="shell relative">
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div><p className="text-[10px] font-black tracking-[.24em] text-[var(--brand)]">اختار ما يناسب مشوارك</p><h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">ثلاث فئات… وتجربة واحدة.</h2></div>
+            <p className="max-w-md text-sm leading-7 text-[var(--app-muted)]">اختر فئة المركبة المناسبة من داخل طلب الرحلة، وراجع التفاصيل قبل تأكيد الطلب.</p>
+          </div>
+          <div className="mt-9 grid gap-4 md:grid-cols-3">
+            <article className="group relative overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-[#111a26] p-6 transition duration-300 hover:-translate-y-1 hover:border-[rgba(245,196,0,.45)]">
+              <span className="absolute -left-5 -top-5 h-28 w-28 rounded-full bg-[var(--brand-soft)] blur-2xl transition group-hover:scale-125"/>
+              <div className="relative flex items-center justify-between"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><CarFront size={27}/></span><span className="text-[11px] font-black tracking-[.2em] text-[var(--app-muted)]">01</span></div>
+              <h3 className="relative mt-8 text-xl font-black">اقتصادي</h3><p className="relative mt-2 text-sm leading-7 text-[var(--app-muted)]">للمشاوير اليومية والتنقلات المعتادة داخل المدينة.</p>
+            </article>
+            <article className="group relative overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-[#111a26] p-6 transition duration-300 hover:-translate-y-1 hover:border-[rgba(245,196,0,.45)]">
+              <span className="absolute -left-5 -top-5 h-28 w-28 rounded-full bg-[var(--brand-soft)] blur-2xl transition group-hover:scale-125"/>
+              <div className="relative flex items-center justify-between"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><UsersRound size={27}/></span><span className="text-[11px] font-black tracking-[.2em] text-[var(--app-muted)]">02</span></div>
+              <h3 className="relative mt-8 text-xl font-black">عائلي</h3><p className="relative mt-2 text-sm leading-7 text-[var(--app-muted)]">مساحة أوسع للعائلة، حسب المركبة المتاحة.</p>
+            </article>
+            <article className="group relative overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-[#111a26] p-6 transition duration-300 hover:-translate-y-1 hover:border-[rgba(245,196,0,.45)]">
+              <span className="absolute -left-5 -top-5 h-28 w-28 rounded-full bg-[var(--brand-soft)] blur-2xl transition group-hover:scale-125"/>
+              <div className="relative flex items-center justify-between"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><BadgeCheck size={27}/></span><span className="text-[11px] font-black tracking-[.2em] text-[var(--app-muted)]">03</span></div>
+              <h3 className="relative mt-8 text-xl font-black">خصوصي</h3><p className="relative mt-2 text-sm leading-7 text-[var(--app-muted)]">رحلة خاصة ومريحة وفق تفاصيل المركبة المتاحة.</p>
+            </article>
+          </div>
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--app-border)] bg-[#111a26]/80 px-5 py-4">
+            <p className="text-xs leading-6 text-[var(--app-muted)]">تظهر الفئات المتاحة ضمن نموذج طلب الرحلة، ويمكنك مراجعة اختيارك قبل الإرسال.</p>
+            <a href="/login?next=/customer" className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-xs font-black text-[#101722] transition hover:bg-[#ffd633]">اختيار فئة السيارة <ArrowLeft size={15}/></a>
           </div>
         </div>
       </section>
