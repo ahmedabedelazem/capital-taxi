@@ -25,7 +25,7 @@ export default function HomePage() {
           <div className="hidden items-center gap-7 text-sm font-medium text-neutral-700 md:flex">
             <a href="#how-it-works" className="transition hover:text-[#5e8f25]">كيف تعمل الخدمة</a>
             <a href="#portals" className="transition hover:text-[#5e8f25]">بوابات الاستخدام</a>
-            <span className="text-neutral-400">العريش · شمال سيناء</span>
+            <span className="text-neutral-500">العريش · شمال سيناء</span>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/login" className="hidden rounded-full px-4 py-3 text-sm font-semibold transition hover:bg-neutral-100 sm:inline-flex">تسجيل الدخول</Link>
@@ -84,7 +84,7 @@ export default function HomePage() {
         <div className="shell">
           <div className="max-w-2xl"><p className="text-xs font-bold tracking-[.2em] text-[#65972c]">ببساطة</p><h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">خطوات واضحة. ومشوار أسهل.</h2></div>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {steps.map((step) => <article key={step.number} className="border-t-4 border-[#8cc63f] pt-5"><span className="text-xs font-bold tracking-widest text-neutral-400">{step.number}</span><h3 className="mt-7 text-xl font-extrabold">{step.title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-neutral-600">{step.description}</p></article>)}
+            {steps.map((step) => <article key={step.number} className="border-t-4 border-[#8cc63f] pt-5"><span className="text-xs font-bold tracking-widest text-neutral-500">{step.number}</span><h3 className="mt-7 text-xl font-extrabold">{step.title}</h3><p className="mt-3 max-w-sm text-sm leading-7 text-neutral-600">{step.description}</p></article>)}
           </div>
         </div>
       </section>
