@@ -54,7 +54,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
 
   return (
     <main className="min-h-screen bg-[var(--app-bg)] text-[var(--app-ink)]">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-[#111a26] focus:px-4 focus:py-3 focus:text-black">تخطي إلى المحتوى</a>
       <header className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-[#0a111b]/95 text-[var(--app-ink)] shadow-[0_10px_35px_rgba(0,0,0,.32)] backdrop-blur-2xl">
         <div className="shell flex h-[76px] items-center justify-between gap-4">
           <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="تاكسي العاصمة - الرئيسية">
@@ -64,7 +64,7 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
           <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-2 md:flex">
             {portalLinks[role].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--app-ink)] shadow-[inset_0_0_0_1px_rgba(184,139,0,.18)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 ${pathname === href ? "bg-[var(--brand-soft)] text-[var(--app-ink)] shadow-[inset_0_0_0_1px_rgba(245,196,0,.18)]" : "text-[var(--app-muted)] hover:bg-[var(--app-bg)] hover:text-[var(--app-ink)]"}`}>
                 <Icon size={16} />{label}
               </Link>
             ))}
@@ -110,12 +110,12 @@ export function PortalShell({ title, subtitle, role, children }: Props) {
             <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-24 h-64 w-64 rounded-full border border-white/10" />
             <div className="relative z-10 flex min-h-[190px] flex-wrap items-end justify-between gap-6 md:min-h-[220px]">
               <div className="max-w-3xl">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold tracking-wide text-[var(--brand)] backdrop-blur"><Sparkles size={13} /> {roleMeta[role].accent} <span className="text-white/60">/ CAPITAL TAXI</span></div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-[#111a26]/10 px-3 py-1.5 text-[10px] font-extrabold tracking-wide text-[var(--brand)] backdrop-blur"><Sparkles size={13} /> {roleMeta[role].accent} <span className="text-white/60">/ CAPITAL TAXI</span></div>
                 <p className="mb-2 text-xs font-bold text-white/70">{roleMeta[role].eyebrow}</p>
                 <h1 className="text-[28px] font-black leading-tight tracking-tight text-white md:text-[40px]">{title}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-white/75 md:text-[15px]">{subtitle}</p>
               </div>
-              <div className="hidden h-16 w-16 items-center justify-center rounded-[22px] border border-white/20 bg-white/10 text-[var(--brand)] backdrop-blur md:flex"><RoleIcon size={30} strokeWidth={1.8} /></div>
+              <div className="hidden h-16 w-16 items-center justify-center rounded-[22px] border border-white/20 bg-[#111a26]/10 text-[var(--brand)] backdrop-blur md:flex"><RoleIcon size={30} strokeWidth={1.8} /></div>
             </div>
             <div className="absolute bottom-0 right-0 h-1.5 w-40 bg-[var(--brand)]" />
           </div>
