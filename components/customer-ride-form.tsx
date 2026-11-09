@@ -605,13 +605,13 @@ export function CustomerRideForm() {
             <label htmlFor="pickup" className="mb-2 block text-xs text-neutral-500">نقطة الانطلاق</label>
             <div className="flex items-center gap-3">
               <span className="h-3 w-3 shrink-0 rounded-full border-2 border-emerald-400"/>
-              <input ref={pickupInput} id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPickupPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400" placeholder="اختر عنواناً من الاقتراحات أو استخدم موقعي"/>
+              <input ref={pickupInput} id="pickup" value={pickup} onChange={(event) => { setPickup(event.target.value); setPickupPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-500" placeholder="اختر عنواناً من الاقتراحات أو استخدم موقعي"/>
               <button type="button" onClick={useCurrentLocation} disabled={locating} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#8cc63f]/40 px-3 py-2 text-xs text-[#5e8f25] transition hover:bg-[#edf6df] disabled:opacity-50"><LocateFixed size={15}/>{locating ? "جارٍ التحديد" : "موقعي"}</button>
             </div>
           </div>
           <div className="rounded-2xl border border-[#24351c]/10 bg-white p-4">
             <label htmlFor="destination" className="mb-2 block text-xs text-neutral-500">الوجهة</label>
-            <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[#5e8f25]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-400" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
+            <div className="flex items-center gap-3"><MapPin className="shrink-0 text-[#5e8f25]" size={18}/><input ref={destinationInput} id="destination" value={destination} onChange={(event) => { setDestination(event.target.value); setDestinationPoint(null); setPreview(false); setBooking(null); }} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-500" placeholder="جامعة سيناء، المساعيد، الكورنيش…"/></div>
           </div>
           <p className="text-[11px] text-neutral-500">{mapsReady ? "اختيار العناوين مدعوم بخرائط Google." : "يلزم مفتاح Google Maps مفعّل عليه Places API لاختيار الوجهة بدقة."}</p>
           {locationMessage && <p aria-live="polite" className="rounded-xl bg-white/5 px-4 py-3 text-xs leading-6 text-neutral-500">{locationMessage}</p>}
@@ -643,7 +643,7 @@ export function CustomerRideForm() {
             <p className="mt-1">مسافة الطريق المعتمدة للتسعير: <b>{booking.distanceKm === null ? "غير متاحة" : `${booking.distanceKm.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} كم`}</b></p>
             <p className="mt-1">السعر التقديري: <b className="text-[#5e8f25]">{booking.fareEstimate === null ? "غير متاح" : `${booking.fareEstimate} ج.م`}</b></p>
             <p className="mt-2 text-xs text-neutral-500">الحالة: {tripStatusLabels[booking.status] ?? booking.status}</p>
-            {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
+            {["pending", "searching", "accepted", "driver_arrived"].includes(booking.status) && <button type="button" onClick={() => void cancelBooking()} disabled={cancelling} className="mt-3 w-full rounded-xl border border-rose-300/30 px-4 py-3 text-xs font-bold text-rose-700 transition hover:bg-rose-400/10 disabled:opacity-50">{cancelling ? "جارٍ إلغاء الرحلة…" : "إلغاء الرحلة"}</button>}
             {cancelMessage && <p role="status" aria-live="polite" className="mt-3 rounded-lg bg-white/5 p-3 text-xs leading-6 text-neutral-500">{cancelMessage}</p>}
             {tripDetails?.driver && <div className="mt-4 rounded-xl border border-[#8cc63f]/30 bg-[#edf6df] p-3">
               <b className="text-sm text-[#5e8f25]">بيانات السائق المعيّن</b>
@@ -705,7 +705,7 @@ export function CustomerRideForm() {
           </form>
           <div className="mt-5 border-t border-[#24351c]/10 pt-4">
             <div className="flex items-center justify-between gap-3"><h4 className="text-sm font-bold">متابعة طلباتك</h4><button type="button" onClick={() => void loadSupportHistory()} disabled={supportHistoryLoading} className="rounded-lg border border-[#24351c]/10 px-3 py-2 text-xs text-[#5e8f25] disabled:opacity-50">تحديث</button></div>
-            {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-200">{supportHistoryError}</p>}
+            {supportHistoryError && <p role="alert" className="mt-3 rounded-xl bg-red-400/5 p-3 text-xs text-red-700">{supportHistoryError}</p>}
             {supportHistoryLoading && <p className="mt-3 text-xs text-neutral-500">جارٍ تحميل الشكاوى…</p>}
             {!supportHistoryLoading && !supportHistoryError && supportTickets.length === 0 && <p className="mt-3 text-xs text-neutral-500">لا توجد طلبات دعم سابقة.</p>}
             <div className="mt-3 space-y-3">{supportTickets.map((ticket) => <article key={ticket.ticketId} className="rounded-xl border border-[#24351c]/10 bg-white p-3">
