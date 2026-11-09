@@ -94,10 +94,6 @@ export function CustomerRideForm() {
   const destinationInput = useRef<HTMLInputElement>(null);
   const idempotencyKey = useRef<string | null>(null);
   const idempotencyFingerprint = useRef<string | null>(null);
-  const pickupInput = useRef<HTMLInputElement>(null);
-  const destinationInput = useRef<HTMLInputElement>(null);
-  const idempotencyKey = useRef<string | null>(null);
-  const idempotencyFingerprint = useRef<string | null>(null);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
